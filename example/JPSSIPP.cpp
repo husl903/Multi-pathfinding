@@ -7,9 +7,11 @@
 #include <yaml-cpp/yaml.h>
 
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
+#include <libMultiRobotPlanning/sipp.hpp>
 #include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
+using libMultiRobotPlanning::SIPP;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
 
@@ -151,6 +153,21 @@ class Environment {
     return true;
   }
 
+  bool isCommandValid(
+      const State& /*s1*/, const State& /*s2*/, const Action& /*a*/,
+      int earliestStartTime,      // can start motion at this time
+      int /*latestStartTime*/,    // must have left s by this time
+      int earliestArrivalTime,    // can only arrive at (s+cmd)
+      int /*latestArrivalTime*/,  // needs to arrive by this time at (s+cmd)
+      int& t) {
+    t = std::max<int>(earliestArrivalTime, earliestStartTime + 1);
+
+    // TODO(whoenig): need to check for swaps here...
+
+    // return t - 1 <= latestStartTime;
+    return true;
+  }
+
  public:
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
@@ -163,7 +180,6 @@ class Environment {
   }
 
   bool isJumpPoint(const State& s) {
- //   return m_jumppoint.find(s) != m_jumppoint.end();
 	  return jump_point_map[s.x][s.y];
   }
 
@@ -265,46 +281,42 @@ int main(int argc, char* argv[]) {
 	  map_1[i].resize(dimy + 2);
   }
 
-
-
   for (const auto& ob:obstacles){
 	  State temp1 = ob,temp2 = ob;
 	  temp1.x = ob.x + 1;
 	  temp2.y = ob.y + 1;
 
-//	  std::cout<<"Obstacle:" << ob.x << " " << ob.y <<std::endl;
-
-	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
+	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
+			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
 		  jumppoint.insert(State(ob.x + 1, ob.y + 1));
 		  map_1[ob.x + 1][ob.y + 1] = true;
-//		  std::cout<< ob.x + 1 << " " << ob.y + 1 <<std::endl;
 	  }
 
 	  temp1 = ob; temp2 = ob;
 	  temp1.x = ob.x + 1;
 	  temp2.y = ob.y - 1;
-	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
+	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
+			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
 		  jumppoint.insert(State(ob.x + 1, ob.y - 1));
 		  map_1[ob.x + 1][ob.y - 1] = true;
-//		  std::cout<< ob.x + 1 << " " << ob.y - 1 <<std::endl;
 	  }
 
 	  temp1 = ob; temp2 = ob;
 	  temp1.x = ob.x - 1;
 	  temp2.y = ob.y + 1;
-	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
+	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
+			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
 		  jumppoint.insert(State(ob.x - 1, ob.y + 1));
 		  map_1[ob.x - 1][ob.y + 1] = true;
-//		  std::cout<< ob.x - 1 << " " << ob.y + 1 <<std::endl;
 	  }
 
 	  temp1 = ob; temp2 = ob;
 	  temp1.x = ob.x - 1;
 	  temp2.y = ob.y - 1;
-	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
+	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
+			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
 		  jumppoint.insert(State(ob.x - 1, ob.y - 1));
 		  map_1[ob.x - 1][ob.y - 1] = true;
-//		  std::cout<< ob.x - 1 << " " << ob.y - 1 <<std::endl;
 	  }
 
   }
@@ -315,14 +327,22 @@ int main(int argc, char* argv[]) {
 	  startStates.emplace_back(State(start[0].as<int>(), start[1].as<int>()));
 	  goals.emplace_back(State(goal[0].as<int>(), goal[1].as<int>()));
   }
- typedef JPSSIPP<State, State, Action, int, Environment> sipp_t;
+  typedef JPSSIPP<State, State, Action, int, Environment> jps_sipp;
+  typedef SIPP<State, State, Action, int, Environment> sipp_t;
 
   std::ofstream out(outputFile);
   out << "schedule:" << std::endl;
 
   // Plan (sequentially)
-  std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals;
-  std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions;
+  std::map<State, std::vector<jps_sipp::interval>> allCollisionIntervals;
+  std::map<State, std::vector<jps_sipp::edgeCollision>> allEdgeCollisions;
+
+  std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
+  std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
+
+//  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(5, 5));
+//  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(10, 15));
+//  allCollisionIntervals[State(2,1)].push_back(jps_sipp::interval(10, 16));
 
   long cost = 0;
   for (size_t i = 0; i < goals.size(); ++i) {
@@ -330,10 +350,11 @@ int main(int argc, char* argv[]) {
     out << "  agent" << i << ":" << std::endl;
 
     Environment env(dimx, dimy, obstacles, jumppoint, map_1, goals[i]);
+    jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
     for (const auto& collisionIntervals : allCollisionIntervals) {
-      sipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
+      jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
       State current_state = collisionIntervals.first;
       if(env.stateValid(State(current_state.x + 1, current_state.y))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
@@ -368,17 +389,25 @@ int main(int argc, char* argv[]) {
       }
     }
 
+
     for (const auto& ec: allEdgeCollisions) {
+    	jpssipp.setEdgeCollisions(ec.first, ec.second);
+    }
+
+    for (const auto& collisionIntervals_sipp : allCollisionIntervals_sipp) {
+       sipp.setCollisionIntervals(collisionIntervals_sipp.first, collisionIntervals_sipp.second);
+    }
+    for (const auto& ec: allEdgeCollisions_sipp) {
     	sipp.setEdgeCollisions(ec.first, ec.second);
     }
+
 
     env.Reset();
     // Plan
     PlanResult<State, Action, int> solution;
     Timer t;
     t.reset();
-    bool success = sipp.search(startStates[i], Action::Wait, solution);
-
+    bool success = jpssipp.search(startStates[i], Action::Wait, solution);
     t.stop();
     std::cout<< t.elapsedSeconds() << std::endl;
     int num_expansion1 = env.num_expansion;
@@ -432,25 +461,27 @@ int main(int argc, char* argv[]) {
       for (size_t i = 1; i < solution2.states.size(); ++i) {
         if (solution2.states[i].first != lastState.first) {
           allCollisionIntervals[lastState.first].push_back(
+            jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
+          allCollisionIntervals_sipp[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution2.states[i].second - 1));
-//          std::cout << lastState.first.x << " " << lastState.first.y << " Interval " << lastState.second << " " << solution2.states[i].second - 1 << "\n";
           lastState = solution2.states[i];
-
         }
       }
       allCollisionIntervals[solution2.states.back().first].push_back(
+            jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+      allCollisionIntervals_sipp[solution2.states.back().first].push_back(
             sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
       // update statistics
       cost += solution2.cost;
 
       // print solution
       for (size_t i = 0; i < solution2.actions.size(); ++i) {
-//    	  auto lastState = solution2.states[0];
-
-    	  if(solution2.actions[i].first != Action::Wait ) allEdgeCollisions[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
-//    	  std::cout << "-------------------\n";
-//   	  std::cout << solution2.states[i].first.x <<" " << solution2.states[i].first.y << " Cost " << solution2.states[i].second << " Action " << solution2.actions[i].first << std::endl;
-
+    	  if(solution2.actions[i].first != Action::Wait ){
+    		  allEdgeCollisions[solution2.states[i].first].push_back(jps_sipp::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
+    	  }
+    	  if(solution2.actions[i].first != Action::Wait ){
+    	      allEdgeCollisions_sipp[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
+    	   }
         std::cout << solution2.states[i].second << ": " << solution2.states[i].first
                   << "->" << solution2.actions[i].first
                   << "(cost: " << solution2.actions[i].second << ")" << std::endl;
@@ -475,8 +506,8 @@ int main(int argc, char* argv[]) {
     	break;
     }
 
-    if(num_expansion1 >= num_expansion2){
-    	std::cout << "Agent ------------------------ " << i << "\n";
+    if(num_expansion1 > num_expansion2){
+    	std::cout << inputFile << " Agent expansion ------------------------ " << num_expansion1 - num_expansion2 << "\n";
     }
 
     res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
@@ -501,11 +532,11 @@ int main(int argc, char* argv[]) {
   // for (const auto& node : config["environment"]["collisionIntervals"]) {
   //   State state(node["location"][0].as<int>(), node["location"][1].as<int>());
 
-  //   std::vector<sipp_t::interval> collisionIntervals;
+  //   std::vector<jps_sipp::interval> collisionIntervals;
 
   //   for (const auto& interval : node["intervals"]) {
   //     collisionIntervals.emplace_back(
-  //         sipp_t::interval(interval[0].as<int>(), interval[1].as<int>()));
+  //         jps_sipp::interval(interval[0].as<int>(), interval[1].as<int>()));
   //   }
   //   sipp.setCollisionIntervals(state, collisionIntervals);
   // }

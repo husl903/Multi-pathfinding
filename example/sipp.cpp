@@ -140,6 +140,9 @@ class Environment {
            m_obstacles.find(s) == m_obstacles.end();
   }
 
+ public:
+  int num_generation = 0;
+  int num_expansion = 0;
  private:
   int m_dimx;
   int m_dimy;

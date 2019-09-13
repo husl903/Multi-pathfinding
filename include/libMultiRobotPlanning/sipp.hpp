@@ -77,11 +77,27 @@ class SIPP {
   };
 
  public:
+   struct edgeCollision{
+ 	  edgeCollision(Cost t, Action action) : t(t), action(action){}
+
+ 	Cost t;
+ 	Action action;
+ 	friend bool operator==(const edgeCollision& a, const edgeCollision& b){
+ 		return (a.t == b.t) && (a.action == b.action);
+ 	}
+  };
+
+ public:
   SIPP(Environment& environment) : m_env(environment), m_astar(m_env) {}
 
   void setCollisionIntervals(const Location& location,
                              const std::vector<interval>& intervals) {
     m_env.setCollisionIntervals(location, intervals);
+  }
+
+  void setEdgeCollisions(const Location& location,
+                             const std::vector<edgeCollision>& ec) {
+    m_env.setEdgeCollisions(location, ec);
   }
 
   bool mightHaveSolution(const State& goal) {
@@ -195,6 +211,7 @@ class SIPP {
       std::vector<Neighbor<State, Action, Cost> > motions;
       m_env.getNeighbors(s.state, motions);
       for (const auto& m : motions) {
+    	  m_env.num_generation++;
         // std::cout << "gN " << m.state << std::endl;
         Cost m_time = m.cost;
         // std::cout << m_lastGScore;
@@ -211,8 +228,15 @@ class SIPP {
             continue;
           }
           int t;
+          Action a_temp;
+          if(m.action == Action::Left) a_temp = Action::Right;
+          else if(m.action == Action::Right) a_temp = Action::Left;
+          else if(m.action == Action::Up) a_temp = Action::Down;
+          else if(m.action == Action::Down) a_temp = Action::Up;
+
           if (m_env.isCommandValid(s.state, m.state, m.action, m_lastGScore,
-                                   end_t, si.start, si.end, t)) {
+                                   end_t, si.start, si.end, t)
+        		  && !IsEdgeCollisions(m.state, edgeCollision(t - 1, a_temp))) {
             // std::cout << "  gN: " << m.state << "," << i << "," << t << ","
             // << m_lastGScore << std::endl;
             neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
@@ -231,6 +255,7 @@ class SIPP {
       // std::endl;
       // This is called before getNeighbors(). We use the callback to find the
       // current cost (=time) of the expanded node
+      m_env.num_expansion++;
       m_lastGScore = gScore;
       m_env.onExpandNode(s.state, fScore, gScore);
     }
@@ -295,6 +320,31 @@ class SIPP {
       return false;
     }
 
+    void setEdgeCollisions(const Location& location,
+  		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
+  	  m_edgeCollision.erase(location);
+  	  if(edge_collision.size() > 0){
+  		  m_edgeCollision[location];
+  		  for(const auto& ec : edge_collision){
+  			  m_edgeCollision[location].push_back(ec);
+  		  }
+  	  }
+    }
+
+    bool IsEdgeCollisions(const Location& location, const edgeCollision& ec){
+//    		std::cout << location.x << " " << location.y << " " << ec.t << " " << ec.action << std::endl;
+//    		return false;
+    		const auto iter = m_edgeCollision.find(location);
+    		if(iter == m_edgeCollision.end()) return false;
+    		if((iter->second).size() == 0) return false;
+    		for (auto& cec : (iter->second)){
+    			if( cec == ec ){
+    				return true;
+    			}
+    		}
+    		return false;
+    }
+
    private:
     const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
@@ -310,6 +360,7 @@ class SIPP {
     Environment& m_env;
     Cost m_lastGScore;
     std::unordered_map<Location, std::vector<interval> > m_safeIntervals;
+    std::unordered_map<Location, std::vector<edgeCollision>> m_edgeCollision;
   };
 
  private:
