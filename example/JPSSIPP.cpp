@@ -7,10 +7,12 @@
 #include <yaml-cpp/yaml.h>
 
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
+#include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
 #include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
+using libMultiRobotPlanning::JPSSIPPAN;
 using libMultiRobotPlanning::SIPP;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
@@ -109,15 +111,6 @@ class Environment {
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
     neighbors.clear();
 
-    State up(s.x, s.y + 1);
-    if (stateValid(up)) {
-      neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
-    }
-    State down(s.x, s.y - 1);
-    if (stateValid(down)) {
-      neighbors.emplace_back(
-          Neighbor<State, Action, int>(down, Action::Down, 1));
-    }
     State left(s.x - 1, s.y);
     if (stateValid(left)) {
       neighbors.emplace_back(
@@ -127,6 +120,16 @@ class Environment {
     if (stateValid(right)) {
       neighbors.emplace_back(
           Neighbor<State, Action, int>(right, Action::Right, 1));
+    }
+
+    State up(s.x, s.y + 1);
+    if (stateValid(up)) {
+      neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
+    }
+    State down(s.x, s.y - 1);
+    if (stateValid(down)) {
+      neighbors.emplace_back(
+          Neighbor<State, Action, int>(down, Action::Down, 1));
     }
   }
 
@@ -251,11 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_1", std::ios::app);
-  std::fstream res_Good("Berlin_all_good_1", std::ios::app);
-
-//  std::fstream res_sta("Berlin_room_64_64_1_c_2", std::ios::app);
-//  std::fstream res_Good("Berlin_good_room_64_64_1_c_2", std::ios::app);
+  std::fstream res_sta("8_8_all_1_test", std::ios::app);
+  std::fstream res_Good("8_8_all_good_test", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -275,7 +275,6 @@ int main(int argc, char* argv[]) {
      obstacles.insert(State(node[0].as<int>(), node[1].as<int>()));
   }
 
-  std::cout << "The size: " << map_1.size();
   map_1.resize(dimx + 2);
   for(int i = 0; i < map_1.size();i++){
 	  map_1[i].resize(dimy + 2);
@@ -328,6 +327,7 @@ int main(int argc, char* argv[]) {
 	  goals.emplace_back(State(goal[0].as<int>(), goal[1].as<int>()));
   }
   typedef JPSSIPP<State, State, Action, int, Environment> jps_sipp;
+  typedef JPSSIPPAN<State, State, Action, int, Environment> jps_an_sipp;
   typedef SIPP<State, State, Action, int, Environment> sipp_t;
 
   std::ofstream out(outputFile);
@@ -337,12 +337,20 @@ int main(int argc, char* argv[]) {
   std::map<State, std::vector<jps_sipp::interval>> allCollisionIntervals;
   std::map<State, std::vector<jps_sipp::edgeCollision>> allEdgeCollisions;
 
+  std::map<State, std::vector<jps_an_sipp::interval>> allCollisionIntervals_jpsan;
+  std::map<State, std::vector<jps_an_sipp::edgeCollision>> allEdgeCollisions_jpsan;
+
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
 //  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(5, 5));
 //  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(10, 15));
 //  allCollisionIntervals[State(2,1)].push_back(jps_sipp::interval(10, 16));
+
+//  allCollisionIntervals_sipp[State(1,1)].push_back(sipp_t::interval(5, 5));
+//  allCollisionIntervals_sipp[State(1,1)].push_back(sipp_t::interval(10, 15));
+//  allCollisionIntervals_sipp[State(2,1)].push_back(sipp_t::interval(10, 16));
+
 
   long cost = 0;
   for (size_t i = 0; i < goals.size(); ++i) {
@@ -351,12 +359,13 @@ int main(int argc, char* argv[]) {
 
     Environment env(dimx, dimy, obstacles, jumppoint, map_1, goals[i]);
     jps_sipp jpssipp(env);
+    jps_an_sipp jps_an_sipp(env);
     sipp_t sipp(env);
 
     for (const auto& collisionIntervals : allCollisionIntervals) {
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
       State current_state = collisionIntervals.first;
-      if(env.stateValid(State(current_state.x + 1, current_state.y))){
+    /*  if(env.stateValid(State(current_state.x + 1, current_state.y))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
       }
 
@@ -371,7 +380,7 @@ int main(int argc, char* argv[]) {
       if(env.stateValid(State(current_state.x, current_state.y + 1))){
     	  env.setJumpPoint(State(current_state.x, current_state.y + 1));
       }
-
+*/
       if(env.stateValid(State(current_state.x + 1, current_state.y - 1))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y - 1));
       }
@@ -394,6 +403,12 @@ int main(int argc, char* argv[]) {
     	jpssipp.setEdgeCollisions(ec.first, ec.second);
     }
 
+    for (const auto& collisionIntervals_jpsan : allCollisionIntervals_jpsan) {
+       jps_an_sipp.setCollisionIntervals(collisionIntervals_jpsan.first, collisionIntervals_jpsan.second);
+    }
+    for (const auto& ec: allEdgeCollisions_jpsan) {
+    	jps_an_sipp.setEdgeCollisions(ec.first, ec.second);
+    }
     for (const auto& collisionIntervals_sipp : allCollisionIntervals_sipp) {
        sipp.setCollisionIntervals(collisionIntervals_sipp.first, collisionIntervals_sipp.second);
     }
@@ -439,6 +454,41 @@ int main(int argc, char* argv[]) {
 
 
     env.Reset();
+    // Plan
+    PlanResult<State, Action, int> solution3;
+    t.reset();
+    bool success3 = jps_an_sipp.search(startStates[i], Action::Wait, solution3);
+    t.stop();
+    std::cout<< t.elapsedSeconds() << std::endl;
+    int num_expansion3 = env.num_expansion;
+    int num_generation3 = env. num_generation;
+    double time3 = t.elapsedSeconds();
+    if (success3) {
+      std::cout << "JPSAN Planning successful! Total cost: " << solution3.cost << " Expansion:"
+    		    << env.num_expansion << " Generation: " << env.num_generation
+                << std::endl;
+
+      // print solution
+      for (size_t i = 0; i < solution3.actions.size(); ++i) {
+        std::cout << solution3.states[i].second << ": " << solution3.states[i].first
+                  << "->" << solution3.actions[i].first
+                  << "(cost: " << solution3.actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution3.states.back().second << ": "
+                << solution3.states.back().first << std::endl;
+
+      for (size_t i = 0; i < solution3.states.size(); ++i) {
+        out << "    - x: " << solution3.states[i].first.x << std::endl
+            << "      y: " << solution3.states[i].first.y << std::endl
+            << "      t: " << solution3.states[i].second << std::endl;
+      }
+    } else {
+      std::cout << "Planning NOT successful!" << std::endl;
+      out << "    []" << std::endl;
+    }
+
+
+    env.Reset();
     env.setNoJPS();
     PlanResult<State, Action, int> solution2;
     t.reset();
@@ -464,6 +514,9 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
           allCollisionIntervals_sipp[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution2.states[i].second - 1));
+          allCollisionIntervals_jpsan[lastState.first].push_back(
+            jps_an_sipp::interval(lastState.second, solution2.states[i].second - 1));
+
           lastState = solution2.states[i];
         }
       }
@@ -471,9 +524,12 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
       allCollisionIntervals_sipp[solution2.states.back().first].push_back(
             sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+
+      allCollisionIntervals_jpsan[solution2.states.back().first].push_back(
+            jps_an_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+//      std::cout << ""
       // update statistics
       cost += solution2.cost;
-
       // print solution
       for (size_t i = 0; i < solution2.actions.size(); ++i) {
     	  if(solution2.actions[i].first != Action::Wait ){
@@ -481,6 +537,10 @@ int main(int argc, char* argv[]) {
     	  }
     	  if(solution2.actions[i].first != Action::Wait ){
     	      allEdgeCollisions_sipp[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
+    	   }
+
+    	  if(solution2.actions[i].first != Action::Wait ){
+    	      allEdgeCollisions_jpsan[solution2.states[i].first].push_back(jps_an_sipp::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
     	   }
         std::cout << solution2.states[i].second << ": " << solution2.states[i].first
                   << "->" << solution2.actions[i].first
@@ -495,7 +555,7 @@ int main(int argc, char* argv[]) {
             << "      t: " << solution2.states[i].second << std::endl;
       }
     } else {
-      std::cout << inputFile  <<  "SIPP Planning NOT successful from Agent: " << i << std::endl;
+      std::cout << inputFile  <<  " SIPP Planning NOT successful from Agent: " << i << std::endl;
       out << "    []" << std::endl;
       break;
     }
@@ -507,15 +567,30 @@ int main(int argc, char* argv[]) {
     }
 
     if(num_expansion1 > num_expansion2){
-    	std::cout << inputFile << " Agent expansion ------------------------ " << num_expansion1 - num_expansion2 << "\n";
+    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " "<< num_expansion1 - num_expansion2 << "\n";
     }
 
+/*    if(num_expansion1 > num_expansion3){
+    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " "<< num_expansion1 - num_expansion3 << "\n";
+    }
+
+
+    if(num_expansion1 < num_expansion3){
+    	std::cout << inputFile << " Not Expansion-4 Agent " << i << " "<< num_expansion1 - num_expansion3 << "\n";
+    }
+
+
+    if(num_generation1 > num_generation2){
+    	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation2 << "\n";
+    }
+*/
     res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
-    res_sta << inputFile << " Agent " << i << " SIPP   : " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
+    res_sta << inputFile << " Agent " << i << " JPSSIPPAN: " << " cost: " << solution3.cost << " " << time3 << " " << num_expansion3 << " " << num_generation3 <<"\n";
+    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
 
     if (time1 < time2){
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
-        res_Good << inputFile << " Agent " << i << " SIPP   : "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
+        res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
 
 //    break;
