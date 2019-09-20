@@ -1586,10 +1586,9 @@ public:
        		bool is_down_edge_collision =  IsEdgeCollisions(state_down,edgeCollision(m_lastGScore + current_cost, Action::Up));
 
         //       std::cout << "Current state : " << action << "  " << s.state.x << "  " << s.state.y << "Cost " << current_cost << "  ]]]]]]]]]]]]]]]\n";
-           	if(action == Action::Left || (action == Action::Up && depth != 0) || (action == Action::Down && depth != 0) || action == Action::All){
+           	if(action == Action::Left || (action == Action::Up && depth != 0) || (action == Action::Down && depth != 0)){
           			current_successor.state.x = s.state.x - 1;
           			current_successor.state.y = s.state.y;
-       //   			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Left" << std::endl;
           			if(m_env.stateValid(current_successor.state) &&
           					!IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost,Action::Right))){
           				bool is_up = false, is_down = false;

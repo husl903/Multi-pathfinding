@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("8_8_all_1_test", std::ios::app);
-  std::fstream res_Good("8_8_all_good_test", std::ios::app);
+  std::fstream res_sta("Berlin_all_", std::ios::app);
+  std::fstream res_Good("Berlin_all_good_", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -562,6 +562,11 @@ int main(int argc, char* argv[]) {
 
 
     if(solution.cost != solution2.cost){
+    	std::cout << inputFile <<  "Agent " << i << ": Not equal" << std::endl;
+    	break;
+    }
+
+    if(solution.cost != solution3.cost){
     	std::cout << inputFile <<  "Agent " << i << ": Not equal" << std::endl;
     	break;
     }

@@ -1803,7 +1803,6 @@ public:
             if(!m_env.isJPS()){
           	  m_env.getNeighbors(s_temp.state, motions);
        //   	  std::cout << "The number of neighbors: " << motions.size() << " " << std::endl;
-          	  std::cout << "Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << "\n";
                 for (const auto& m : motions) {
               	  m_env.num_generation++;
       //        	  std::cout << "Current successor: " << m.state.x << " " << m.state.y << "\n";
@@ -1841,7 +1840,7 @@ public:
 
       		  State state_re = s.state;
       		  m_env.num_expansion++;
-    		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+//    		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
       		  jps_successors.clear();
       		  Cost wait_time_l = 0, wait_time_r = 0, wait_time_u = 0, wait_time_d = 0;
          	      if(s_temp.dir & 0x1){
@@ -1860,6 +1859,16 @@ public:
          	     			  }else{
          	     				  getJPSSuccessors(s_temp, Action::Left, si.start - 1 -m_lastGScore, 0);
          	     				  wait_time_l = si.start - 1 - m_lastGScore;
+         	     			  }
+         	     			  if( i + 1 < sis.size()){
+         	     				  if(end_t >= sis[i+1].start - 1){
+         	     						 JPSSIPPState temp_state = s;
+         	     						 temp_state.state = s.state;
+         	     						 temp_state.dir = 0x1;
+         	     						 temp_state.flag_wait = true;
+         	     						 temp_state.action = Action::Left;
+         	     						 jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Left, sis[i+1].start -1 -m_lastGScore));
+         	     				  }
          	     			  }
          	     			  break;
          	    		  }
@@ -1883,6 +1892,16 @@ public:
          	     			  }else{
          	     				  getJPSSuccessors(s_temp, Action::Right, si.start - 1 -m_lastGScore, 0);
          	     				  wait_time_r = si.start - 1 -m_lastGScore;
+         	     			  }
+         	     			  if( i + 1 < sis.size()){
+         	     				  if(end_t >= sis[i+1].start - 1){
+         	     						 JPSSIPPState temp_state = s;
+         	     						 temp_state.state = s.state;
+         	     						 temp_state.dir = 0x2;
+         	     						 temp_state.flag_wait = true;
+         	     						 temp_state.action = Action::Right;
+         	     						 jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Right, sis[i+1].start -1 -m_lastGScore));
+         	     				  }
          	     			  }
          	     			  break;
          	    		  }
@@ -1908,6 +1927,17 @@ public:
          	     				  getJPSSuccessors(s_temp, Action::Up, si.start - 1 -m_lastGScore, 0);
          	     				  wait_time_u = si.start - 1 -m_lastGScore;
          	     			  }
+
+         	     			  if( i + 1 < sis.size()){
+         	     				  if(end_t >= sis[i+1].start - 1){
+         	     						 JPSSIPPState temp_state = s;
+         	     						 temp_state.state = s.state;
+         	     						 temp_state.dir = 0x7;
+         	     						 temp_state.flag_wait = true;
+         	     						 temp_state.action = Action::Up;
+         	     						 jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Up, sis[i+1].start -1 -m_lastGScore));
+         	     				  }
+         	     			  }
          	     			  break;
          	    		  }
          	    	  }
@@ -1931,12 +1961,22 @@ public:
          	     				  getJPSSuccessors(s_temp, Action::Down, si.start - 1 -m_lastGScore, 0);
          	     				  wait_time_d = si.start - 1 -m_lastGScore;
          	     			  }
+         	     			  if( i + 1 < sis.size()){
+         	     				  if(end_t >= sis[i+1].start - 1){
+         	     						 JPSSIPPState temp_state = s;
+         	     						 temp_state.state = s.state;
+         	     						 temp_state.dir = 0xb;
+         	     						 temp_state.flag_wait = true;
+         	     						 temp_state.action = Action::Down;
+         	     						 jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down, sis[i+1].start -1 -m_lastGScore));
+         	     				  }
+         	     			  }
          	     			  break;
          	    		  }
          	    	  }
          	      }
           	  for (const auto& m : jps_successors) {
-         		  std::cout << "Successor +++++++++++ ------ " << m.state.state.x << " "<< m.state.state.y << " Cost " << m.cost + m_lastGScore << " flag " << m.state.flag_wait << "\n";
+//         		  std::cout << "Successor +++++++++++ ------ " << m.state.state.x << " "<< m.state.state.y << " Cost " << m.cost + m_lastGScore << " flag " << m.state.flag_wait << "\n";
   				  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait), JPSSIPPAction(m.action, m.cost),
 							  m.cost));
@@ -1973,7 +2013,7 @@ public:
            	if(action == Action::Left || (action == Action::Up && depth != 0) || (action == Action::Down && depth != 0)){
           			current_successor.state.x = s.state.x - 1;
           			current_successor.state.y = s.state.y;
-       //  			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Left" << std::endl;
+//         			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Left" << std::endl;
           			if(m_env.stateValid(current_successor.state) &&
           					!IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost, Action::Right))){
           				size_t successor_interval;
@@ -1981,26 +2021,25 @@ public:
           				Cost next_start = -1, next_end = -1;
           				findSafeInterval(current_successor.state, start_t + 1, successor_interval, //find the safe interval
           				          						successor_start_t, successor_end_t, next_start, next_end);
-//          				std::cout << "Successor Start : " << successor_start_t << " " << successor_end_t << " " << next_start << " " << next_end << "\n";
-         				if( next_start != -1){
+          				bool flag_push = false;
+          				if(next_start != -1){
          					if(isTemporalObstacleSafe2(current_successor.state, m_lastGScore + current_cost + 1)
-         								&& next_start != -1 && end_t >= next_start - 1){
-         						if(!IsEdgeCollisions(current_successor.state, edgeCollision(next_start - 1, Action::Right))){ // the code can be improved
-         							JPSSIPPState temp_state = s;
-         							temp_state.dir = 0x1;
-         							temp_state.flag_wait = true;
-         							temp_state.action = Action::Left;
-         							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Left, next_start -1 -m_lastGScore));
-         							if(depth !=0 ){
-         								temp_state.dir = 0x1;
-         								temp_state.flag_wait = false;
-         								temp_state.action = Action::Left;
-         								jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Left, current_cost));
-         							}
+         							&& next_start != -1 && end_t >= next_start - 1){
+         						if(!IsEdgeCollisions(current_successor.state,edgeCollision(next_start - 1,Action::Right))){
+//         							std::cout << "Right 0000\n";
+             						JPSSIPPState temp_state = s;
+             						temp_state.dir = 0x1;
+             						temp_state.flag_wait = false;
+             						temp_state.action = Action::Left;
+             						if(depth != 0) {
+             							flag_push = true;
+             							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Left, current_cost));
+             						}
          						}
          					}
           				}
-         				if(successor_start_t !=- 1){
+
+         				if(successor_start_t !=- 1 && !flag_push){
           					current_successor.interval = successor_interval;
           					current_successor.dir = 0x00;
               				bool is_up = false, is_down = false;
@@ -2026,8 +2065,8 @@ public:
           							if(!IsEdgeCollisions(s.state,edgeCollision(next_start_s - 1, Action::Left))
           									&& successor_end_t >= next_start_s - 1){
           								current_successor.dir =  0x2;
- //         								current_successor.flag_wait = true;
- //         								jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
+//          								current_successor.flag_wait = true;
+//          								jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
           							}
           						}
           					 }
@@ -2057,10 +2096,10 @@ public:
 //              						current_successor.flag_wait = true;
 //              						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
               						current_successor.flag_wait = false;
-              						current_successor.dir = 0x01;
+              						current_successor.dir = 0x03;
               						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost + 1));
               					} else {
-//              						current_successor.dir = 0x01;
+             						current_successor.dir = 0x01;
               						getJPSSuccessors(current_successor, Action::Left, current_cost + 1, depth + 1);
               					}
               				}
@@ -2074,26 +2113,30 @@ public:
 
           			if(m_env.stateValid(current_successor.state)
           					&& !IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost,Action::Left))){
-          				std::cout << "Right " << current_successor.state.x << " " << current_successor.state.y << "\n";
+//          				std::cout << "Right " << current_successor.state.x << " " << current_successor.state.y << "\n";
           				bool is_up = false, is_down = false;
           				size_t successor_interval;
           				Cost successor_start_t, successor_end_t;
           				Cost next_start = -1, next_end = -1;
           				findSafeInterval(current_successor.state, start_t + 1, successor_interval, successor_start_t, successor_end_t, next_start, next_end);
+          				bool flag_push = false;
           				if(next_start != -1){
          					if(isTemporalObstacleSafe2(current_successor.state, m_lastGScore + current_cost + 1)
          							&& next_start != -1 && end_t >= next_start - 1){
          						if(!IsEdgeCollisions(current_successor.state,edgeCollision(next_start - 1,Action::Left))){
-         							std::cout << "Right 0000\n";
+//         							std::cout << "Right 0000\n";
              						JPSSIPPState temp_state = s;
              						temp_state.dir = 0x2;
-             						temp_state.flag_wait = true;
+             						temp_state.flag_wait = false;
              						temp_state.action = Action::Right;
-             						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Right, next_start - 1 - m_lastGScore));
+             						if(depth != 0) {
+             							flag_push = true;
+             							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Right, current_cost));
+             						}
          						}
          					}
           				}
-          				if(successor_start_t != -1){
+          				if(successor_start_t != -1 && !flag_push){
           					current_successor.interval = successor_interval;
           					current_successor.dir = 0x00;
               				if(m_env.isJumpPoint(current_successor.state)){
@@ -2126,7 +2169,7 @@ public:
              				}
 
               				if(is_up && !is_down){
-                  				std::cout << "Right 1" << "\n";
+//                  				std::cout << "Right 1" << "\n";
              					current_successor.dir = current_successor.dir | 0x6;
               					current_successor.flag_wait = false;
               					current_successor.action = Action::Right;
@@ -2134,7 +2177,7 @@ public:
               				}
 
               				if(!is_up&&is_down){
-                  				std::cout << "Right 2" << "\n";
+//                  				std::cout << "Right 2" << "\n";
               					current_successor.dir = current_successor.dir | 0x0a;
               					current_successor.action = Action::Right;
               					current_successor.flag_wait = false;
@@ -2152,14 +2195,9 @@ public:
               				if(!(is_up || is_down)){
                   				std::cout << "Right 4" << "\n";
               					if(current_successor.dir == 0x01){
-              						std::cout << "Right 5 \n";
-              						current_successor.flag_wait = true;
-              						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, next_start_s - 1 -m_lastGScore));
-              						if(next_start_s-1-m_lastGScore != current_cost+1){
               							current_successor.flag_wait = false;
-              							current_successor.dir = 0x02;
+              							current_successor.dir = 0x03;
               							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost + 1));
-              						}
               					}else {
               						current_successor.dir = 0x02;
               						getJPSSuccessors(current_successor, Action::Right, current_cost + 1, depth + 1);
@@ -2181,6 +2219,7 @@ public:
           				Cost next_start = -1, next_end = -1;
           				findSafeInterval(current_successor.state, start_t + 1, successor_interval,
           				          						successor_start_t, successor_end_t, next_start, next_end);
+          				bool flag_push = false;
           				if(next_start != -1){
        						if(isTemporalObstacleSafe2(current_successor.state, m_lastGScore + current_cost + 1)
        								&& next_start != -1 && end_t >= next_start - 1){
@@ -2189,13 +2228,15 @@ public:
              						temp_state.dir = 0x4;
              						temp_state.interval = s.interval;
              						temp_state.action = Action::Up;
-             						temp_state.flag_wait = true;
-             						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Up, next_start -1 - m_lastGScore));
+             						temp_state.flag_wait = false;
+             						if(depth != 0){
+             							flag_push = true;
+             							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Up, current_cost + 1));
+             						}
          						}
        						}
           				}
-
-          				if(successor_start_t != -1){
+          				if(successor_start_t != -1 && !flag_push){
           					current_successor.interval = successor_interval;
           					current_successor.dir = 0x00;
          					Cost next_start_s = -1;
@@ -2219,16 +2260,10 @@ public:
            						current_successor.action = Action::Up;
            						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost + 1));
            					} else {
-//
            						if(current_successor.dir == 0x08){
-           							current_successor.flag_wait = true;
-           							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
-              						if(next_start_s -1 -m_lastGScore != current_cost + 1){
-              							current_successor.dir = 0x07;
+              							current_successor.dir = 0x0f;
                   						current_successor.flag_wait = false;
                   						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost + 1));
-
-              						}
            						} else {
            							current_successor.dir = 0x07;
            							getJPSSuccessors(current_successor, Action::Up, current_cost + 1, depth + 1);
@@ -2248,6 +2283,7 @@ public:
           				Cost next_start = -1, next_end = -1;
           				findSafeInterval(current_successor.state, start_t + 1, successor_interval,
           				          						successor_start_t, successor_end_t, next_start, next_end);
+          				bool flag_push = false;
           			    if(next_start != -1){
        						if(isTemporalObstacleSafe2(current_successor.state, m_lastGScore + current_cost + 1)
        								&& next_start != -1 && end_t >= next_start - 1){
@@ -2257,13 +2293,16 @@ public:
              						temp_state.dir = 0x08;
              						temp_state.interval = s.interval;
              						temp_state.action = Action::Down;
-             						temp_state.flag_wait = true;
-            						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down, next_start - 1- m_lastGScore));
+             						temp_state.flag_wait = false;
+            						if(depth != 0){
+            							flag_push = true;
+            							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down, current_cost + 1));
+            						}
 
          						}
        						}
           				}
-          				if(successor_start_t != -1){
+          			    if(successor_start_t != -1 && !flag_push){
 
           					current_successor.interval = successor_interval;
          					Cost next_start_s = -1;
@@ -2272,8 +2311,6 @@ public:
              						next_start_s = si_s.at(s.interval + 1).start;
              						if(!IsEdgeCollisions(s.state, edgeCollision(next_start_s - 1, Action::Down)) && successor_end_t >= next_start_s - 1){
              							current_successor.dir = 0x04;
-//             							current_successor.flag_wait = true;
-//             							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
              						}
              					 }
              				}
@@ -2288,13 +2325,9 @@ public:
               					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost + 1));
               				} else{
               					if(current_successor.dir == 0x04){
-              						current_successor.flag_wait = true;
-              						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, next_start_s - 1 -m_lastGScore));
-              						if(next_start_s - 1 - m_lastGScore!=current_cost+!){
-              							current_successor.dir = 0x0b;
+              							current_successor.dir = 0x0f;
                   						current_successor.flag_wait = false;
                   						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost + 1));
-              						}
               					}else {
               						current_successor.dir = 0x0b;
               						getJPSSuccessors(current_successor, Action::Down, current_cost + 1, depth + 1);
