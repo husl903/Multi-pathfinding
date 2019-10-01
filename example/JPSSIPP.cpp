@@ -208,7 +208,7 @@ class Environment {
  public:
   int num_generation = 0;
   int num_expansion = 0;
-  int limit_jump = 0;
+  int limit_jump = 5;
   std::vector<std::vector<bool>> jump_point_map;
   bool is_limit = false;
 
@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_", std::ios::app);
-  std::fstream res_Good("Berlin_all_good_", std::ios::app);
+  std::fstream res_sta("Berlin_all_4", std::ios::app);
+  std::fstream res_Good("Berlin_all_good_4", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -562,7 +562,7 @@ int main(int argc, char* argv[]) {
 
 
     if(solution.cost != solution2.cost){
-    	std::cout << inputFile <<  "Agent " << i << ": Not equal" << std::endl;
+    	std::cout << inputFile <<  "Agent " << i << ": Not equal1" << std::endl;
     	break;
     }
 
@@ -573,6 +573,10 @@ int main(int argc, char* argv[]) {
 
     if(num_expansion1 > num_expansion2){
     	std::cout << inputFile << " Not Expansion-1 Agent " << i << " "<< num_expansion1 - num_expansion2 << "\n";
+    }
+
+    if(num_generation1 - num_generation3 > 20){
+    	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation3 << "\n";
     }
 
 /*    if(num_expansion1 > num_expansion3){

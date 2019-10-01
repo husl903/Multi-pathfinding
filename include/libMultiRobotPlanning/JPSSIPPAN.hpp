@@ -1420,7 +1420,7 @@ public:
       		  State state_re = s.state;
 
       		  m_env.num_expansion++;
-//    		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+    		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
       		  jps_successors.clear();
       		  Cost wait_time_l = 0, wait_time_r = 0, wait_time_u = 0, wait_time_d = 0;
 
@@ -1521,7 +1521,7 @@ public:
           		  Cost start_t = m_lastGScore + m_time;
           		  Cost end_t =
           				  safeIntervals(m_env.getLocation(s.state)).at(s.interval).end;
-      //    		  std::cout << m.state.state.x << " " << m.state.state.y <<  " Start " << start_t << " End: " << end_t << " Cost "<< m_time << "\n";
+//          		  std::cout << m.state.state.x << " " << m.state.state.y <<  " Start " << start_t << " End: " << end_t << " Cost "<< m_time << "\n";
           		  Cost wait_time = 0;
           		  if(m.action == Action::Left){
           			  wait_time = wait_time_l;
@@ -1559,7 +1559,7 @@ public:
           				  neighbors.emplace_back(Neighbor<JPSSIPPANState, JPSSIPPANAction, Cost>(
           						  JPSSIPPANState(m.state.state, i, m.state.dir), JPSSIPPANAction(m.action, m.cost),
       							  t - m_lastGScore));
-//          				  std::cout << "Successor " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore  << " Last " << m_lastGScore<< "-----\n";
+          				  std::cout << "Successor " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore  << " Last " << m_lastGScore<< "-----\n";
           			  }
           		  }
           	  }
@@ -1578,6 +1578,8 @@ public:
 
             JPSSIPPANState current_successor = s;
             current_successor.dir = 0x00;
+
+            std::cout << "Generation : " <<  s.state.x << " " << s.state.y << "\n";
             m_env.num_generation++;
 
        		State state_up(s.state.x, s.state.y + 1);
@@ -1585,7 +1587,6 @@ public:
        		bool is_up_edge_collision =  IsEdgeCollisions(state_up,edgeCollision(m_lastGScore + current_cost, Action::Down));
        		bool is_down_edge_collision =  IsEdgeCollisions(state_down,edgeCollision(m_lastGScore + current_cost, Action::Up));
 
-        //       std::cout << "Current state : " << action << "  " << s.state.x << "  " << s.state.y << "Cost " << current_cost << "  ]]]]]]]]]]]]]]]\n";
            	if(action == Action::Left || (action == Action::Up && depth != 0) || (action == Action::Down && depth != 0)){
           			current_successor.state.x = s.state.x - 1;
           			current_successor.state.y = s.state.y;
@@ -1593,19 +1594,33 @@ public:
           					!IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost,Action::Right))){
           				bool is_up = false, is_down = false;
           				unsigned int dir = 0x00;
+          				Cost up_start_t = -1, down_start_t = -1;
           				if(m_env.isJumpPoint(current_successor.state)){
+
           					if( ((m_env.isObstacle(State(s.state.x, s.state.y + 1))
-          							|| isTemporalObstacleSafe2(State(s.state.x, s.state.y + 1), m_lastGScore + current_cost + 1)
-									|| is_up_edge_collision) &&
-          							m_env.stateValid(State(s.state.x - 1, s.state.y + 1)))){
-          						is_up = true;
+									|| is_up_edge_collision
+          							|| isTemporalObstacleSafe(State(s.state.x, s.state.y + 1), m_lastGScore + current_cost + 1))
+          							&&	m_env.stateValid(State(s.state.x - 1, s.state.y + 1)))){
+          						if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y + 1), edgeCollision(m_lastGScore + current_cost, Action::Down))){
+          							is_up = true;
+          						}
+          					} else if (isTemporalObstacleSafe2(State(s.state.x - 1, s.state.y + 1), m_lastGScore + current_cost + 1, up_start_t)
+          							&& m_env.stateValid(State(s.state.x - 1, s.state.y + 1))){
+         								is_up = true;
           					}
+
           					if(((m_env.isObstacle(State(s.state.x, s.state.y - 1))
-          							|| isTemporalObstacleSafe2(State(s.state.x, s.state.y - 1), m_lastGScore + current_cost + 1)
-       							    || is_down_edge_collision)
+									|| is_down_edge_collision
+									|| isTemporalObstacleSafe(State(s.state.x, s.state.y - 1), m_lastGScore + current_cost + 1))
           							&& m_env.stateValid(State(s.state.x - 1, s.state.y - 1)))){
-          						is_down = true;
+          						if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y - 1), edgeCollision(m_lastGScore + current_cost, Action::Up))){
+              						is_down = true;
+          						}
+          					} else if(isTemporalObstacleSafe2(State(s.state.x - 1, s.state.y - 1), m_lastGScore + current_cost + 1, down_start_t)
+          							&& m_env.stateValid(State(s.state.x - 1, s.state.y - 1))){
+          							is_down = true;
           					}
+
           				}
 
       					if(flag_solution && isTemporalObstacleSafe2(s.state, m_lastGScore + current_cost + 1)){
@@ -1652,26 +1667,38 @@ public:
           			current_successor.state.x = s.state.x + 1;
           			current_successor.state.y = s.state.y;
        //   			m_env.num_generation++;
-  //        			std::cout<<"Current state :" << s.state.x << " " << s.state.y << "Right" << std::endl;
-  //        			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Right" << std::endl;
+//          			std::cout<<"Current state :" << s.state.x << " " << s.state.y << "Right" << std::endl;
+//          			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Right" << std::endl;
           			if(m_env.stateValid(current_successor.state)
           					&& !IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost,Action::Left))){
           				bool is_up = false, is_down = false;
           				unsigned int dir = 0x00;
           				if(m_env.isJumpPoint(current_successor.state)){
-         					if(((m_env.isObstacle(State(s.state.x, s.state.y + 1))
-         							|| isTemporalObstacleSafe2(State(s.state.x, s.state.y + 1), m_lastGScore + current_cost +1)
-									|| is_up_edge_collision)
-         							&& m_env.stateValid(State(s.state.x + 1, s.state.y + 1)))){
-          						is_up = true;
+          					Cost up_start_t = -1, down_start_t = -1;
+          					if( ((m_env.isObstacle(State(s.state.x, s.state.y + 1))
+									|| is_up_edge_collision
+          							|| isTemporalObstacleSafe(State(s.state.x, s.state.y + 1), m_lastGScore + current_cost + 1))
+          							&&	m_env.stateValid(State(s.state.x + 1, s.state.y + 1)))){
+          						if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y + 1), edgeCollision(m_lastGScore + current_cost, Action::Down))){
+          							is_up = true;
+          						}
+          					} else if (isTemporalObstacleSafe2(State(s.state.x + 1, s.state.y + 1), m_lastGScore + current_cost + 1, up_start_t)
+          							&& m_env.stateValid(State(s.state.x + 1, s.state.y + 1))){
+         								is_up = true;
           					}
-         					if(((m_env.isObstacle(State(s.state.x, s.state.y - 1))
-          							|| isTemporalObstacleSafe2(State(s.state.x, s.state.y - 1), m_lastGScore + current_cost + 1)
-									|| is_down_edge_collision)
+
+          					if(((m_env.isObstacle(State(s.state.x, s.state.y - 1))
+									|| is_down_edge_collision
+									|| isTemporalObstacleSafe(State(s.state.x, s.state.y - 1), m_lastGScore + current_cost + 1))
           							&& m_env.stateValid(State(s.state.x + 1, s.state.y - 1)))){
-          						is_down = true;
-       //   						std::cout << "Re-start Down\n";
+          						if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y - 1), edgeCollision(m_lastGScore + current_cost, Action::Up))){
+              						is_down = true;
+          						}
+          					} else if(isTemporalObstacleSafe2(State(s.state.x + 1, s.state.y - 1), m_lastGScore + current_cost + 1, down_start_t)
+          							&& m_env.stateValid(State(s.state.x + 1, s.state.y - 1))){
+         							is_down = true;
           					}
+
           				}
 
      					if(flag_solution && isTemporalObstacleSafe2(s.state, m_lastGScore + current_cost + 1)){
@@ -2477,6 +2504,7 @@ public:
           }
         }
         return true;
+
     }
 
     bool isTemporalObstacleSafe2(const Location& location, Cost time){ // whether the obstacle appears after the time
@@ -2494,6 +2522,24 @@ public:
 
         if(si.back().end == std::numeric_limits<Cost>::max()) { return false;}
         else { return true;}
+    }
+
+
+    bool isTemporalObstacleSafe2(const Location& location, Cost time, Cost &start_time){ // whether the obstacle appears after the time
+        const auto& si = safeIntervals(m_env.getLocation(location));
+//        std::cout << location.x << "  " << location.y << " Cost: " << time << " si.size " << si.size() << "\n";
+        start_time = -1;
+        if(si.size() == 0) return true;
+        Cost start_ = 0, end_ = si[0].start - 1;
+        for (size_t idx = 0; idx < si.size() - 1; ++idx) {
+        	if(start_ <= end_ && end_ >= time){ start_time = end_; return true;}
+        	start_ = si[idx].end + 1;
+        	end_ = si[idx + 1].start - 1;
+        }
+    	if(start_ <= end_ && end_ >= time) {start_time = end_ ; return true;}
+
+        if(si.back().end == std::numeric_limits<Cost>::max()) { return false;}
+        else { start_time = -1; return true;}
     }
 
   public:

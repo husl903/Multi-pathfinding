@@ -209,7 +209,7 @@ class SIPP {
         const SIPPState& s,
         std::vector<Neighbor<SIPPState, SIPPAction, Cost> >& neighbors) {
       std::vector<Neighbor<State, Action, Cost> > motions;
-  	  std::cout << "Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << "\n";
+// 	  std::cout << "Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << "\n";
 
       m_env.num_expansion++;
       m_env.getNeighbors(s.state, motions);
@@ -225,11 +225,12 @@ class SIPP {
         const auto& sis = safeIntervals(m_env.getLocation(m.state));
         for (size_t i = 0; i < sis.size(); ++i) {
           const interval& si = sis[i];
-          // std::cout << "  i " << i << ": " << si.start << "," << si.end <<
+//          std::cout << m.state.x << " " << m.state.y << "  i " << i << ": " << si.start << " , " << si.end << " " << start_t << " " << end_t<< " \n";
           // std::endl;
           if (si.start - m_time > end_t || si.end < start_t) {
             continue;
           }
+//          std::cout << " --------------\n";
           int t;
           Action a_temp;
           if(m.action == Action::Left) a_temp = Action::Right;
@@ -245,7 +246,7 @@ class SIPP {
             neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
                 SIPPState(m.state, i), SIPPAction(m.action, m.cost),
                 t - m_lastGScore));
-            std::cout << "Successor : " << m.state.x << " " << m.state.y << "\n";
+//            std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost << "\n";
           }
         }
       }
