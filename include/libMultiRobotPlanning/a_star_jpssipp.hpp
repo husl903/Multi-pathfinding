@@ -123,9 +123,20 @@ class JPSAStar {
             Cost tentative_gScore = current.gScore + neighbor.cost;
             auto iter = stateToHeap.find(neighbor.state);
             if (iter == stateToHeap.end()) {  // Discover a new node
+
+
 //            	std::cout << neighbor.state.state.x << " " << neighbor.state.state.y << " -------\n";
               Cost fScore =
                   tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
+
+//              if(neighbor.state.state.x == 122 && neighbor.state.state.y == 182){
+//            	  std::cout << "flag ----+++++++++++ " << neighbor.state.dir << " g " << tentative_gScore << " f " << fScore << " \n";
+//              }
+
+//              if(neighbor.state.state.x == 123 && neighbor.state.state.y == 181){
+//              	std::cout << "flag ----" << neighbor.state.dir << " g " << tentative_gScore << " f " << fScore << " \n";
+//              }
+
               auto handle =
                   openSet.push(Node(neighbor.state, fScore, tentative_gScore));
               (*handle).handle = handle;
@@ -148,21 +159,36 @@ class JPSAStar {
     	} else if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
+
+
           if (iter == stateToHeap.end()) {  // Discover a new node
+
+
+
             Cost fScore =
                 tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
+
+//            if(neighbor.state.state.x == 122 && neighbor.state.state.y == 182){
+//            	std::cout <<
+//          	  std::cout << "----+++++++++++ " << neighbor.state.dir << " g " << tentative_gScore << " f " << fScore << " \n";
+//            }
+
+//            if(neighbor.state.state.x == 123 && neighbor.state.state.y == 181){
+//            	std::cout << "----" << neighbor.state.dir << " g " << tentative_gScore << " f " << fScore << " \n";
+//            }
+
             auto handle =
                 openSet.push(Node(neighbor.state, fScore, tentative_gScore));
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
           } else {
-            auto handle = iter->second;
+//            auto handle = iter->second;
 
-            if((tentative_gScore >= (*handle).gScore)){
-            	(*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
-            	continue;
-            }
+//            if((tentative_gScore == (*handle).gScore)){
+//            	(*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
+//            	continue;
+//            }
 
             // update f and gScore
 //            Cost delta = (*handle).gScore - tentative_gScore;
@@ -202,8 +228,10 @@ class JPSAStar {
       // Our heap is a maximum heap, so we invert the comperator function here
       if (fScore != other.fScore) {
         return fScore > other.fScore;
-      } else {
+      } else if(gScore != other.fScore){
         return gScore < other.gScore;
+      } else {
+    	  return state.dir < other.state.dir;
       }
     }
 

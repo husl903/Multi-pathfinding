@@ -155,6 +155,8 @@ class SIPP {
   struct SIPPState {
     SIPPState(const State& state, size_t interval)
         : state(state), interval(interval) {}
+    SIPPState(const State& state, size_t interval, unsigned int dir)
+        : state(state), interval(interval), dir(dir) {}
 
     bool operator==(const SIPPState& other) const {
       return std::tie(state, interval) == std::tie(other.state, other.interval);
@@ -209,7 +211,7 @@ class SIPP {
         const SIPPState& s,
         std::vector<Neighbor<SIPPState, SIPPAction, Cost> >& neighbors) {
       std::vector<Neighbor<State, Action, Cost> > motions;
-// 	  std::cout << "Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << "\n";
+ 	  std::cout << "Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
 
       m_env.num_expansion++;
       m_env.getNeighbors(s.state, motions);
@@ -232,11 +234,12 @@ class SIPP {
           }
 //          std::cout << " --------------\n";
           int t;
+          unsigned int dir_1 = 0x00;
           Action a_temp;
-          if(m.action == Action::Left) a_temp = Action::Right;
-          else if(m.action == Action::Right) a_temp = Action::Left;
-          else if(m.action == Action::Up) a_temp = Action::Down;
-          else if(m.action == Action::Down) a_temp = Action::Up;
+          if(m.action == Action::Left) {a_temp = Action::Right;dir_1 = 0x01;}
+          else if(m.action == Action::Right) {a_temp = Action::Left; dir_1 = 0x02;}
+          else if(m.action == Action::Up) {a_temp = Action::Down;dir_1 = 0x04;}
+          else if(m.action == Action::Down){ a_temp = Action::Up; dir_1 = 0x08;}
 
           if (m_env.isCommandValid(s.state, m.state, m.action, m_lastGScore,
                                    end_t, si.start, si.end, t)
@@ -244,9 +247,9 @@ class SIPP {
             // std::cout << "  gN: " << m.state << "," << i << "," << t << ","
             // << m_lastGScore << std::endl;
             neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
-                SIPPState(m.state, i), SIPPAction(m.action, m.cost),
+                SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
                 t - m_lastGScore));
-//            std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost << "\n";
+               std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " \n";
           }
         }
       }

@@ -164,6 +164,9 @@ public:
     JPSSIPPANState(const State& state, size_t interval, unsigned int dir)
         : state(state), interval(interval), dir(dir), g_cost(0), flag_wait(false){}
 
+    JPSSIPPANState(const State& state, size_t interval, unsigned int dir, Action action)
+        : state(state), interval(interval), dir(dir), g_cost(0), flag_wait(false), action(action){}
+
     JPSSIPPANState(const State& state, size_t interval, unsigned int dir,Cost g_cost, bool flag_wait)
         : state(state), interval(interval), dir(dir), g_cost(g_cost), flag_wait(flag_wait){}
 
@@ -1420,12 +1423,17 @@ public:
       		  State state_re = s.state;
 
       		  m_env.num_expansion++;
-    		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+//      		  if(s.state.x == 123 && s.state.y == 182)
+//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y  << " Action " << s.action << " Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+
+//      		  if(s.state.x == 122 && s.state.y == 182)
+//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y  << " Action " << s.action << " Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+
       		  jps_successors.clear();
       		  Cost wait_time_l = 0, wait_time_r = 0, wait_time_u = 0, wait_time_d = 0;
 
          	      if(s_temp.dir & 0x1){
-       //  	    	  std::cout << "Left : \n";
+
          	    	  s_temp.action = Action::Left;
          	    	  state_re.x = s.state.x -1;
          	    	  state_re.y = s.state.y;
@@ -1483,6 +1491,9 @@ public:
          	     				  continue;
          	     			  }
          	     			  if(si.start - 1 <= m_lastGScore){
+         	     				if(s.state.x == 122 && s.state.y == 182){
+         	     					std::cout << "+++++\n";
+         	     				}
          	     				  getJPSSuccessors(s_temp, Action::Up, 0, 0);
          	     			  }else{
          	     				  getJPSSuccessors(s_temp, Action::Up, si.start - 1 -m_lastGScore, 0);
@@ -1506,6 +1517,7 @@ public:
          	     			  }
       //     	     			std::cout << "Time----- " << si.start - 1 << " end_t " << end_t << " " << si.end - 1 << " Start_t " << start_t << " "<<std::endl;
          	     			  if(si.start -  1 <= m_lastGScore){
+
          	     				  getJPSSuccessors(s_temp, Action::Down, 0, 0);
          	     			  }else{
          	     				  getJPSSuccessors(s_temp, Action::Down, si.start - 1 -m_lastGScore, 0);
@@ -1557,9 +1569,18 @@ public:
                   		  }
 
           				  neighbors.emplace_back(Neighbor<JPSSIPPANState, JPSSIPPANAction, Cost>(
-          						  JPSSIPPANState(m.state.state, i, m.state.dir), JPSSIPPANAction(m.action, m.cost),
+          						  JPSSIPPANState(m.state.state, i, m.state.dir, m.action), JPSSIPPANAction(m.action, m.cost),
       							  t - m_lastGScore));
-          				  std::cout << "Successor " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore  << " Last " << m_lastGScore<< "-----\n";
+
+//            			 if(s.state.x == 46 && s.state.y == 149)
+//            				  std::cout << "Successor " <<  m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
+
+
+//          				if(s.state.x == 123 && s.state.y == 182)
+//          				  std::cout << "Successor " <<  m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
+//          				if(s.state.x == 122 && s.state.y == 182)
+//          				  std::cout << "Successor " << m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
+
           			  }
           		  }
           	  }
@@ -1579,7 +1600,7 @@ public:
             JPSSIPPANState current_successor = s;
             current_successor.dir = 0x00;
 
-            std::cout << "Generation : " <<  s.state.x << " " << s.state.y << "\n";
+//            std::cout << "Generation : " <<  s.state.x << " " << s.state.y << "\n";
             m_env.num_generation++;
 
        		State state_up(s.state.x, s.state.y + 1);
@@ -1606,6 +1627,7 @@ public:
           						}
           					} else if (isTemporalObstacleSafe2(State(s.state.x - 1, s.state.y + 1), m_lastGScore + current_cost + 1, up_start_t)
           							&& m_env.stateValid(State(s.state.x - 1, s.state.y + 1))){
+          							if(up_start_t != -1)
          								is_up = true;
           					}
 
@@ -1618,7 +1640,7 @@ public:
           						}
           					} else if(isTemporalObstacleSafe2(State(s.state.x - 1, s.state.y - 1), m_lastGScore + current_cost + 1, down_start_t)
           							&& m_env.stateValid(State(s.state.x - 1, s.state.y - 1))){
-          							is_down = true;
+          							if(down_start_t != -1) is_down = true;
           					}
 
           				}
@@ -1668,7 +1690,8 @@ public:
           			current_successor.state.y = s.state.y;
        //   			m_env.num_generation++;
 //          			std::cout<<"Current state :" << s.state.x << " " << s.state.y << "Right" << std::endl;
-//          			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Right" << std::endl;
+          			if(current_successor.state.x == 123 && current_successor.state.x == 182)
+          			std::cout<<"Current successor :" << current_successor.state.x << " " << current_successor.state.y << "Right" << std::endl;
           			if(m_env.stateValid(current_successor.state)
           					&& !IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost,Action::Left))){
           				bool is_up = false, is_down = false;
@@ -1684,7 +1707,7 @@ public:
           						}
           					} else if (isTemporalObstacleSafe2(State(s.state.x + 1, s.state.y + 1), m_lastGScore + current_cost + 1, up_start_t)
           							&& m_env.stateValid(State(s.state.x + 1, s.state.y + 1))){
-         								is_up = true;
+         								if(up_start_t != -1) is_up = true;
           					}
 
           					if(((m_env.isObstacle(State(s.state.x, s.state.y - 1))
@@ -1696,7 +1719,7 @@ public:
           						}
           					} else if(isTemporalObstacleSafe2(State(s.state.x + 1, s.state.y - 1), m_lastGScore + current_cost + 1, down_start_t)
           							&& m_env.stateValid(State(s.state.x + 1, s.state.y - 1))){
-         							is_down = true;
+         							if(down_start_t != -1) is_down = true;
           					}
 
           				}

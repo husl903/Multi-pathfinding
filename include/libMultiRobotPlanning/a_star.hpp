@@ -175,8 +175,13 @@ class AStar {
       // Our heap is a maximum heap, so we invert the comperator function here
       if (fScore != other.fScore) {
         return fScore > other.fScore;
-      } else {
+      } /*else {
+    	return gScore < other.gScore;
+      }*/
+      else if(gScore != other.gScore){
         return gScore < other.gScore;
+      } else {
+    	  return state.dir < other.state.dir;
       }
     }
 
