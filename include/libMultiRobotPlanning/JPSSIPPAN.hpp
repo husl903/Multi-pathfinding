@@ -1491,9 +1491,9 @@ public:
          	     				  continue;
          	     			  }
          	     			  if(si.start - 1 <= m_lastGScore){
-         	     				if(s.state.x == 122 && s.state.y == 182){
-         	     					std::cout << "+++++\n";
-         	     				}
+ //        	     				if(s.state.x == 122 && s.state.y == 182){
+ //        	     					std::cout << "+++++\n";
+//         	     				}
          	     				  getJPSSuccessors(s_temp, Action::Up, 0, 0);
          	     			  }else{
          	     				  getJPSSuccessors(s_temp, Action::Up, si.start - 1 -m_lastGScore, 0);
