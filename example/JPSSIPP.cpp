@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_11", std::ios::app);
-  std::fstream res_Good("Berlin_all_good_11", std::ios::app);
+  std::fstream res_sta("Berlin_all_14", std::ios::app);
+  std::fstream res_Good("Berlin_all_good_14", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -605,7 +605,7 @@ int main(int argc, char* argv[]) {
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
         res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
-//    if(i == 49) break;
+//   if(i == 49) break;
 //    break;
   }
 
