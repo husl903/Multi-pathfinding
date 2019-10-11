@@ -1424,7 +1424,7 @@ public:
 
       		  m_env.num_expansion++;
 //      		  if(s.state.x == 123 && s.state.y == 182)
-      		  std::cout << "Current State " << s.state.x << "  " << s.state.y  << " Action " << s.action << " Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y  << " Action " << s.action << " Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
 
 //      		  if(s.state.x == 122 && s.state.y == 182)
 //      		  std::cout << "Current State " << s.state.x << "  " << s.state.y  << " Action " << s.action << " Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
@@ -1579,7 +1579,7 @@ public:
 //          				if(s.state.x == 123 && s.state.y == 182)
 //          				  std::cout << "Successor " <<  m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
 //          				if(s.state.x == 122 && s.state.y == 182)
-          				  std::cout << "Successor " << m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
+//          				  std::cout << "Successor " << m.state.action << " " << m.state.state.x << " " << m.state.state.y <<" Cost " << m.cost + m_lastGScore << " dir " << m.state.dir  << " Last " << m_lastGScore<< "-----\n";
 
           			  }
           		  }

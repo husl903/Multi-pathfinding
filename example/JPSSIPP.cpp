@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_14", std::ios::app);
-  std::fstream res_Good("Berlin_all_good_14", std::ios::app);
+  std::fstream res_sta("Berlin_all_17", std::ios::app);
+  std::fstream res_Good("Berlin_all_good_17", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -365,7 +365,7 @@ int main(int argc, char* argv[]) {
     for (const auto& collisionIntervals : allCollisionIntervals) {
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
       State current_state = collisionIntervals.first;
-    /*  if(env.stateValid(State(current_state.x + 1, current_state.y))){
+/*      if(env.stateValid(State(current_state.x + 1, current_state.y))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
       }
 
@@ -379,8 +379,8 @@ int main(int argc, char* argv[]) {
 
       if(env.stateValid(State(current_state.x, current_state.y + 1))){
     	  env.setJumpPoint(State(current_state.x, current_state.y + 1));
-      }
-*/
+      }*/
+
       if(env.stateValid(State(current_state.x + 1, current_state.y - 1))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y - 1));
       }
@@ -463,7 +463,7 @@ int main(int argc, char* argv[]) {
     int num_expansion3 = env.num_expansion;
     int num_generation3 = env. num_generation;
     double time3 = t.elapsedSeconds();
-    if (success3) {
+/*    if (success3) {
       std::cout << "JPSAN Planning successful! Total cost: " << solution3.cost << " Expansion:"
     		    << env.num_expansion << " Generation: " << env.num_generation
                 << std::endl;
@@ -486,7 +486,7 @@ int main(int argc, char* argv[]) {
       std::cout << "Planning NOT successful!" << std::endl;
       out << "    []" << std::endl;
     }
-
+*/
 
     env.Reset();
     env.setNoJPS();
