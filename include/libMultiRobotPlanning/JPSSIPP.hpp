@@ -511,7 +511,7 @@ public:
                 		           				is_up_r = IsEdgeCollisions(State(s.state.x - 1, s.state.y + 1), edgeCollision(up_start_t, Action::Right));
                 							}
                  							if(up_start_t != -1 && up_start_t <= successor_end_t){
-                 								//if it is not the case like the exmaple A.....X, and up_start_t is in the current safe interval is
+                 								//if it is not the case like the exmaple A.....X, and up_start_t is in the current safe interval.
                  								//                                       B.....Y
                  									while(1){
                  										if(((is_up_valid && temp_start_t != -1 && !is_up_p && !is_up_r)
