@@ -496,7 +496,7 @@ public:
        					   left_1 - m_lastGScore));
 
        		   }
-
+       		   std::cout << " test---\n";
 
 /*     	    	  if(left_start_t != -1  && left_start_t <= end_t
      	    			  && !IsEdgeCollisions(State(s.state.x - 1, s.state.y),edgeCollision(left_start_t, Action::Right))){
