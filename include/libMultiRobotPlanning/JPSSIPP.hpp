@@ -284,15 +284,16 @@ public:
                 }
             }else {
 
+              const auto& sis_s = safeIntervals(m_env.getLocation(s.state));
           	  Cost start_t = m_lastGScore;
-      		  Cost end_t =
-      				  safeIntervals(m_env.getLocation(s.state)).at(s.interval).end;
+      		  Cost end_t = sis_s.at(s.interval).end;
 
       		  State state_re = s.state;
-
+      		  bool is_up_edge_collision = true;
+      		  bool is_down_edge_collision = true;
       		  std::vector<startTime> re_start;
 
-//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
       		  jps_successors.clear();
       		  Cost wait_time_l = 0, wait_time_r = 0, wait_time_u = 0, wait_time_d = 0;
          	  if(s.dir & 0x1){
@@ -317,36 +318,283 @@ public:
            	   	  getJPSSuccessors(s_temp, 0x08, 0, 0);
          	   }
 
+
          	   //Generate the waiting successor
          	   Cost up_start_t = -1, down_start_t = -1, left_start_t = -1, right_start_t = -1;
          	   re_start.clear();
-         	   if(isTemporalObstacleAfterT(State(s.state.x, s.state.y + 1), m_lastGScore + 1, up_start_t)){
-         		   if(up_start_t != -1  && up_start_t <= end_t
+         	   if(m_env.stateValid(State(s.state.x, s.state.y + 1))
+         			   && isTemporalObstacleAfterT(State(s.state.x, s.state.y + 1), m_lastGScore + 1, up_start_t)){
+         		   JPSSIPPState temp_state = s;
+         		   temp_state.flag_wait = false;
+         		   temp_state.state.x = s.state.x;
+         		   temp_state.state.y = s.state.y + 1;
+
+        		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x, s.state.y + 1)));
+         		   Cost up_1 = -1;
+         		   for (size_t i = 0; i < sis.size(); ++i) {
+         			   const interval& si = sis[i];
+         			   if (si.start - 1 > end_t) {
+         				   break;
+         			   }
+         			   if( si.end < start_t + 1){
+         				   continue;
+         			   }
+         			  up_1 = std::max<int>(start_t + 1, si.start);
+           			  if(up_1 == m_lastGScore + 1) continue;
+
+         			   if(!IsEdgeCollisions(State(s.state.x, s.state.y + 1), edgeCollision(up_1 - 1, Action::Down))){
+             			   temp_state.interval = i;
+                		   temp_state.dir = 0x00;
+             			   for(size_t ii = 0; ii < sis_s.size(); ++ii){
+             				   if(sis_s[ii].start == up_1 + 1
+             						   && !IsEdgeCollisions(State(s.state.x, s.state.y), edgeCollision(up_1, Action::Up))){
+             					   temp_state.dir |= 0x0b;
+             					   break;
+             				   }
+             			   }
+         				   temp_state.dir |= 0x07;
+            			   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Up,
+         						   up_1 - m_lastGScore));
+         			   }
+         		   }
+
+/*        		   if(up_start_t != -1  && up_start_t <= end_t
      	    				  && !IsEdgeCollisions(State(s.state.x, s.state.y + 1),edgeCollision(up_start_t,Action::Down))){
      	    			  re_start.push_back(startTime(up_start_t, Action::Up, 0x04, true));
          		   }
-         	   }
+*/         	   }
 
-     	      if(isTemporalObstacleAfterT(State(s.state.x, s.state.y - 1), m_lastGScore + 1, down_start_t)){
-     	    	  if(down_start_t != -1  && down_start_t <= end_t
+     	      if(m_env.stateValid(State(s.state.x, s.state.y - 1)) &&
+     	    		  isTemporalObstacleAfterT(State(s.state.x, s.state.y - 1), m_lastGScore + 1, down_start_t)){
+
+        		   JPSSIPPState temp_state = s;
+        		   temp_state.dir = 0x00;
+        		   temp_state.flag_wait = false;
+        		   temp_state.state.x = s.state.x;
+        		   temp_state.state.y = s.state.y - 1;
+
+        		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x, s.state.y - 1)));
+        		   Cost down_1 = -1;
+        		   for (size_t i = 0; i < sis.size(); ++i) {
+        			   const interval& si = sis[i];
+        			   if (si.start - 1 > end_t) {
+        				   break;
+        			   }
+        			   if( si.end < start_t + 1){
+        				   continue;
+        			   }
+        			   down_1 = std::max<int>(start_t + 1, si.start);
+        			   if(down_1 == m_lastGScore + 1) continue;
+
+        			   if(!IsEdgeCollisions(State(s.state.x, s.state.y - 1), edgeCollision(down_1 - 1, Action::Up))){
+            			   temp_state.interval = i;
+            			   temp_state.dir = 0x00;
+             			   for(size_t ii = 0; ii < sis_s.size(); ++ii){
+             				   if(sis_s[ii].start == down_1 + 1 &&
+             						   !IsEdgeCollisions(State(s.state.x, s.state.y), edgeCollision(down_1, Action::Down))){
+             					   temp_state.dir |= 0x07;
+             					   break;
+             				   }
+             			   }
+        				   temp_state.dir |= 0x0b;
+        				   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
+        						   down_1 - m_lastGScore));
+        			   }
+        		   }
+
+/*     	    	  if(down_start_t != -1  && down_start_t <= end_t
      	    			 && !IsEdgeCollisions(State(s.state.x, s.state.y - 1),edgeCollision(down_start_t,Action::Up))){
      	    		  re_start.push_back(startTime(down_start_t, Action::Down, 0x08, true));
      	    	  }
-     	      }
+*/     	      }
 
-     	      if(isTemporalObstacleAfterT(State(s.state.x - 1, s.state.y), m_lastGScore + 1, left_start_t)){
-     	    	  if(left_start_t != -1  && left_start_t <= end_t
+     	      if(m_env.stateValid(State(s.state.x - 1, s.state.y)) &&
+     	    		  isTemporalObstacleAfterT(State(s.state.x - 1, s.state.y), m_lastGScore + 1, left_start_t)){
+       		   JPSSIPPState temp_state = s;
+       		   temp_state.dir = 0x00;
+       		   temp_state.flag_wait = false;
+       		   temp_state.state.x = s.state.x - 1;
+       		   temp_state.state.y = s.state.y;
+
+       		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x - 1, s.state.y)));
+       		   Cost left_1 = -1;
+       		   for (size_t i = 0; i < sis.size(); ++i) {
+       			   const interval& si = sis[i];
+       			   if (si.start - 1 > end_t) {
+       				   break;
+       			   }
+       			   if( si.end < start_t + 1){
+       				   continue;
+       			   }
+       			   left_1 = std::max<int>(start_t + 1, si.start);
+       			   if(left_1 == m_lastGScore + 1) continue;
+
+       			   temp_state.interval = i;
+       			   temp_state.dir = 0x00;
+       			   if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y), edgeCollision(left_1 - 1, Action::Right))){
+       				   temp_state.dir |= 0x01;
+       			   }else break;
+       			   for(size_t ii = 0; ii < sis_s.size(); ++ii){
+        			   if(sis_s[ii].start == left_1 + 1 &&
+        					   !IsEdgeCollisions(State(s.state.x, s.state.y), edgeCollision(left_1 -1, Action::Left))){
+        				   temp_state.dir |= 0x02;
+        				   break;
+        			   }
+        		   }
+
+       			    Cost temp_t = left_1 + 1;
+					if(m_env.stateValid(State(s.state.x - 1, s.state.y + 1))){ //Whether the successor need to restart the up direction
+						if(m_env.isObstacle(State(s.state.x, s.state.y + 1))
+								|| IsEdgeCollisions(State(s.state.x, s.state.y + 1), edgeCollision(left_1 -1, Action::Down))
+								|| isTemporalObstacleAtT(State(s.state.x, s.state.y + 1), left_1)
+//								|| isSafeAtT(State(s.state.x - 1, s.state.y + 1), temp_t)
+								){
+							if(!IsEdgeCollisions(State(s.state.x -1, s.state.y + 1), edgeCollision(left_1 - 1, Action::Down))){
+								temp_state.dir |= 0x04;
+							}
+						}
+						if(isSafeAtT(State(s.state.x - 1, s.state.y + 1), temp_t)){
+							bool is_up_p = IsEdgeCollisions(State(s.state.x, s.state.y + 1), edgeCollision(left_1 - 1, Action::Down));
+							bool is_up_r = IsEdgeCollisions(State(s.state.x - 1, s.state.y + 1), edgeCollision(left_1, Action::Right));
+							if(!(m_env.stateValid(State(s.state.x, s.state.y + 1)) && !is_up_p && !is_up_r
+									&& isSafeAtT(State(s.state.x, s.state.y + 1), left_1)
+									&& isTemporalObstacleAtT(State(s.state.x - 1, s.state.y + 1), left_1)
+									&& isTemporalObstacleAtT(State(s.state.x, s.state.y + 1), left_1 - 1))){
+								if(!IsEdgeCollisions(State(s.state.x -1, s.state.y + 1), edgeCollision(left_1 - 1, Action::Down))){
+									temp_state.dir |= 0x04;
+								}
+							}
+						}
+					}
+
+					if(m_env.stateValid(State(s.state.x - 1, s.state.y - 1))){
+						if(m_env.isObstacle(State(s.state.x, s.state.y - 1))
+								|| IsEdgeCollisions(State(s.state.x, s.state.y - 1), edgeCollision(left_1 -1, Action::Up))
+								|| isTemporalObstacleAtT(State(s.state.x, s.state.y - 1), left_1)
+//								|| isSafeAtT(State(s.state.x - 1, s.state.y - 1), temp_t)
+								){
+							if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y - 1), edgeCollision(left_1 - 1, Action::Up))){
+								temp_state.dir |= 0x08;
+							}
+						}
+
+						if(isSafeAtT(State(s.state.x - 1, s.state.y - 1), temp_t)){
+							bool is_up_p = IsEdgeCollisions(State(s.state.x, s.state.y - 1), edgeCollision(left_1 - 1, Action::Up));
+							bool is_up_r = IsEdgeCollisions(State(s.state.x - 1, s.state.y - 1), edgeCollision(left_1, Action::Right));
+							if(!(m_env.stateValid(State(s.state.x, s.state.y - 1)) && !is_up_p && !is_up_r && left_1 - 1 <= end_t && left_1 - 1 >= start_t
+									&& isSafeAtT(State(s.state.x, s.state.y - 1), left_1)
+									&& isTemporalObstacleAtT(State(s.state.x - 1, s.state.y - 1), left_1)
+									&& isTemporalObstacleAtT(State(s.state.x, s.state.y - 1), left_1 - 1))){
+								if(!IsEdgeCollisions(State(s.state.x -1, s.state.y - 1), edgeCollision(left_1 - 1, Action::Up))){
+									temp_state.dir |= 0x08;
+								}
+							}
+						}
+					}
+
+       				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
+       					   left_1 - m_lastGScore));
+
+       		   }
+
+
+/*     	    	  if(left_start_t != -1  && left_start_t <= end_t
      	    			  && !IsEdgeCollisions(State(s.state.x - 1, s.state.y),edgeCollision(left_start_t, Action::Right))){
      	    			  re_start.push_back(startTime(left_start_t, Action::Left, 0x01, true));
      	    	  }
-     	      }
+*/     	      }
 
      	      if(isTemporalObstacleAfterT(State(s.state.x + 1, s.state.y), m_lastGScore + 1, right_start_t)){
-     	    	  if(right_start_t != -1  && right_start_t <= end_t
+
+          		   JPSSIPPState temp_state = s;
+          		   temp_state.dir = 0x00;
+          		   temp_state.flag_wait = false;
+          		   temp_state.state.x = s.state.x + 1;
+          		   temp_state.state.y = s.state.y;
+
+          		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x + 1, s.state.y)));
+          		   Cost right_1 = -1;
+          		   for (size_t i = 0; i < sis.size(); ++i) {
+          			   const interval& si = sis[i];
+          			   if (si.start - 1 > end_t) {
+          				   break;
+          			   }
+          			   if( si.end < start_t + 1){
+          				   continue;
+          			   }
+          			   right_1 = std::max<int>(start_t + 1, si.start);
+          			   if(right_1 == m_lastGScore + 1) continue;
+
+          			   temp_state.interval = i;
+          			   temp_state.dir = 0x00;
+          			   if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y), edgeCollision(right_1 - 1, Action::Left))){
+          				   temp_state.dir |= 0x02;
+          			   }else break;
+   //       			       std::cout << " State " << s.state.x << " " << s.state.y << " Time : " << start_t << " " << si.start - 1  << " Curr " << m_lastGScore << " \n";
+          			   for(size_t ii = 0; ii < sis_s.size(); ++ii){
+          				   if(sis_s[ii].start == right_1 + 1 &&
+           					   !IsEdgeCollisions(State(s.state.x, s.state.y), edgeCollision(right_1 -1, Action::Right))){
+          					   temp_state.dir |= 0x01;
+          				   }
+          			   }
+          			   Cost temp_t = right_1 + 1;
+//          			   std::cout << "State : " << s.state.x << " " << s.state.y+1 << " " << right_1 << "\n";
+          			   if(m_env.stateValid(State(s.state.x + 1, s.state.y + 1))){ //Whether the successor need to restart the up direction
+          				   if(m_env.isObstacle(State(s.state.x, s.state.y + 1))
+   								|| IsEdgeCollisions(State(s.state.x, s.state.y + 1), edgeCollision(right_1 - 1, Action::Down))
+   								|| isTemporalObstacleAtT(State(s.state.x, s.state.y + 1), right_1)
+//								|| isSafeAtT(State(s.state.x + 1, s.state.y + 1), temp_t)
+								){
+          					   if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y + 1), edgeCollision(right_1 - 1, Action::Down))){
+          						   temp_state.dir |= 0x04;
+          					   	}
+          				   }
+          				   if(isSafeAtT(State(s.state.x + 1, s.state.y + 1), temp_t)){
+          					   bool is_up_p = IsEdgeCollisions(State(s.state.x, s.state.y + 1), edgeCollision(right_1 - 1, Action::Down));
+          					   bool is_up_r = IsEdgeCollisions(State(s.state.x + 1, s.state.y + 1), edgeCollision(right_1, Action::Left));
+          					   if(!(m_env.stateValid(State(s.state.x, s.state.y + 1)) && !is_up_p && !is_up_r
+          							   && isSafeAtT(State(s.state.x, s.state.y + 1), right_1)
+   										&& isTemporalObstacleAtT(State(s.state.x + 1, s.state.y + 1), right_1)
+										&& isTemporalObstacleAtT(State(s.state.x, s.state.y + 1), right_1 - 1))){
+          						   if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y + 1), edgeCollision(right_1 - 1, Action::Down))){
+          							   temp_state.dir |= 0x04;
+          						   }
+          					   }
+          				   }
+          			   }
+          			   if(m_env.stateValid(State(s.state.x + 1, s.state.y - 1))){
+          				   if(m_env.isObstacle(State(s.state.x, s.state.y - 1))
+          						   || IsEdgeCollisions(State(s.state.x, s.state.y - 1), edgeCollision(right_1 -1, Action::Up))
+								   || isTemporalObstacleAtT(State(s.state.x, s.state.y - 1), right_1)
+								   //|| isSafeAtT(State(s.state.x + 1, s.state.y - 1), temp_t)
+								   //|| isTemporalObstacleAtT(State(s.state.x + 1, s.state.y - 1), right_1)
+								   ){
+          					   if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y - 1), edgeCollision(right_1 - 1, Action::Up))){
+          						   temp_state.dir |= 0x08;
+          					   }
+          				   }
+
+          				   if(isSafeAtT(State(s.state.x + 1, s.state.y - 1), temp_t)){
+          					   bool is_up_p = IsEdgeCollisions(State(s.state.x, s.state.y - 1), edgeCollision(right_1 - 1, Action::Up));
+          					   bool is_up_r = IsEdgeCollisions(State(s.state.x + 1, s.state.y - 1), edgeCollision(right_1, Action::Left));
+          					   if(!(m_env.stateValid(State(s.state.x, s.state.y - 1)) && !is_up_p && !is_up_r
+          							   && isSafeAtT(State(s.state.x, s.state.y - 1), right_1)
+   										&& isTemporalObstacleAtT(State(s.state.x + 1, s.state.y - 1), right_1)
+										&& isTemporalObstacleAtT(State(s.state.x, s.state.y - 1), right_1 - 1))){
+          						   if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y - 1), edgeCollision(right_1 - 1, Action::Up))){
+          							   temp_state.dir |= 0x08;
+          						   }
+          					   }
+          				   }
+          			   }
+          			   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
+          					   right_1 - m_lastGScore));
+          		   }
+/*    	    	  if(right_start_t != -1  && right_start_t <= end_t
      	    			  && !IsEdgeCollisions(State(s.state.x + 1, s.state.y),edgeCollision(right_start_t,Action::Left))){
      	    			  re_start.push_back(startTime(right_start_t, Action::Left, 0x02, true));
      	    	  }
-     	      }
+*/     	      }
 
      	      std::sort(re_start.begin(), re_start.end());
      	      JPSSIPPState temp_state = s;
@@ -376,7 +624,7 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-// 				  	  std::cout << "Successor: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
   				 m_env.num_generation++;
           	  }
           }
@@ -390,6 +638,7 @@ public:
              	bool flag_solution = false;
              	if (m_env.isSolution(s.state)) {
              		if(depth !=0 ){
+             			s.flag_wait = false;
              			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Left, current_cost));
              			return ;
              		}
@@ -464,7 +713,7 @@ public:
             				          						successor_start_t, successor_end_t, successor_next_start, successor_next_end);
 
             				if(successor_next_start != -1 && depth != 0){ // the current s can be the waiting jump point on the left direction.
-            					if( end_t >= successor_next_start - 1){
+            					if( end_t >= successor_next_start - 1 && successor_next_start - 1 != m_lastGScore + current_cost){
             							if(!IsEdgeCollisions(current_successor.state,edgeCollision(successor_next_start - 1,Action::Right))){
 //            								JPSSIPPState temp_state = s;
 //            								temp_state.dir = 0x1;
@@ -511,7 +760,7 @@ public:
                 		           				is_up_r = IsEdgeCollisions(State(s.state.x - 1, s.state.y + 1), edgeCollision(up_start_t, Action::Right));
                 							}
                  							if(up_start_t != -1 && up_start_t <= successor_end_t){
-                 								//if it is not the case like the exmaple A.....X, and up_start_t is in the current safe interval is
+                 								//if it is not the case like the exmaple A.....X, and up_start_t is in the current safe interval.
                  								//                                       B.....Y
                  									while(1){
                  										if(((is_up_valid && temp_start_t != -1 && !is_up_p && !is_up_r)
@@ -532,7 +781,7 @@ public:
                                     								break;
                                     							}
                  											} else break;
-                 										}else {
+                 										} else {
                  											if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y + 1), edgeCollision(up_start_t, Action::Down)))
                  											re_start.push_back(startTime(up_start_t, Action::Up, 0x04, true));
                  											break;
@@ -541,7 +790,7 @@ public:
                             				}
                 						}
                 					}
-                					if(m_env.stateValid(State(s.state.x - 1, s.state.y - 1))){ //Whether the successor need to restart the up direction
+                					if(m_env.stateValid(State(s.state.x - 1, s.state.y - 1))){ //Whether the successor need to restart the down direction
                 						if(m_env.isObstacle(State(s.state.x, s.state.y - 1))
                 								|| is_down_edge_collision
 												|| isTemporalObstacleAtT(State(s.state.x, s.state.y - 1), m_lastGScore + current_cost + 1)){
@@ -588,7 +837,6 @@ public:
                 											}
                 										} else break;
                 									} else {
-//                										std::cout << "+++\n";
                 										if(!IsEdgeCollisions(State(s.state.x - 1, s.state.y -1), edgeCollision(down_start_t, Action::Up)))
                 										re_start.push_back(startTime(down_start_t, Action::Down, 0x08, true));
                 										break;
@@ -635,6 +883,7 @@ public:
             					} else {
             						if(re_ac == m_lastGScore + current_cost + 1) { // set the re-start direction.
             							current_successor.dir = current_dir;
+//            							std::cout << current_successor.state. x << " " << current_successor.state.y << " \n";
             						} else current_successor.dir = 0x01;
 
             		          		if(!m_env.stateValid(State(current_successor.state.x - 1, current_successor.state.y)) ||
@@ -670,7 +919,7 @@ public:
             				bool flag_push = false;
 
             				if(successor_next_start != -1 && depth != 0){
-            					if( end_t >= successor_next_start - 1){
+            					if( end_t >= successor_next_start - 1 && successor_next_start - 1 != m_lastGScore + current_cost){
             						if(!IsEdgeCollisions(current_successor.state,edgeCollision(successor_next_start - 1,Action::Left))){
             							re_ac_r = successor_next_start -1;
             							re_start_s.push_back(startTime(successor_next_start - 1, Action::Right, 0x02, true));
@@ -814,7 +1063,6 @@ public:
             						if(re_start[re_i].rt == -1) continue;
             						current_successor.action = Action::Right;
             						restart_dir |= re_start[re_i].dir;
-
             						for(int re_ii = re_i + 1; re_ii < re_start.size(); re_ii++){
             							if(re_start[re_ii].rt == re_start[re_i].rt){
             								restart_dir |= re_start[re_ii].dir;
@@ -869,7 +1117,7 @@ public:
             				bool flag_push = false;
             				Cost re_ac_u = -1;
             				if(successor_next_start != -1 && depth != 0){
-         						if(end_t >= successor_next_start - 1){
+         						if(end_t >= successor_next_start - 1 && successor_next_start - 1 != m_lastGScore + current_cost){
          							if(!IsEdgeCollisions(current_successor.state,edgeCollision(successor_next_start - 1, Action::Down))){
 //               						JPSSIPPState temp_state = s;
 //               						temp_state.dir = 0x4;
@@ -934,7 +1182,6 @@ public:
              		current_successor.state.x = s.state.x;
              		current_successor.state.y = s.state.y - 1;
           	 	 	if(is_down_valid && !is_down_edge_collision){
-
             				size_t successor_interval;
             				successor_start_t = -1; successor_end_t = -1;
             				successor_next_start = -1;  successor_next_end = -1;
@@ -942,7 +1189,7 @@ public:
             				          						successor_start_t, successor_end_t, successor_next_start, successor_next_end);
 
             			    if(successor_next_start != -1 && depth != 0){
-         						if( end_t >= successor_next_start - 1){
+         						if( end_t >= successor_next_start - 1 && successor_next_start - 1 != m_lastGScore + current_cost){
          							if(!IsEdgeCollisions(current_successor.state,edgeCollision(successor_next_start - 1, Action::Up))){
 //         								JPSSIPPState temp_state = s;
 //         								temp_state.dir = 0x08;
@@ -993,6 +1240,8 @@ public:
              							} else {
              								current_successor.dir = 0x0b;
              							}
+
+
              							current_successor.flag_wait = false;
                  						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost + 1));
                 					}else {
@@ -1017,6 +1266,7 @@ public:
   								temp_state.dir |= re_start_s[re_ii].dir;
   							}else break;
   						}
+//  						std::cout << temp_state.state.x << " " << temp_state.state.y << " ++++++++++=\n";
        					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Left, re_start_s[re_i].rt - m_lastGScore));
   						break;
   					}
@@ -1231,6 +1481,18 @@ public:
 
         if(si.back().end == std::numeric_limits<Cost>::max()) { return false;}
         else { start_time = -1; return true;}
+    }
+
+    bool isSafeAtT(const Location& location, Cost &start_time){ // whether the obstacle appears after the time
+        const auto& si = safeIntervals(m_env.getLocation(location));
+//       std::cout << location.x << "  " << location.y << " Cost: " << start_time << " si.size " << si.size() << "\n";
+
+       if(si.size() == 0) return false;
+        Cost start_ = 0, end_ = si[0].start - 1;
+        for (size_t idx = 0; idx < si.size(); ++idx) {
+        	if(si[idx].start == start_time) return true;
+        }
+        return false;
     }
 
   public:

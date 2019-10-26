@@ -254,8 +254,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_17", std::ios::app);
-  std::fstream res_Good("Berlin_all_good_17", std::ios::app);
+  std::fstream res_sta("Berlin_all_8_8", std::ios::app);
+  std::fstream res_Good("Berlin_all_8_8_good_10", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -572,12 +572,30 @@ int main(int argc, char* argv[]) {
     }
 
     if(num_expansion1 > num_expansion2){
-    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " "<< num_expansion1 - num_expansion2 << "\n";
+    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion1 - num_expansion2 << "\n";
     }
 
     if(num_expansion3 > num_expansion2){
-    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " "<< num_expansion3 - num_expansion2 << "\n";
+    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " " << num_expansion3 << " " << num_expansion3 - num_expansion2 << "\n";
     }
+
+    if(num_expansion1 > num_expansion2){
+    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion1 - num_expansion2 << "\n";
+    }
+
+    if(num_expansion3 > num_expansion2){
+    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " " << num_expansion3 << " " << num_expansion3 - num_expansion2 << "\n";
+    }
+
+    if(num_generation1 > num_generation2){
+    	std::cout << inputFile << " Not Generation-1 Agent " << i << " " << num_generation1 << " " << num_generation1 - num_generation2 << "\n";
+    }
+
+    if(num_generation3 > num_generation2){
+    	std::cout << inputFile << " Not Generation-3 Agent " << i << " " << num_generation3 << " " << num_generation3 - num_generation2 << "\n";
+    }
+    std::cout << inputFile << " All-Generation Agent " << i << " " << num_generation1  << " " << num_generation2 << "\n";
+    std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
 //    if(num_generation1 - num_generation3 > 20){
 //    	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation3 << "\n";
@@ -597,7 +615,8 @@ int main(int argc, char* argv[]) {
     	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation2 << "\n";
     }
 */
-    res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
+    res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " "
+    		<< num_generation1 << " " << num_expansion1 - num_expansion2 <<"\n";
     res_sta << inputFile << " Agent " << i << " JPSSIPPAN: " << " cost: " << solution3.cost << " " << time3 << " " << num_expansion3 << " " << num_generation3 <<"\n";
     res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
 
@@ -605,7 +624,7 @@ int main(int argc, char* argv[]) {
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
         res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
-//   if(i == 49) break;
+//   if(i == 5) break;
 //    break;
   }
 
