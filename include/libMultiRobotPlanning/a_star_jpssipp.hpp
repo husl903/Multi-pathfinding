@@ -108,7 +108,7 @@ class JPSAStar {
 
       openSet.pop();
       stateToHeap.erase(current.state);
-      if(!current.state.flag_wait && closedSet.find(current.state) != closedSet.end()) continue;
+//      if(!current.state.flag_wait && closedSet.find(current.state) != closedSet.end()) continue;
       if(closedSet.find(current.state) == closedSet.end()) closedSet.insert(current.state);
 
       m_env.onExpandNode(current.state, current.fScore, current.gScore);
@@ -117,7 +117,7 @@ class JPSAStar {
       m_env.getNeighbors(current.state, neighbors);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
 
-    	if(neighbor.state.flag_wait){
+/*    	if(neighbor.state.flag_wait){
 //    		 std::cout << neighbor.state.state.x << " " << neighbor.state.state.y << " cost " << neighbor.state.g_cost << "\n";
             Cost tentative_gScore = current.gScore + neighbor.cost;
             auto iter = stateToHeap.find(neighbor.state);
@@ -145,7 +145,7 @@ class JPSAStar {
                 std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                   tentative_gScore)));
 
-    	} else if (closedSet.find(neighbor.state) == closedSet.end()) {
+    	} else*/ if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
 
@@ -162,22 +162,20 @@ class JPSAStar {
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
           } else {
 
-        	  continue;
-
         	  auto handle = iter->second;
-        	  if((tentative_gScore == (*handle).gScore)){
-        		  (*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
+        	  if((tentative_gScore >= (*handle).gScore)){
+//        		  (*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
         		  continue;
         	  }
 
             // update f and gScore
-//            Cost delta = (*handle).gScore - tentative_gScore;
-//            (*handle).state.dir =  neighbor.state.dir;
-//            (*handle).gScore = tentative_gScore;
-//            (*handle).fScore -= delta;
-//            openSet.increase(handle);
-//            m_env.onDiscover(neighbor.state, (*handle).fScore,
-//                             (*handle).gScore);
+            Cost delta = (*handle).gScore - tentative_gScore;
+            (*handle).state.dir =  neighbor.state.dir;
+            (*handle).gScore = tentative_gScore;
+            (*handle).fScore -= delta;
+            openSet.increase(handle);
+            m_env.onDiscover(neighbor.state, (*handle).fScore,
+                             (*handle).gScore);
           }
 
           // Best path for this node so far

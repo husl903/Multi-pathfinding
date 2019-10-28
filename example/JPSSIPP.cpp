@@ -587,13 +587,13 @@ int main(int argc, char* argv[]) {
     	std::cout << inputFile << " Not Expansion-3 Agent " << i << " " << num_expansion3 << " " << num_expansion3 - num_expansion2 << "\n";
     }
 
-    if(num_generation1 > num_generation2){
-    	std::cout << inputFile << " Not Generation-1 Agent " << i << " " << num_generation1 << " " << num_generation1 - num_generation2 << "\n";
+    if(num_generation1 > 5*num_generation2){
+    	std::cout << inputFile << " Not Generation-1 Agent " << i << " " << num_generation1 << " " << num_generation2 << " " << num_generation1 - num_generation2 << "\n";
     }
 
-    if(num_generation3 > num_generation2){
+/*    if(num_generation3 > num_generation2){
     	std::cout << inputFile << " Not Generation-3 Agent " << i << " " << num_generation3 << " " << num_generation3 - num_generation2 << "\n";
-    }
+    }*/
     std::cout << inputFile << " All-Generation Agent " << i << " " << num_generation1  << " " << num_generation2 << "\n";
     std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
