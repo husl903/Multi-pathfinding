@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_8_8", std::ios::app);
+  std::fstream res_sta("Berlin_all_8_8_3", std::ios::app);
   std::fstream res_Good("Berlin_all_8_8_good_10", std::ios::app);
 
 
