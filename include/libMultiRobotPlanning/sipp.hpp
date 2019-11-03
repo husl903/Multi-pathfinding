@@ -216,7 +216,7 @@ class SIPP {
 
       m_env.getNeighbors(s.state, motions);
       for (const auto& m : motions) {
-    	  m_env.num_generation++;
+//    	  m_env.num_generation++;
         // std::cout << "gN " << m.state << std::endl;
         Cost m_time = m.cost;
         // std::cout << m_lastGScore;
@@ -246,6 +246,7 @@ class SIPP {
         		  && !IsEdgeCollisions(m.state, edgeCollision(t - 1, a_temp))) {
             // std::cout << "  gN: " << m.state << "," << i << "," << t << ","
             // << m_lastGScore << std::endl;
+        	m_env.num_generation++;
             neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
                 SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
                 t - m_lastGScore));
