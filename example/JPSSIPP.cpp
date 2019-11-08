@@ -572,20 +572,14 @@ int main(int argc, char* argv[]) {
     }
 
     if(num_expansion1 > num_expansion2){
-    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion1 - num_expansion2 << "\n";
+    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion2 << " " << num_expansion1 - num_expansion2 << "\n";
     }
 
     if(num_expansion3 > num_expansion2){
     	std::cout << inputFile << " Not Expansion-3 Agent " << i << " " << num_expansion3 << " " << num_expansion3 - num_expansion2 << "\n";
     }
 
-    if(num_expansion1 > num_expansion2){
-    	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion1 - num_expansion2 << "\n";
-    }
 
-    if(num_expansion3 > num_expansion2){
-    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " " << num_expansion3 << " " << num_expansion3 - num_expansion2 << "\n";
-    }
 
     if(num_generation1 > 5*num_generation2){
     	std::cout << inputFile << " Not Generation-1 Agent " << i << " " << num_generation1 << " " << num_generation2 << " " << num_generation1 - num_generation2 << "\n";

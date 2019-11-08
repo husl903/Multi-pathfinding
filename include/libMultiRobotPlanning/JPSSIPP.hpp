@@ -681,14 +681,17 @@ public:
                 				if(m_env.isJumpPoint(current_successor.state)){ //The successor may be a jump point.
                 					if(m_env.stateValid(State(s.state.x - 1, s.state.y + 1))){ //Whether the successor need to restart the up direction
                 						if(m_env.isObstacle(state_up)
-                								|| is_up_edge_collision    //there is an edge collision at S to state_up at m_lastGScore + current_cost + 1
+                								|| is_up_edge_collision
 												|| successor_start_u == -1 //state_up at (m_lastGScore + current_cost + 1) is the temporal obstacle
 												){
                 							// at the time m_lastGScore + current_cost + 1 successor need to restart the up direction
+
+ //               							std::cout << successor_start_u << " -----------------\n";
                 							if(!IsEdgeCollisions(State(s.state.x -1, s.state.y + 1),
                 									edgeCollision(m_lastGScore + current_cost + 1, Action::Down))){
                 								up_start_t = m_lastGScore + current_cost + 1;
                 								re_start.push_back(startTime(up_start_t, Action::Up, 0x04, false));
+
                 							}
                 						} else {
                 							// after the time m_lastGScore + current_cost + 1 successor need to restart the up direction
@@ -923,11 +926,11 @@ public:
                 							}
                 						} else{
                								isTemporalObstacleAfterT(State(s.state.x + 1, s.state.y + 1), m_lastGScore + current_cost + 1, up_right_t);
-/*                							if(up_right_t != -1 && (up_right_t <= successor_end)){
+                							if(up_right_t != -1 && (up_right_t <= successor_end)){
          										if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y + 1), edgeCollision(up_right_t, Action::Down)))
          										re_start.push_back(startTime(up_right_t, Action::Up, 0x04, true));
-                							}*/
-                							Cost temp_start_t = -1, temp_end_t = -1;
+                							}
+/*                							Cost temp_start_t = -1, temp_end_t = -1;
                 							size_t iv = -1;
                 							bool is_up_p = false, is_up_l = false;
                 							if(up_right_t == m_lastGScore + current_cost + 1){
@@ -969,7 +972,7 @@ public:
                  										break;
                  									}
                  								}
-                            				}
+                            				}*/
                 						}
                 					}
 
@@ -983,11 +986,11 @@ public:
                 							}
                 						} else{
                 							isTemporalObstacleAfterT(State(s.state.x + 1, s.state.y - 1), m_lastGScore + current_cost + 1, down_right_t);
-/*                							if(down_right_t != -1 && (down_right_t <= successor_end)){
+                							if(down_right_t != -1 && (down_right_t <= successor_end)){
          										if(!IsEdgeCollisions(State(s.state.x + 1, s.state.y - 1), edgeCollision(down_right_t, Action::Up)))
                     									re_start.push_back(startTime(down_right_t, Action::Down, 0x08, true));
-                							}*/
-                							Cost temp_start_t = -1, temp_end_t = -1;
+                							}
+/*                							Cost temp_start_t = -1, temp_end_t = -1;
                 							size_t iv = -1;
                 							bool is_down_p = false, is_down_l = false;
                 							if(down_right_t == m_lastGScore + current_cost + 1){
@@ -1027,7 +1030,7 @@ public:
                  										break;
                  									}
                  								}
-                            				}
+                            				}*/
                 						}
                 					}
                 				}
@@ -1124,9 +1127,12 @@ public:
             			}
              	}
 
-            	if((dir & 0x04) && is_up_valid && !is_up_edge_collision){
+            	if((dir & 0x04) && is_up_valid
+            			&& !is_up_edge_collision){
             				current_successor.state = state_up;
             				current_successor.flag_wait = false;
+            				findSafeInterval(state_up, start_t + 1, successor_interval_u,
+            				          				successor_start_u, successor_end_u, successor_next_start_u, successor_next_end_u);
             				successor_interval =  successor_interval_u;
             				successor_start = successor_start_u; successor_end = successor_end_u;
             				successor_next_start = successor_next_start_u; successor_next_end = successor_next_end_u;
@@ -1171,6 +1177,8 @@ public:
              	if((dir & 0x08) && is_down_valid && !is_down_edge_collision){
              				current_successor.state = state_down;
              				current_successor.flag_wait = false;
+               				findSafeInterval(state_down, start_t + 1, successor_interval_d,
+                				          		successor_start_d, successor_end_d, successor_next_start_d, successor_next_end_d);
         					successor_interval =  successor_interval_d;
         					successor_start = successor_start_d; successor_end = successor_end_d;
         					successor_next_start = successor_next_start_d; successor_next_end = successor_next_end_d;
