@@ -163,8 +163,9 @@ class JPSAStar {
           } else {
 
         	  auto handle = iter->second;
-        	  if((tentative_gScore >= (*handle).gScore)){
-//        		  (*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
+        	  if(tentative_gScore >= (*handle).gScore) continue;
+        	  if((tentative_gScore == (*handle).gScore)){
+        		  (*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
         		  continue;
         	  }
 
