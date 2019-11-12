@@ -90,12 +90,12 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 
 class Environment {
  public:
-  Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles, std::unordered_set<State> m_jumppoint,
+  Environment(size_t dimx, size_t dimy, std::vector<std::vector<bool>> obstacles, std::vector<std::vector<bool>> t_obstacle,
               std::vector<std::vector<bool>>jump_point_map, State goal)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
-		m_jumppoint(std::move(m_jumppoint)),
+		m_temporal_obstacle(std::move(t_obstacle)),
 		jump_point_map(std::move(jump_point_map)),
         m_goal(goal) {}
 
@@ -174,12 +174,22 @@ class Environment {
  public:
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
-           m_obstacles.find(s) == m_obstacles.end();
+           !m_obstacles[s.x][s.y];
   }
 
   bool isObstacle(const State& s){
 	  return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
-	           m_obstacles.find(s) != m_obstacles.end();
+	           m_obstacles[s.x][s.y];
+  }
+
+  bool isTemporalObstacle(const State& s){
+	  return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+			  !m_temporal_obstacle[s.x][s.y];
+  }
+
+  void setTemporalObstacle(const State& s){
+//	  std::cout << "State " << s.x << " " << s.y <<std::endl;
+	  m_temporal_obstacle[s.x][s.y] = true;
   }
 
   bool isJumpPoint(const State& s) {
@@ -188,7 +198,6 @@ class Environment {
 
   void setJumpPoint(const State& s){
 	  jump_point_map[s.x][s.y] = true;
-	  m_jumppoint.insert(s);
   }
 
   void setJPS(){
@@ -210,13 +219,14 @@ class Environment {
   int num_expansion = 0;
   int limit_jump = 5;
   std::vector<std::vector<bool>> jump_point_map;
+  std::vector<std::vector<bool>> m_temporal_obstacle;
   bool is_limit = false;
 
  private:
   int m_dimx;
   int m_dimy;
-  std::unordered_set<State> m_obstacles;
-  std::unordered_set<State> m_jumppoint;
+//  std::unordered_set<State> m_obstacles;
+  std::vector<std::vector<bool>> m_obstacles;
   State m_goal;
   bool is_jps = true;
 };
@@ -262,23 +272,32 @@ int main(int argc, char* argv[]) {
   YAML::Node config = YAML::LoadFile(inputFile);
 
   std::unordered_set<State> obstacles;
-  std::unordered_set<State> jumppoint;
+
   std::vector<State> goals;
   std::vector<State> startStates;
-  std::vector<std::vector<bool>> map_1;
+  std::vector<std::vector<bool>> map_jump_point;
+  std::vector<std::vector<bool>> map_obstacle;
+  std::vector<std::vector<bool>> map_temporal_obstacle;
 
   const auto& dim = config["map"]["dimensions"];
   int dimx = dim[0].as<int>();
   int dimy = dim[1].as<int>();
 
-  for (const auto& node : config["map"]["obstacles"]) {
-     obstacles.insert(State(node[0].as<int>(), node[1].as<int>()));
+  map_jump_point.resize(dimx + 2);
+  map_obstacle.resize(dimx + 2);
+  map_temporal_obstacle.resize(dimx + 2);
+  for(int i = 0; i < map_jump_point.size();i++){
+	  map_jump_point[i].resize(dimy + 2);
+	  map_obstacle[i].resize(dimy + 2);
+	  map_temporal_obstacle[i].resize(dimy + 2);
   }
 
-  map_1.resize(dimx + 2);
-  for(int i = 0; i < map_1.size();i++){
-	  map_1[i].resize(dimy + 2);
+
+  for (const auto& node : config["map"]["obstacles"]) {
+     obstacles.insert(State(node[0].as<int>(), node[1].as<int>()));
+     map_obstacle[node[0].as<int>()][node[1].as<int>()] = true;
   }
+
 
   for (const auto& ob:obstacles){
 	  State temp1 = ob,temp2 = ob;
@@ -287,8 +306,7 @@ int main(int argc, char* argv[]) {
 
 	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
 			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
-		  jumppoint.insert(State(ob.x + 1, ob.y + 1));
-		  map_1[ob.x + 1][ob.y + 1] = true;
+		  map_jump_point[ob.x + 1][ob.y + 1] = true;
 	  }
 
 	  temp1 = ob; temp2 = ob;
@@ -296,8 +314,7 @@ int main(int argc, char* argv[]) {
 	  temp2.y = ob.y - 1;
 	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
 			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
-		  jumppoint.insert(State(ob.x + 1, ob.y - 1));
-		  map_1[ob.x + 1][ob.y - 1] = true;
+		  map_jump_point[ob.x + 1][ob.y - 1] = true;
 	  }
 
 	  temp1 = ob; temp2 = ob;
@@ -305,8 +322,7 @@ int main(int argc, char* argv[]) {
 	  temp2.y = ob.y + 1;
 	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
 			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
-		  jumppoint.insert(State(ob.x - 1, ob.y + 1));
-		  map_1[ob.x - 1][ob.y + 1] = true;
+		  map_jump_point[ob.x - 1][ob.y + 1] = true;
 	  }
 
 	  temp1 = ob; temp2 = ob;
@@ -314,8 +330,7 @@ int main(int argc, char* argv[]) {
 	  temp2.y = ob.y - 1;
 	  if(temp1.x >= 0 && temp1.x <= dimx && temp2.y >=0 && temp2.y <= dimy
 			  && obstacles.find(temp1)==obstacles.end() && obstacles.find(temp2) == obstacles.end()){
-		  jumppoint.insert(State(ob.x - 1, ob.y - 1));
-		  map_1[ob.x - 1][ob.y - 1] = true;
+		  map_jump_point[ob.x - 1][ob.y - 1] = true;
 	  }
 
   }
@@ -353,7 +368,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
 
-    Environment env(dimx, dimy, obstacles, jumppoint, map_1, goals[i]);
+    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, goals[i]);
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
@@ -405,9 +420,8 @@ int main(int argc, char* argv[]) {
     	sipp.setEdgeCollisions(ec.first, ec.second);
     }
 
-
-    env.Reset();
     // Plan
+    env.Reset();
     PlanResult<State, Action, int> solution;
     Timer t;
     t.reset();
@@ -443,41 +457,6 @@ int main(int argc, char* argv[]) {
 
 
     env.Reset();
-    // Plan
-/*    PlanResult<State, Action, int> solution3;
-    t.reset();
-    bool success3 = jps_an_sipp.search(startStates[i], Action::Wait, solution3);
-    t.stop();
-    std::cout<< t.elapsedSeconds() << std::endl;
-    int num_expansion3 = env.num_expansion;
-    int num_generation3 = env. num_generation;
-    double time3 = t.elapsedSeconds();
-    if (success3) {
-      std::cout << "JPSAN Planning successful! Total cost: " << solution3.cost << " Expansion:"
-    		    << env.num_expansion << " Generation: " << env.num_generation
-                << std::endl;
-
-      // print solution
-      for (size_t i = 0; i < solution3.actions.size(); ++i) {
-        std::cout << solution3.states[i].second << ": " << solution3.states[i].first
-                  << "->" << solution3.actions[i].first
-                  << "(cost: " << solution3.actions[i].second << ")" << std::endl;
-      }
-      std::cout << solution3.states.back().second << ": "
-                << solution3.states.back().first << std::endl;
-
-      for (size_t i = 0; i < solution3.states.size(); ++i) {
-        out << "    - x: " << solution3.states[i].first.x << std::endl
-            << "      y: " << solution3.states[i].first.y << std::endl
-            << "      t: " << solution3.states[i].second << std::endl;
-      }
-    } else {
-      std::cout << "Planning NOT successful!" << std::endl;
-      out << "    []" << std::endl;
-    }
-*/
-
-    env.Reset();
     env.setNoJPS();
     PlanResult<State, Action, int> solution2;
     t.reset();
@@ -497,13 +476,14 @@ int main(int argc, char* argv[]) {
 
       // update collision intervals
       auto lastState = solution2.states[0];
+
       for (size_t i = 1; i < solution2.states.size(); ++i) {
         if (solution2.states[i].first != lastState.first) {
           allCollisionIntervals[lastState.first].push_back(
             jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
           allCollisionIntervals_sipp[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution2.states[i].second - 1));
-
+          env.setTemporalObstacle(lastState.first);
           lastState = solution2.states[i];
         }
       }
@@ -511,6 +491,7 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
       allCollisionIntervals_sipp[solution2.states.back().first].push_back(
             sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+      env.setTemporalObstacle(solution2.states.back().first);
 
 //      std::cout << ""
       // update statistics
@@ -547,12 +528,9 @@ int main(int argc, char* argv[]) {
     	break;
     }
 
-
     if(num_expansion1 > num_expansion2){
     	std::cout << inputFile << " Not Expansion-1 Agent " << i << " " << num_expansion1 << " " << num_expansion2 << " " << num_expansion1 - num_expansion2 << "\n";
     }
-
-
 
 
     if(num_generation1 > 5*num_generation2){
@@ -565,24 +543,7 @@ int main(int argc, char* argv[]) {
     std::cout << inputFile << " All-Generation Agent " << i << " " << num_generation1  << " " << num_generation2 << "\n";
     std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
-//    if(num_generation1 - num_generation3 > 20){
-//    	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation3 << "\n";
-//    }
 
-/*    if(num_expansion1 > num_expansion3){
-    	std::cout << inputFile << " Not Expansion-3 Agent " << i << " "<< num_expansion1 - num_expansion3 << "\n";
-    }
-
-
-    if(num_expansion1 < num_expansion3){
-    	std::cout << inputFile << " Not Expansion-4 Agent " << i << " "<< num_expansion1 - num_expansion3 << "\n";
-    }
-
-
-    if(num_generation1 > num_generation2){
-    	std::cout << inputFile << " Not Generation-1 Agent " << i << " "<< num_generation1 - num_generation2 << "\n";
-    }
-*/
     res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " "
     		<< num_generation1 << " " << num_expansion1 - num_expansion2 <<"\n";
 //    res_sta << inputFile << " Agent " << i << " JPSSIPPAN: " << " cost: " << solution3.cost << " " << time3 << " " << num_expansion3 << " " << num_generation3 <<"\n";
@@ -598,25 +559,6 @@ int main(int argc, char* argv[]) {
 
   out << "statistics:" << std::endl;
   out << "  cost: " << cost << std::endl;
-  // out << "  makespan: " << makespan << std::endl;
-  // out << "  runtime: " << timer.elapsedSeconds() << std::endl;
-
-
-
-
-  // for (const auto& node : config["environment"]["collisionIntervals"]) {
-  //   State state(node["location"][0].as<int>(), node["location"][1].as<int>());
-
-  //   std::vector<jps_sipp::interval> collisionIntervals;
-
-  //   for (const auto& interval : node["intervals"]) {
-  //     collisionIntervals.emplace_back(
-  //         jps_sipp::interval(interval[0].as<int>(), interval[1].as<int>()));
-  //   }
-  //   sipp.setCollisionIntervals(state, collisionIntervals);
-  // }
-
-
 
 
   return 0;

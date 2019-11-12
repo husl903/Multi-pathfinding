@@ -133,14 +133,14 @@ class AStar {
             // std::cout << "  this is an old node: " << tentative_gScore << ","
             // << (*handle).gScore << std::endl;
             // We found this node before with a better path
-            if (tentative_gScore > (*handle).gScore) {
+            if (tentative_gScore >= (*handle).gScore) {
               continue;
             }
 
-            if (tentative_gScore == (*handle).gScore) {
+/*            if (tentative_gScore == (*handle).gScore) {
             	(*handle).state.dir |=  neighbor.state.dir;
                continue;
-            }
+            }*/
 
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;

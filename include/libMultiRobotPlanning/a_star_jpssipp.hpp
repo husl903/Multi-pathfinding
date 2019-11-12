@@ -164,10 +164,10 @@ class JPSAStar {
 
         	  auto handle = iter->second;
         	  if(tentative_gScore >= (*handle).gScore) continue;
-        	  if((tentative_gScore == (*handle).gScore)){
+ /*       	  if((tentative_gScore == (*handle).gScore)){
         		  (*handle).state.dir = (*handle).state.dir | neighbor.state.dir;
         		  continue;
-        	  }
+        	  }*/
 
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;
