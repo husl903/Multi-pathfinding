@@ -184,11 +184,10 @@ class Environment {
 
   bool isTemporalObstacle(const State& s){
 	  return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
-			  !m_temporal_obstacle[s.x][s.y];
+			  m_temporal_obstacle[s.x][s.y];
   }
 
   void setTemporalObstacle(const State& s){
-//	  std::cout << "State " << s.x << " " << s.y <<std::endl;
 	  m_temporal_obstacle[s.x][s.y] = true;
   }
 
@@ -225,7 +224,6 @@ class Environment {
  private:
   int m_dimx;
   int m_dimy;
-//  std::unordered_set<State> m_obstacles;
   std::vector<std::vector<bool>> m_obstacles;
   State m_goal;
   bool is_jps = true;
@@ -483,7 +481,7 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
           allCollisionIntervals_sipp[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution2.states[i].second - 1));
-          env.setTemporalObstacle(lastState.first);
+          map_temporal_obstacle[lastState.first.x][lastState.first.y] = true;
           lastState = solution2.states[i];
         }
       }
@@ -491,7 +489,7 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
       allCollisionIntervals_sipp[solution2.states.back().first].push_back(
             sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
-      env.setTemporalObstacle(solution2.states.back().first);
+      map_temporal_obstacle[lastState.first.x][lastState.first.y] = true;
 
 //      std::cout << ""
       // update statistics
