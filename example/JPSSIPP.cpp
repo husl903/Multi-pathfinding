@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
       "input file (YAML)")("output,o",
                            po::value<std::string>(&outputFile)->required(),
                            "output file (YAML)")
-						   //("results, txt", po::value<std::string>(&res)->required(), "results file (TXT)")
+						   ("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")
       // ("url",
       // po::value<std::string>(&url)->default_value("http://0.0.0.0:8080"),
       // "server URL")
@@ -262,8 +262,10 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::fstream res_sta("Berlin_all_8_8_3", std::ios::app);
-  std::fstream res_Good("Berlin_all_8_8_good_10", std::ios::app);
+  std::cout << res << " --\n";
+
+  std::fstream res_sta(res, std::ios::app);
+  std::fstream res_Good(res+"_good", std::ios::app);
 
 
   // Configure SIPP based on config file
@@ -423,7 +425,7 @@ int main(int argc, char* argv[]) {
     PlanResult<State, Action, int> solution;
     Timer t;
     t.reset();
-    bool success = jpssipp.search(startStates[i], Action::Wait, solution);
+    bool success = jpssipp.search(startStates[i], Action::Wait, solution,0, map_temporal_obstacle[startStates[i].x][startStates[i].y]);
     t.stop();
     std::cout<< t.elapsedSeconds() << std::endl;
     int num_expansion1 = env.num_expansion;
