@@ -708,7 +708,7 @@ public:
     		          			break;
     		          		}
     					}
-    	             	if (isSolution(current_successor) || current_successor.state.x%8 ==0 || current_successor.state.y%8 ==0) {
+    	             	if (isSolution(current_successor)) {
     	             		current_successor.dir = 0x01;
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
     	           			break ;
@@ -842,7 +842,7 @@ public:
     		          		}
     					}
 
-    	             	if (isSolution(current_successor) || current_successor.state.x%8 ==0 || current_successor.state.y%8 ==0) {
+    	             	if (isSolution(current_successor)) {
     	             		current_successor.dir = 0x02;
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
     	           			break ;
@@ -934,7 +934,7 @@ public:
                 					}
                 				}
 
-            	             	if (isSolution(current_successor) || current_successor.state.x%8 ==0 || current_successor.state.y%8 ==0) {
+            	             	if (isSolution(current_successor)) {
             	             		current_successor.dir = 0x07;
 
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
@@ -1003,7 +1003,7 @@ public:
                 					}
                 				}
 
-            	             	if (isSolution(current_successor) || current_successor.state.x%8 ==0 || current_successor.state.y%8 ==0) {
+            	             	if (isSolution(current_successor)) {
             	             		current_successor.dir = 0x0b;
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           			break ;
