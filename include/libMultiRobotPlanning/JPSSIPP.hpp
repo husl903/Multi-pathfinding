@@ -117,6 +117,9 @@ public:
                              const std::vector<interval>& intervals) {
     m_env.setCollisionIntervals(location, intervals);
   }
+  void setEdgeCollisionSize(const int& dimx, const int& dimy){
+	  m_env.setEdgeCollisionSize(dimx, dimy);
+  }
 
   void setEdgeCollisions(const Location& location,
                              const std::vector<edgeCollision>& ec) {
@@ -1187,7 +1190,7 @@ public:
       m_env.onDiscover(s.state, fScore, gScore);
     }
 
-    void setCollisionIntervals(const Location& location,
+/*    void setCollisionIntervals(const Location& location,
                                const std::vector<interval>& intervals) {
       m_safeIntervals.erase(location);
       std::vector<interval> sortedIntervals(intervals);
@@ -1219,15 +1222,63 @@ public:
               {start, std::numeric_limits<int>::max()});
         }
       }
-      // auto iter = m_safeIntervals.find(location);
-      // if (iter != m_safeIntervals.end()) {
-      //   for (const auto& si : iter->second) {
-      //     std::cout << "  si: " << si.start << " - " << si.end << std::endl;
-      //   }
-      // }
+    }*/
+
+    void setCollisionIntervals(const Location& location,
+                               const std::vector<interval>& intervals) {
+    	if(intervals.size() == 0) return;
+    	int index = m_env.getIndex(location);
+    	m_safeIntervals_t[index].clear();
+    	std::vector<interval> sortedIntervals(intervals);
+    	std::sort(sortedIntervals.begin(), sortedIntervals.end());
+
+        int start = 0;
+        int lastEnd = 0;
+        for (const auto& interval : sortedIntervals) {
+          assert(interval.start <= interval.end);
+          assert(start <= interval.start);
+
+          if (start <= interval.start - 1) {
+            m_safeIntervals_t[index].push_back({start, interval.start - 1});
+          }
+          start = interval.end + 1;
+          lastEnd = interval.end;
+        }
+        if (lastEnd < std::numeric_limits<int>::max()) {
+          m_safeIntervals_t[index].push_back(
+              {start, std::numeric_limits<int>::max()});
+        }
+    }
+
+    void setEdgeCollisionSize(const int& dimx, const int& dimy){
+    	m_edgeCollision_t.resize(dimx * dimy);
+    	m_safeIntervals_t.resize(dimx * dimy);
+    	return ;
     }
 
     void setEdgeCollisions(const Location& location,
+  		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
+    	int index = m_env.getIndex(location);
+
+    	if(edge_collision.size() > 0){
+    		m_edgeCollision_t[index].clear();
+    		for(const auto& ec : edge_collision){
+    			m_edgeCollision_t[index].push_back(ec);
+    		}
+    	}
+    }
+
+    bool IsEdgeCollisions(const Location& location, const edgeCollision& ec){
+    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
+    	int index = m_env.getIndex(location);
+    	if(m_edgeCollision_t[index].size() == 0) return false;
+    	for(auto& cec : (m_edgeCollision_t[index])){
+    		if(cec == ec) return true;
+    	}
+    	return false;
+    }
+
+/*    void setEdgeCollisions(const Location& location,
   		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
   	  m_edgeCollision.erase(location);
   	  if(edge_collision.size() > 0){
@@ -1255,9 +1306,10 @@ public:
 //    			return false;
 //    		} else return true;
     }
-
+*/
     bool findSafeInterval(const State& state, Cost time, size_t& interval)
     {
+
       const auto& si = safeIntervals(m_env.getLocation(state));
       for (size_t idx = 0; idx < si.size(); ++idx) {
         if (si[idx].start <= time && si[idx].end >= time) {
@@ -1308,7 +1360,6 @@ public:
     			  next_start = -1;
     			  next_end = -1;
     		  }
-//    		  std::cout << start_t << " " << end_t << " " << next_start <<" " << next_end << "-------------------\n";
     		  return true;
         }
       }
@@ -1329,24 +1380,6 @@ public:
         return true;
     }
 
-    bool isTemporalObstacleAfterT(const Location& location, Cost time){ // whether the obstacle appears after the time
-//    	return m_env.isTemporalObstacle(m_env.getLocation(location));
-    	if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return false;
-        const auto& si = safeIntervals(m_env.getLocation(location));
-//        std::cout << location.x << "  " << location.y << " Cost: " << time << " si.size " << si.size() << "\n";
-        if(si.size() == 0) return true;
-        Cost start_ = 0, end_ = si[0].start - 1;
-        for (size_t idx = 0; idx < si.size() - 1; ++idx) {
-//        	std::cout << start_ << " " << end_<<"\n";
-        	if(start_ <= end_ && end_ >= time){ return true;}
-        	start_ = si[idx].end + 1;
-        	end_ = si[idx + 1].start - 1;
-        }
-    	if(start_ <= end_ && end_ >= time) { return true;}
-
-        if(si.back().end == std::numeric_limits<Cost>::max()) { return false;}
-        else { return true;}
-    }
 
 
     bool isTemporalObstacleAfterT(const Location& location, Cost time, Cost &start_time){ // whether the obstacle appears after the time
@@ -1359,7 +1392,6 @@ public:
         if(si.size() == 0) return true;
         Cost start_ = 0, end_ = si[0].start - 1;
         for (size_t idx = 0; idx < si.size() - 1; ++idx) {
-//        	std::cout << start_ << " " << end_<<"\n";
         	if(start_ <= end_ && end_ >= time){ start_time = end_; return true;}
         	start_ = si[idx].end + 1;
         	end_ = si[idx + 1].start - 1;
@@ -1403,7 +1435,7 @@ public:
     	return true;
     }
    private:
-    const std::vector<interval>& safeIntervals(const Location& location) {
+/*    const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});
       if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
@@ -1413,14 +1445,25 @@ public:
       }
       return iter->second;
     }
-
+*/
+    const std::vector<interval>& safeIntervals(const Location& location) {
+      static std::vector<interval> defaultInterval(
+          1, {0, std::numeric_limits<Cost>::max()});
+      if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
+      int index = m_env.getIndex(location);
+//      const auto iter = m_safeIntervals_t[index];
+//      std::cout << location.x << " " << location.y << "size " << iter.size() << " \n";
+      return m_safeIntervals_t[index];
+    }
 
    private:
     Environment& m_env;
     Cost m_lastGScore;
     std::unordered_map<Location, std::vector<interval> > m_safeIntervals;
+    std::vector<std::vector<interval>> m_safeIntervals_t;
 //    std::unordered_map<Location, std::unordered_set<edgeCollision, EdgeCollisionHasher>> m_edgeCollision;
-    std::unordered_map<Location, std::vector<edgeCollision>> m_edgeCollision;
+//    std::unordered_map<Location, std::vector<edgeCollision>> m_edgeCollision;
+    std::vector<std::vector<edgeCollision>> m_edgeCollision_t;
     std::vector<Neighbor<JPSSIPPState, Action, Cost> > jps_successors;
   };
 

@@ -95,6 +95,10 @@ class SIPP {
     m_env.setCollisionIntervals(location, intervals);
   }
 
+  void setEdgeCollisionSize(const int& dimx, const int& dimy){
+	  m_env.setEdgeCollisionSize(dimx, dimy);
+  }
+
   void setEdgeCollisions(const Location& location,
                              const std::vector<edgeCollision>& ec) {
     m_env.setEdgeCollisions(location, ec);
@@ -277,7 +281,7 @@ class SIPP {
       m_env.onDiscover(s.state, fScore, gScore);
     }
 
-    void setCollisionIntervals(const Location& location,
+/*    void setCollisionIntervals(const Location& location,
                                const std::vector<interval>& intervals) {
       m_safeIntervals.erase(location);
       std::vector<interval> sortedIntervals(intervals);
@@ -316,6 +320,31 @@ class SIPP {
       //     std::cout << "  si: " << si.start << " - " << si.end << std::endl;
       //   }
       // }
+    }*/
+    void setCollisionIntervals(const Location& location,
+                               const std::vector<interval>& intervals) {
+    	if(intervals.size() == 0) return;
+    	int index = m_env.getIndex(location);
+    	m_safeIntervals_t[index].clear();
+    	std::vector<interval> sortedIntervals(intervals);
+    	std::sort(sortedIntervals.begin(), sortedIntervals.end());
+
+        int start = 0;
+        int lastEnd = 0;
+        for (const auto& interval : sortedIntervals) {
+          assert(interval.start <= interval.end);
+          assert(start <= interval.start);
+
+          if (start <= interval.start - 1) {
+            m_safeIntervals_t[index].push_back({start, interval.start - 1});
+          }
+          start = interval.end + 1;
+          lastEnd = interval.end;
+        }
+        if (lastEnd < std::numeric_limits<int>::max()) {
+          m_safeIntervals_t[index].push_back(
+              {start, std::numeric_limits<int>::max()});
+        }
     }
 
     bool findSafeInterval(const State& state, Cost time, size_t& interval) {
@@ -329,6 +358,34 @@ class SIPP {
       return false;
     }
 
+    void setEdgeCollisionSize(const int& dimx, const int& dimy){
+    	m_edgeCollision_t.resize(dimx * dimy);
+    	m_safeIntervals_t.resize(dimx * dimy);
+    	return ;
+    }
+
+    void setEdgeCollisions(const Location& location,
+  		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
+    	int index = m_env.getIndex(location);
+
+    	if(edge_collision.size() > 0){
+    		m_edgeCollision_t[index].clear();
+    		for(const auto& ec : edge_collision){
+    			m_edgeCollision_t[index].push_back(ec);
+    		}
+    	}
+    }
+
+    bool IsEdgeCollisions(const Location& location, const edgeCollision& ec){
+    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
+    	int index = m_env.getIndex(location);
+    	if(m_edgeCollision_t[index].size() == 0) return false;
+    	for(auto& cec : (m_edgeCollision_t[index])){
+    		if(cec == ec) return true;
+    	}
+    	return false;
+    }
+/*
     void setEdgeCollisions(const Location& location,
   		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
   	  m_edgeCollision.erase(location);
@@ -353,9 +410,9 @@ class SIPP {
     		}
     		return false;
     }
-
+*/
    private:
-    const std::vector<interval>& safeIntervals(const Location& location) {
+/*    const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});
       const auto iter = m_safeIntervals.find(location);
@@ -363,13 +420,24 @@ class SIPP {
         return defaultInterval;
       }
       return iter->second;
+    }*/
+    const std::vector<interval>& safeIntervals(const Location& location) {
+      static std::vector<interval> defaultInterval(
+          1, {0, std::numeric_limits<Cost>::max()});
+      if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
+      int index = m_env.getIndex(location);
+//      const auto iter = m_safeIntervals_t[index];
+//      std::cout << location.x << " " << location.y << "size " << iter.size() << " \n";
+      return m_safeIntervals_t[index];
     }
 
    private:
     Environment& m_env;
     Cost m_lastGScore;
     std::unordered_map<Location, std::vector<interval> > m_safeIntervals;
-    std::unordered_map<Location, std::vector<edgeCollision>> m_edgeCollision;
+    std::vector<std::vector<interval> > m_safeIntervals_t;
+//    std::unordered_map<Location, std::vector<edgeCollision>> m_edgeCollision;
+    std::vector<std::vector<edgeCollision>> m_edgeCollision_t;
   };
 
  private:

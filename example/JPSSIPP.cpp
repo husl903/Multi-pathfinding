@@ -106,6 +106,9 @@ class Environment {
   bool isSolution(const State& s) { return s == m_goal; }
 
   State getLocation(const State& s) { return s; }
+  int getIndex(const State& s){
+	  return (s.x*m_dimy + s.y);
+  }
 
   void getNeighbors(const State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
@@ -262,7 +265,6 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  std::cout << res << " --\n";
 
   std::fstream res_sta(res, std::ios::app);
   std::fstream res_Good(res+"_good", std::ios::app);
@@ -372,6 +374,8 @@ int main(int argc, char* argv[]) {
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
+    jpssipp.setEdgeCollisionSize(dimx, dimy);
+    sipp.setEdgeCollisionSize(dimx, dimy);
     for (const auto& collisionIntervals : allCollisionIntervals) {
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
       State current_state = collisionIntervals.first;

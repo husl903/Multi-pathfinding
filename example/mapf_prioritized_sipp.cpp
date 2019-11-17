@@ -94,6 +94,10 @@ class Environment {
 
   State getLocation(const State& s) { return s; }
 
+  int getIndex(const State& s){
+	  return (s.x*m_dimy + s.y);
+  }
+
   void getNeighbors(const State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
     neighbors.clear();
@@ -141,12 +145,15 @@ class Environment {
     // return t - 1 <= latestStartTime;
     return true;
   }
-
- private:
+  bool isTemporalObstacle(const State& s){
+	  return true;
+  }
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
            m_obstacles.find(s) == m_obstacles.end();
   }
+ private:
+
 
  public:
   int num_generation = 0;
