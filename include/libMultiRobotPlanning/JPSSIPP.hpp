@@ -708,7 +708,7 @@ public:
     		          			break;
     		          		}
     					}
-    	             	if (isSolution(current_successor)) {
+    	             	if (isSolution(current_successor) || current_successor.state.x%4 == 0 || current_successor.state.y%4 == 0) {
     	             		current_successor.dir = 0x01;
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
     	           			break ;
@@ -842,7 +842,7 @@ public:
     		          		}
     					}
 
-    	             	if (isSolution(current_successor)) {
+    	             	if (isSolution(current_successor) || current_successor.state.x %4 == 0 || current_successor.state.y %4 == 0) {
     	             		current_successor.dir = 0x02;
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
     	           			break ;
@@ -934,7 +934,7 @@ public:
                 					}
                 				}
 
-            	             	if (isSolution(current_successor)) {
+            	             	if (isSolution(current_successor) || current_successor.state.x %4 == 0 || current_successor.state.y %4 == 0) {
             	             		current_successor.dir = 0x07;
 
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
@@ -1003,7 +1003,7 @@ public:
                 					}
                 				}
 
-            	             	if (isSolution(current_successor)) {
+            	             	if (isSolution(current_successor) || current_successor.state.x %4 == 0 || current_successor.state.y %4 == 0) {
             	             		current_successor.dir = 0x0b;
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           			break ;
@@ -1371,6 +1371,7 @@ public:
     }
 
     bool isSafeAtT(const Location& location, Cost &start_time){ // whether the obstacle appears after the time
+    	if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return true;
         const auto& si = safeIntervals(m_env.getLocation(location));
 //       std::cout << location.x << "  " << location.y << " Cost: " << start_time << " si.size " << si.size() << "\n";
        if(si.size() == 0) return false;
@@ -1405,6 +1406,7 @@ public:
     const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});
+      if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
       const auto iter = m_safeIntervals.find(location);
       if (iter == m_safeIntervals.end()) {
         return defaultInterval;
