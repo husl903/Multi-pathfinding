@@ -281,46 +281,7 @@ class SIPP {
       m_env.onDiscover(s.state, fScore, gScore);
     }
 
-/*    void setCollisionIntervals(const Location& location,
-                               const std::vector<interval>& intervals) {
-      m_safeIntervals.erase(location);
-      std::vector<interval> sortedIntervals(intervals);
-      std::sort(sortedIntervals.begin(), sortedIntervals.end());
 
-      // std::cout << location << ": " << std::endl;
-      if (intervals.size() > 0) {
-        m_safeIntervals[location];  // create empty safe interval
-        int start = 0;
-        int lastEnd = 0;
-        for (const auto& interval : sortedIntervals) {
-          // std::cout << "  ci: " << interval.start << " - " << interval.end <<
-          // std::endl;
-          assert(interval.start <= interval.end);
-          assert(start <= interval.start);
-          // if (start + 1 != interval.start - 1) {
-          // std::cout << start << "," << interval.start << std::endl;
-          // assert(start + 1 < interval.start - 1);
-          if (start <= interval.start - 1) {
-            m_safeIntervals[location].push_back({start, interval.start - 1});
-          }
-          // }
-          start = interval.end + 1;
-          lastEnd = interval.end;
-        }
-        if (lastEnd < std::numeric_limits<int>::max()) {
-          // assert(start < std::numeric_limits<int>::max());
-          m_safeIntervals[location].push_back(
-              {start, std::numeric_limits<int>::max()});
-        }
-      }
-
-      // auto iter = m_safeIntervals.find(location);
-      // if (iter != m_safeIntervals.end()) {
-      //   for (const auto& si : iter->second) {
-      //     std::cout << "  si: " << si.start << " - " << si.end << std::endl;
-      //   }
-      // }
-    }*/
     void setCollisionIntervals(const Location& location,
                                const std::vector<interval>& intervals) {
     	if(intervals.size() == 0) return;
@@ -412,15 +373,6 @@ class SIPP {
     }
 */
    private:
-/*    const std::vector<interval>& safeIntervals(const Location& location) {
-      static std::vector<interval> defaultInterval(
-          1, {0, std::numeric_limits<Cost>::max()});
-      const auto iter = m_safeIntervals.find(location);
-      if (iter == m_safeIntervals.end()) {
-        return defaultInterval;
-      }
-      return iter->second;
-    }*/
     const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});

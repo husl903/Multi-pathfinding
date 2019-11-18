@@ -223,10 +223,9 @@ class Environment {
   std::vector<std::vector<bool>> jump_point_map;
   std::vector<std::vector<bool>> m_temporal_obstacle;
   bool is_limit = false;
-
- private:
   int m_dimx;
   int m_dimy;
+ private:
   std::vector<std::vector<bool>> m_obstacles;
   State m_goal;
   bool is_jps = true;
@@ -366,6 +365,7 @@ int main(int argc, char* argv[]) {
 
 
   long cost = 0;
+  int num_temporal_obstacle = 0;
   for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
@@ -441,13 +441,13 @@ int main(int argc, char* argv[]) {
                 << std::endl;
 
       // print solution
-      for (size_t i = 0; i < solution.actions.size(); ++i) {
+  /*    for (size_t i = 0; i < solution.actions.size(); ++i) {
         std::cout << solution.states[i].second << ": " << solution.states[i].first
                   << "->" << solution.actions[i].first
                   << "(cost: " << solution.actions[i].second << ")" << std::endl;
       }
       std::cout << solution.states.back().second << ": "
-                << solution.states.back().first << std::endl;
+                << solution.states.back().first << std::endl;*/
 
       for (size_t i = 0; i < solution.states.size(); ++i) {
         out << "    - x: " << solution.states[i].first.x << std::endl
@@ -487,7 +487,10 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
           allCollisionIntervals_sipp[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution2.states[i].second - 1));
-          map_temporal_obstacle[lastState.first.x][lastState.first.y] = true;
+          if(!map_temporal_obstacle[lastState.first.x][lastState.first.y]){
+        	  map_temporal_obstacle[lastState.first.x][lastState.first.y]= true;
+        	  num_temporal_obstacle++;
+          }
           lastState = solution2.states[i];
         }
       }
@@ -495,7 +498,10 @@ int main(int argc, char* argv[]) {
             jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
       allCollisionIntervals_sipp[solution2.states.back().first].push_back(
             sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
-      map_temporal_obstacle[lastState.first.x][lastState.first.y] = true;
+      if(!map_temporal_obstacle[lastState.first.x][lastState.first.y]){
+    	  map_temporal_obstacle[lastState.first.x][lastState.first.y]= true;
+    	  num_temporal_obstacle++;
+      }
 
 //      std::cout << ""
       // update statistics
@@ -508,12 +514,12 @@ int main(int argc, char* argv[]) {
     	  if(solution2.actions[i].first != Action::Wait ){
     	      allEdgeCollisions_sipp[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
     	   }
-        std::cout << solution2.states[i].second << ": " << solution2.states[i].first
+/*        std::cout << solution2.states[i].second << ": " << solution2.states[i].first
                   << "->" << solution2.actions[i].first
-                  << "(cost: " << solution2.actions[i].second << ")" << std::endl;
+                  << "(cost: " << solution2.actions[i].second << ")" << std::endl;*/
       }
-      std::cout << solution2.states.back().second << ": "
-                << solution2.states.back().first << std::endl;
+/*      std::cout << solution2.states.back().second << ": "
+                << solution2.states.back().first << std::endl;*/
 
       for (size_t i = 0; i < solution2.states.size(); ++i) {
         out << "    - x: " << solution2.states[i].first.x << std::endl
@@ -549,15 +555,15 @@ int main(int argc, char* argv[]) {
 
 
     res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " "
-    		<< num_generation1 << " " << num_expansion1 - num_expansion2 <<"\n";
+    		<< num_generation1 << " " << num_temporal_obstacle <<" \n";
 //    res_sta << inputFile << " Agent " << i << " JPSSIPPAN: " << " cost: " << solution3.cost << " " << time3 << " " << num_expansion3 << " " << num_generation3 <<"\n";
-    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
+    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 << " " << num_temporal_obstacle <<" \n";
 
     if (time1 < time2){
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
         res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
-//   if(i == 5) break;
+//   if(i == 10) break;
 //    break;
   }
 
