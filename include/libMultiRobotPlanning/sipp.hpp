@@ -85,6 +85,9 @@ class SIPP {
  	friend bool operator==(const edgeCollision& a, const edgeCollision& b){
  		return (a.t == b.t) && (a.action == b.action);
  	}
+    friend bool operator<(const edgeCollision& a, const edgeCollision& b) {
+      return a.t < b.t;
+    }
   };
 
  public:
@@ -328,23 +331,39 @@ class SIPP {
     void setEdgeCollisions(const Location& location,
   		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
     	int index = m_env.getIndex(location);
-
-    	if(edge_collision.size() > 0){
+    	std::vector<edgeCollision> sortedEdges(edge_collision);
+    	std::sort(sortedEdges.begin(), sortedEdges.end());
+    	if(sortedEdges.size() > 0){
     		m_edgeCollision_t[index].clear();
-    		for(const auto& ec : edge_collision){
+    		for(const auto& ec : sortedEdges){
     			m_edgeCollision_t[index].push_back(ec);
     		}
     	}
     }
 
     bool IsEdgeCollisions(const Location& location, const edgeCollision& ec){
-    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
+    	if(!m_env.stateValid(location) || !m_env.isTemporalObstacle(location)) return false;
+    	int index = m_env.getIndex(location);
+    	if(m_edgeCollision_t[index].size() == 0) return false;
+    	bool flag_1 = false;
+    	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
+    	while (low <= high){
+    		if(m_edgeCollision_t[index][low] == ec) return true;
+    		if(m_edgeCollision_t[index][high] == ec) return true;
+    		mid = low + (high - low)/2;
+    		if(m_edgeCollision_t[index][mid] == ec) return true;
+    		else if(m_edgeCollision_t[index][mid].t < ec.t){
+    			low = mid + 1;
+    		} else high = mid -1;
+    	}
+    	return false;
+/*    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
     	for(auto& cec : (m_edgeCollision_t[index])){
     		if(cec == ec) return true;
     	}
-    	return false;
+    	return false;*/
     }
 /*
     void setEdgeCollisions(const Location& location,

@@ -86,6 +86,9 @@ public:
 	friend bool operator==(const edgeCollision& a, const edgeCollision& b){
 		return (a.t == b.t) && (a.action == b.action);
 	}
+    friend bool operator<(const edgeCollision& a, const edgeCollision& b) {
+      return a.t < b.t;
+    }
   };
 public:
   struct EdgeCollisionHasher {
@@ -240,7 +243,7 @@ public:
     }
 
     bool mightHaveSolution(const State& goal) {
-      const auto& si = safeIntervals(m_env.getLocation(goal));
+      const auto& si = safeIntervals(goal);
       return m_env.isSolution(goal) &&
         !si.empty() &&
         si.back().end == std::numeric_limits<Cost>::max();
@@ -248,7 +251,7 @@ public:
 
     bool isSolution(const JPSSIPPState& s) {
       return m_env.isSolution(s.state) &&
-             safeIntervals(m_env.getLocation(s.state)).at(s.interval).end ==
+             safeIntervals(s.state).at(s.interval).end ==
                  std::numeric_limits<Cost>::max();
     }
 
@@ -265,9 +268,9 @@ public:
                   Cost m_time = m.cost;
                   Cost start_t = m_lastGScore + m_time;
                   Cost end_t =
-                      safeIntervals(m_env.getLocation(s.state)).at(s.interval).end;
+                      safeIntervals(s.state).at(s.interval).end;
 
-                  const auto& sis = safeIntervals(m_env.getLocation(m.state));
+                  const auto& sis = safeIntervals(m.state);
                   for (size_t i = 0; i < sis.size(); ++i) {
                     const interval& si = sis[i];
                     if (si.start - m_time > end_t || si.end < start_t) {
@@ -290,7 +293,7 @@ public:
                   }
                 }
             } else {
-              const auto& sis_s = safeIntervals(m_env.getLocation(s.state));
+              const auto& sis_s = safeIntervals(s.state);
           	  Cost start_t = m_lastGScore;
       		  Cost end_t = sis_s.at(s.interval).end;
       		  State state_re = s.state;
@@ -313,16 +316,15 @@ public:
          	   //Generate the waiting successor
          	   Cost up_start_t = -1, down_start_t = -1, left_start_t = -1, right_start_t = -1;
          	   re_start.clear();
-
+         	  JPSSIPPState temp_state = s;
       	      if(m_env.stateValid(State(s.state.x - 1, s.state.y)) &&
       	    		  isTemporalObstacleAfterT(State(s.state.x - 1, s.state.y), m_lastGScore + 1, left_start_t)){
-        		   JPSSIPPState temp_state = s;
         		   temp_state.dir = 0x00;
         		   temp_state.flag_wait = true;
         		   temp_state.state.x = s.state.x - 1;
         		   temp_state.state.y = s.state.y;
 
-        		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x - 1, s.state.y)));
+        		   const auto& sis = safeIntervals(State(s.state.x - 1, s.state.y));
         		   for (size_t i = 0; i < sis.size(); ++i) {
         			   const interval& si = sis[i];
         			   if (si.start - 1 > end_t)	break;
@@ -407,7 +409,7 @@ public:
            		   temp_state.flag_wait = true;
            		   temp_state.state.x = s.state.x + 1;
            		   temp_state.state.y = s.state.y;
-           		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x + 1, s.state.y)));
+           		   const auto& sis = safeIntervals(State(s.state.x + 1, s.state.y));
            		   for (size_t i = 0; i < sis.size(); ++i) {
            			   const interval& si = sis[i];
            			   if (si.start - 1 > end_t)	break;
@@ -487,7 +489,7 @@ public:
          		   temp_state.flag_wait = true;
          		   temp_state.state.x = s.state.x;
          		   temp_state.state.y = s.state.y + 1;
-        		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x, s.state.y + 1)));
+        		   const auto& sis = safeIntervals(State(s.state.x, s.state.y + 1));
          		   for (size_t i = 0; i < sis.size(); ++i) {
          			   const interval& si = sis[i];
          			   if (si.start - 1 > end_t) break;
@@ -523,7 +525,7 @@ public:
         		   temp_state.state.x = s.state.x;
         		   temp_state.state.y = s.state.y - 1;
 
-        		   const auto& sis = safeIntervals(m_env.getLocation(State(s.state.x, s.state.y - 1)));
+        		   const auto& sis = safeIntervals(State(s.state.x, s.state.y - 1));
         		   for (size_t i = 0; i < sis.size(); ++i) {
         			   const interval& si = sis[i];
         			   if (si.start - 1 > end_t)	break;
@@ -610,7 +612,7 @@ public:
          		up_start_t = -1; down_start_t = -1; right_start_t = -1; left_start_t = -1;
         		if(m_env.stateValid(current_successor.state) &&
         				!IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost_l, Action::Right))){
-             		const auto& si_s_l = safeIntervals(m_env.getLocation(temp_s.state));
+             		const auto& si_s_l = safeIntervals(temp_s.state);
     				successor_start = -1; successor_end = -1;
     				successor_next_start = -1; successor_next_end = -1;
     				findSafeInterval(current_successor.state, m_lastGScore + current_cost_l + 1, successor_interval,                  //find the safe interval
@@ -741,7 +743,7 @@ public:
          		up_start_t = -1; down_start_t = -1; right_start_t = -1; left_start_t = -1;
         		if(m_env.stateValid(current_successor.state) &&
         				!IsEdgeCollisions(current_successor.state,edgeCollision(m_lastGScore + current_cost_l, Action::Left))){
-             		const auto& si_s_l = safeIntervals(m_env.getLocation(temp_s.state));
+             		const auto& si_s_l = safeIntervals(temp_s.state);
 
     				successor_start = -1; successor_end = -1;
     				successor_next_start = -1; successor_next_end = -1;
@@ -899,7 +901,7 @@ public:
 
                 		if(m_env.stateValid(current_successor.state) &&
                 				!IsEdgeCollisions(current_successor.state, edgeCollision(m_lastGScore + current_cost_l, Action::Down))){
-                     		const auto& si_s_l = safeIntervals(m_env.getLocation(temp_s.state));
+                     		const auto& si_s_l = safeIntervals(temp_s.state);
 
                 			findSafeInterval(current_successor.state, m_lastGScore + current_cost_l + 1, successor_interval,
                       				          				successor_start, successor_end, successor_next_start, successor_next_end);
@@ -970,7 +972,7 @@ public:
      					}
                 		if(m_env.stateValid(current_successor.state) &&
                 				!IsEdgeCollisions(current_successor.state, edgeCollision(m_lastGScore + current_cost_l, Action::Up))){
-                     		const auto& si_s_l = safeIntervals(m_env.getLocation(temp_s.state));
+                     		const auto& si_s_l = safeIntervals(temp_s.state);
 
                 			findSafeInterval(current_successor.state, m_lastGScore + current_cost_l + 1, successor_interval,
                       				          				successor_start, successor_end, successor_next_start, successor_next_end);
@@ -1071,10 +1073,11 @@ public:
     void setEdgeCollisions(const Location& location,
   		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {
     	int index = m_env.getIndex(location);
-
-    	if(edge_collision.size() > 0){
+    	std::vector<edgeCollision> sortedEdges(edge_collision);
+    	std::sort(sortedEdges.begin(), sortedEdges.end());
+    	if(sortedEdges.size() > 0){
     		m_edgeCollision_t[index].clear();
-    		for(const auto& ec : edge_collision){
+    		for(const auto& ec : sortedEdges){
     			m_edgeCollision_t[index].push_back(ec);
     		}
     	}
@@ -1084,15 +1087,27 @@ public:
     	if(!m_env.stateValid(location) || !m_env.isTemporalObstacle(location)) return false;
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
-    	for(auto& cec : (m_edgeCollision_t[index])){
-    		if(cec == ec) return true;
+    	bool flag_1 = false;
+    	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
+    	while (low <= high){
+    		if(m_edgeCollision_t[index][low] == ec) return true;
+    		if(m_edgeCollision_t[index][high] == ec) return true;
+    		mid = low + (high - low)/2;
+    		if(m_edgeCollision_t[index][mid] == ec) return true;
+    		else if(m_edgeCollision_t[index][mid].t < ec.t){
+    			low = mid + 1;
+    		} else high = mid -1;
     	}
     	return false;
+    	/*for(auto& cec : (m_edgeCollision_t[index])){
+    		if(cec == ec) return true;
+    	}
+    	return false;*/
     }
 
     bool findSafeInterval(const State& state, Cost time, size_t& interval)
     {
-      const auto& si = safeIntervals(m_env.getLocation(state));
+      const auto& si = safeIntervals(state);
       for (size_t idx = 0; idx < si.size(); ++idx) {
         if (si[idx].start <= time && si[idx].end >= time) {
           interval = idx;
@@ -1104,7 +1119,7 @@ public:
 
     bool findSafeInterval(const State& state, Cost time, size_t& interval, Cost &start_t, Cost &end_t)
     {
-      const auto& si = safeIntervals(m_env.getLocation(state));
+      const auto& si = safeIntervals(state);
       for (size_t idx = 0; idx < si.size(); ++idx) {
         if (si[idx].start <= time && si[idx].end >= time) {
           interval = idx;
@@ -1118,7 +1133,7 @@ public:
 
     bool findSafeInterval(const State& state, Cost time, size_t& interval, Cost &start_t, Cost &end_t, Cost &next_start, Cost &next_end)
     {
-      const auto& si = safeIntervals(m_env.getLocation(state));
+      const auto& si = safeIntervals(state);
       start_t = -1;
       end_t = -1;
       next_start = -1;
@@ -1150,7 +1165,7 @@ public:
 
     bool isTemporalObstacleAtT(const Location& location, Cost time){
     	if(!m_env.isTemporalObstacle(location)) return false;
-        const auto& si = safeIntervals(m_env.getLocation(location));
+        const auto& si = safeIntervals(location, true);
         if(si.size() == 0) return true;
         for (size_t idx = 0; idx < si.size(); ++idx) {
           if (si[idx].start <= time && si[idx].end >= time) {
@@ -1163,9 +1178,8 @@ public:
 
 
     bool isTemporalObstacleAfterT(const Location& location, Cost time, Cost &start_time){ // whether the obstacle appears after the time
-
-       	if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return false;
-        const auto& si = safeIntervals(m_env.getLocation(location));
+       	if(!m_env.isTemporalObstacle(location)) return false;
+        const auto& si = safeIntervals(location, true);
         start_time = -1;
         if(si.size() == 0) return true;
         Cost start_ = 0, end_ = si[0].start - 1;
@@ -1181,8 +1195,8 @@ public:
     }
 
     bool isSafeAtT(const Location& location, Cost &start_time){ // whether the obstacle appears after the time
-    	if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return true;
-        const auto& si = safeIntervals(m_env.getLocation(location));
+    	if(!m_env.isTemporalObstacle(location)) return true;
+        const auto& si = safeIntervals(location, true);
        if(si.size() == 0) return false;
         Cost start_ = 0, end_ = si[0].start - 1;
         for (size_t idx = 0; idx < si.size(); ++idx) {
@@ -1195,10 +1209,15 @@ public:
     const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});
-      if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
+      if(!m_env.isTemporalObstacle(location)) return defaultInterval;
       int index = m_env.getIndex(location);
 //      const auto iter = m_safeIntervals_t[index];
 //      std::cout << location.x << " " << location.y << "size " << iter.size() << " \n";
+      return m_safeIntervals_t[index];
+    }
+
+    const std::vector<interval>& safeIntervals(const Location& location, bool is_temporal) {
+      int index = m_env.getIndex(location);
       return m_safeIntervals_t[index];
     }
 
