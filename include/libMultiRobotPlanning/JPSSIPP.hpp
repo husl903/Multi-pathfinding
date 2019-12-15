@@ -601,6 +601,9 @@ public:
  		Cost up_left_t = -1, down_left_t = -1, up_right_t = -1, down_right_t = -1;
  		Cost up_start_t = -1, down_start_t = -1, right_start_t = -1, left_start_t = -1;
 
+ 		Cost par_f = (Cost)m_env.admissibleHeuristic(s.state) + current_cost;
+ 		Cost succ_f = 0;
+ 		int step = 0;
      	if((dir & 0x01) && !flag_is_solution){ // the left direction
      		JPSSIPPState temp_s = s;
      		Cost current_cost_l = current_cost;
@@ -724,9 +727,13 @@ public:
     	           			break ;
     	             	}
     	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-    	             		current_successor.dir = 0x01;
-    	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
-    	           			break ;
+//    	             	if(step > m_env.limit_jump){
+//        	             	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+//    	             		if(succ_f > par_f){
+    	             			current_successor.dir = 0x01;
+    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
+    	           				break ;
+//    	             		}
     	             	}
     					current_cost_l++;
     					temp_s = current_successor;
@@ -738,6 +745,7 @@ public:
      		}
      	}
 
+     	step = 0;
      	if((dir & 0x02) && !flag_is_solution){ // the left direction
      		JPSSIPPState temp_s = s;
      		Cost current_cost_l = current_cost;
@@ -863,11 +871,16 @@ public:
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
     	           			break ;
     	             	}
+
     	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-    	             		current_successor.dir = 0x02;
-    	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
-    	           			break ;
-    	             	}
+//    	             	if(step > m_env.limit_jump){
+//    	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+//    	             		if(succ_f > par_f){
+    	             			current_successor.dir = 0x02;
+    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
+    	           				break ;
+    	             		}
+//    	             	}
     					current_cost_l++;
     					temp_s = current_successor;
     				} else break;
@@ -897,10 +910,14 @@ public:
          		Cost up_left_t = -1, down_left_t = -1, up_right_t = -1, down_right_t = -1;
          		Cost up_start_t = -1, down_start_t = -1, right_start_t = -1, left_start_t = -1;
 
+         		Cost par_f = (Cost)m_env.admissibleHeuristic(s.state) + current_cost;
+         		Cost succ_f = 0;
+         		int step = 0;
             	if((dir & 0x04) && !flag_is_solution){
              		JPSSIPPState temp_s = s;
              		Cost current_cost_l = current_cost;
             		while(true){
+            			step++;
             			current_successor.state.x = temp_s.state.x;
             			current_successor.state.y = temp_s.state.y + 1;
                  		up_left_t = -1; down_left_t = -1; up_right_t = -1; down_right_t = -1;
@@ -961,10 +978,15 @@ public:
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           			break ;
             	             	}
-            	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-            	             		current_successor.dir = 0x07;
-            	             		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-            	             	    break ;
+
+           	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+//            	             	if(step > m_env.limit_jump){
+//            	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+//            	             		if(succ_f > par_f){
+            	             			current_successor.dir = 0x07;
+            	             			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	             	    	break ;
+//            	             		}
             	             	}
             					current_cost_l++;
             					temp_s = current_successor;
@@ -972,11 +994,12 @@ public:
                 		}else break;
             		}
              	}
+            	step = 0;
             	if((dir & 0x08) && !flag_is_solution){
              		JPSSIPPState temp_s = s;
              		Cost current_cost_l = current_cost;
             		while(true){
-
+            			step++;
             			current_successor.state.x = temp_s.state.x;
             			current_successor.state.y = temp_s.state.y - 1;
                  		up_left_t = -1; down_left_t = -1; up_right_t = -1; down_right_t = -1;
@@ -1036,9 +1059,13 @@ public:
             	           			break ;
             	             	}
             	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-            	             		current_successor.dir = 0x0b;
-            	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-            	           			break ;
+//            	             	if(step > m_env.limit_jump){
+//            	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+//            	             		if(succ_f > par_f){
+            	             			current_successor.dir = 0x0b;
+            	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	           				break ;
+//            	             		}
             	             	}
             					current_cost_l++;
             					temp_s = current_successor;

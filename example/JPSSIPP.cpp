@@ -229,7 +229,7 @@ class Environment {
  public:
 	int num_generation = 0;
 	int num_expansion = 0;
-	int limit_jump = 4;
+	int limit_jump = 32;
  private:
 	int m_dimx;
 	int m_dimy;
@@ -384,7 +384,7 @@ int main(int argc, char* argv[]) {
 
   long cost = 0;
   int num_temporal_obstacle = 0;
-  int num_path = 100;//goals.size();
+  int num_path = goals.size();//goals.size();
 //  int num_path = 5;
   for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
