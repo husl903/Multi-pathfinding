@@ -250,12 +250,15 @@ int main(int argc, char* argv[]) {
 	std::string inputFile;
 	std::string outputFile;
 	std::string res;
+	int num_path = 50;//goals.size();
+
 	desc.add_options()("help", "produce help message")(
       "input,i", po::value<std::string>(&inputFile)->required(),
       "input file (YAML)")("output,o",
                            po::value<std::string>(&outputFile)->required(),
                            "output file (YAML)")
 						   ("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")
+						   ("path num,N", po::value<int>(&num_path)->required(), "num path (TXT)")
       // ("url",
       // po::value<std::string>(&url)->default_value("http://0.0.0.0:8080"),
       // "server URL")
@@ -384,7 +387,7 @@ int main(int argc, char* argv[]) {
 
   long cost = 0;
   int num_temporal_obstacle = 0;
-  int num_path = goals.size();//goals.size();
+  num_path = 50;
 //  int num_path = 5;
   for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
@@ -578,7 +581,13 @@ int main(int argc, char* argv[]) {
     } else {
       std::cout << inputFile  <<  " SIPP Planning NOT successful from Agent: " << i << std::endl;
       out << "    []" << std::endl;
-      break;
+      res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << " -1 " <<  " -1 " << " -1 "
+      		<< " -1 " <<" -1 \n";
+
+      res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << " -1 " << " -1 " << " -1 " << " -1 " <<" -1 \n";
+
+      continue;
+//      break;
     }
 
 

@@ -3,6 +3,8 @@
 #include <map>
 
 #include "a_star.hpp"
+#include "sipp.hpp"
+#include "JPSSIPP.hpp"
 
 namespace libMultiRobotPlanning {
 
