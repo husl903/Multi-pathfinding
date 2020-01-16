@@ -93,6 +93,17 @@ class SIPP {
  public:
   SIPP(Environment& environment) : m_env(environment), m_astar(m_env) {}
 
+  void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
+	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
+  }
+  void sortCollisionVertex(){
+	  m_env.sortCollisionVertex();
+  }
+
+  void setEdgeConstraint(const Location& location, int time, Action ac, bool is_first){
+	  m_env.setEdgeConstraint(location, time, ac, is_first);
+  }
+
   void setCollisionIntervals(const Location& location,
                              const std::vector<interval>& intervals) {
     m_env.setCollisionIntervals(location, intervals);
@@ -283,7 +294,45 @@ class SIPP {
       // << interval.end << std::endl;
       m_env.onDiscover(s.state, fScore, gScore);
     }
+    void setCollisionVertex(const Location& location, int startTime, int endTime, bool is_first){
+    	int index = m_env.getIndex(location);
+//    	std::cout << "  " << location.x << "  --- " << location.y << "\n";
+    	if(is_first){
+    		m_safeIntervals_t[index].clear();
+    	}
+    	std::cout << " Start Time " << startTime << " endTime " << endTime << " \n";
+    	m_safeIntervals_t[index].push_back({startTime, endTime});
+    	std::cout<< (m_safeIntervals_t[index].back()).start << " \n";
+    }
 
+    void sortCollisionVertex(){
+
+    	for(int i = 0;i < m_safeIntervals_t.size(); i++){
+    		if(m_safeIntervals_t[i].size() == 0) continue;
+    		std::vector<interval> sortedIntervals(m_safeIntervals_t[i].begin(), m_safeIntervals_t[i].end());
+    		sort(sortedIntervals.begin(), sortedIntervals.end());
+//    		std::cout << "m_safeIntervals_t.size()" << m_safeIntervals_t[i].size() << " " << sortedIntervals.size() << " *************\n";
+    		m_safeIntervals_t[i].clear();
+    		int start = 0;
+    		int lastEnd = 0;
+
+//    		std::cout << "m_safeIntervals_t.size()" << m_safeIntervals_t[i].size() << " " << sortedIntervals.size() << " &&&&&&&&&&&&&&&&\n";
+            for (const auto& interval : sortedIntervals) {
+            	assert(interval.start <= interval.end);
+            	assert(start <= interval.start);
+            	if (start <= interval.start - 1) {
+            		m_safeIntervals_t[i].push_back({start, interval.start - 1});
+            	}
+            	start = interval.end + 1;
+            	lastEnd = interval.end;
+            }
+            if (lastEnd < std::numeric_limits<int>::max()) {
+            	m_safeIntervals_t[i].push_back(
+            		{start, std::numeric_limits<int>::max()});
+            }
+
+    	}
+    }
 
     void setCollisionIntervals(const Location& location,
                                const std::vector<interval>& intervals) {
@@ -320,6 +369,14 @@ class SIPP {
         }
       }
       return false;
+    }
+
+    void setEdgeConstraint(const Location& location, int time, Action ac, bool is_first){
+    	int index = m_env.getIndex(location);
+    	if(is_first){
+    		m_edgeCollision_t[index].clear();
+    	}
+    	m_edgeCollision_t[index].push_back({time, ac});
     }
 
     void setEdgeCollisionSize(const int& dimx, const int& dimy){

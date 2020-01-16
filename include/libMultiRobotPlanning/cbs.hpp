@@ -5,6 +5,9 @@
 #include "a_star.hpp"
 #include "sipp.hpp"
 #include "JPSSIPP.hpp"
+#include "planresult.hpp"
+//using libMultiRobotPlanning::SIPP;
+//using libMultiRobotPlanning::JPSSIPP;
 
 namespace libMultiRobotPlanning {
 
@@ -78,7 +81,7 @@ statistical purposes.
     This function is called on every low-level expansion and can be used for
 statistical purposes.
 */
-template <typename State, typename Action, typename Cost, typename Conflict,
+template <typename State, typename Location, typename Action, typename Cost, typename Conflict,
           typename Constraints, typename Environment>
 class CBS {
  public:
@@ -154,12 +157,97 @@ class CBS {
 
         newNode.cost -= newNode.solution[i].cost;
 
+        jps_sipp jps(m_env);
+        jps.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        PlanResult<Location, Action, int> solutiontemp;
+        bool is_first_constraint = true;
+        for(auto & constraint : newNode.constraints[i].vertexConstraints){
+        	Location location(constraint.x, constraint.y);
+        	if(is_first_constraint){
+        		jps.setCollisionVertex(location, constraint.time, constraint.time, true);
+        		is_first_constraint = false;
+        	}else{
+        		jps.setCollisionVertex(location, constraint.time, constraint.time, false);
+        	}
+//        	std::cout << " test constaring\n";
+        }
+        jps.sortCollisionVertex();
+
+        is_first_constraint = true;
+        for(auto & constraint : newNode.constraints[i].edgeConstraints){
+        	Location loc(constraint.x1, constraint.y1);
+        	if(constraint.x1 == constraint.x1){
+        		if(constraint.y1 == constraint.y2 - 1){
+        			jps.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint);
+        		}else if(constraint.y1 == constraint.y2 + 1){
+        			jps.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint);
+        		}
+        	}else{
+        		if(constraint.x1 == constraint.x2 - 1){
+        			jps.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint);
+        		}else if(constraint.x1 == constraint.x2 + 1){
+        			jps.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint);
+        		}
+        	}
+        	if(is_first_constraint){
+        		is_first_constraint = false;
+        	}
+        }
+        m_env.setGoal(i);
+        bool isJpsSucc = jps.search(Location(initialStates[i].x, initialStates[i].y), Action::Wait, solutiontemp, 0, true);
+        if(!isJpsSucc){
+        	std::cout << " JPS not success )))))))))))))))))))))))\n";
+        }
+
+        sipp_t sipp(m_env);
+        sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        PlanResult<Location, Action, int> solutionSipp;
+        is_first_constraint = true;
+        for(auto & constraint : newNode.constraints[i].vertexConstraints){
+        	Location location(constraint.x, constraint.y);
+        	if(is_first_constraint){
+        		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
+        		is_first_constraint = false;
+        	}else{
+        		sipp.setCollisionVertex(location, constraint.time, constraint.time, false);
+        	}
+//        	std::cout << " test constaring\n";
+        }
+        sipp.sortCollisionVertex();
+
+        is_first_constraint = true;
+        for(auto & constraint : newNode.constraints[i].edgeConstraints){
+        	Location loc(constraint.x1, constraint.y1);
+        	if(constraint.x1 == constraint.x1){
+        		if(constraint.y1 == constraint.y2 - 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint);
+        		}else if(constraint.y1 == constraint.y2 + 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint);
+        		}
+        	}else{
+        		if(constraint.x1 == constraint.x2 - 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint);
+        		}else if(constraint.x1 == constraint.x2 + 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint);
+        		}
+        	}
+        	if(is_first_constraint){
+        		is_first_constraint = false;
+        	}
+        }
+        m_env.setGoal(i);
+        bool isSippSucc = sipp.search(Location(initialStates[i].x, initialStates[i].y), Action::Wait, solutionSipp, 0);
+        if(!isSippSucc){
+        	std::cout << " Sipp not success ((((((((((((((((((999\n";
+        }
+
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
         bool success = lowLevel.search(initialStates[i], newNode.solution[i]);
 
         newNode.cost += newNode.solution[i].cost;
 
+        std::cout << " Cost jps " << solutiontemp.cost << " Astar " << newNode.solution[i].cost << " Sipp " << solutionSipp.cost << " +++++++++++++++++++++++++++++++++++++++++++++==\n";
         if (success) {
           // std::cout << "  success. cost: " << newNode.cost << std::endl;
           auto handle = open.push(newNode);
@@ -248,6 +336,12 @@ class CBS {
  private:
   Environment& m_env;
   typedef AStar<State, Action, Cost, LowLevelEnvironment> LowLevelSearch_t;
+  typedef JPSSIPP<Location, Location, Action, int, Environment> jps_sipp;
+  typedef SIPP<Location, Location, Action, int, Environment> sipp_t;
+//  jps_sipp.setEdgeCollisionSize(10, 10);
+//  std::map<Location, std::vector<jps_sipp::interval>> allCollisionIntervals;
+//  std::map<Location, std::vector<JPSSIPP::edgeCollision>> allEdgeCollisions;
+
 };
 
 }  // namespace libMultiRobotPlanning
