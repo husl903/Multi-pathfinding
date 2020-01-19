@@ -90,7 +90,8 @@ class Environment {
  public:
 
 	Environment(size_t dimx, size_t dimy, std::vector<std::vector<bool>> obstacles, std::vector<std::vector<bool>> t_obstacle,
-              std::vector<std::vector<bool>>jump_point_map, std::vector<std::vector<int>>last_ob_g, std::vector<std::vector<int>>nei_ob_g, State goal)
+              std::vector<std::vector<bool>>jump_point_map, std::vector<std::vector<int>>last_ob_g,
+			  std::vector<std::vector<int>>nei_ob_g, State goal)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
@@ -178,7 +179,9 @@ class Environment {
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
 				!m_obstacles[s.x][s.y];
 	}
-
+	bool isBorder(const State& s){
+		return s.x == 0 || s.x == m_dimx - 1 || s.y == 0 || s.y == m_dimy - 1;
+	}
 	bool isObstacle(const State& s){
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
 	           m_obstacles[s.x][s.y];
@@ -187,6 +190,16 @@ class Environment {
 	bool isTemporalObstacle(const State& s){
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
 			  m_temporal_obstacle[s.x][s.y];
+	}
+
+	bool isTemporalEdgeConstraint(const State& s){
+		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+			  m_temporal_obstacle[s.x][s.y];
+	}
+
+	bool isTemporalEdgeConstraintAfterT(const State& s, int T){
+		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+			  m_temporal_obstacle[s.x][s.y]>=T;
 	}
 
 	bool isTemporalObstacleAfterT(const State& s, int T){

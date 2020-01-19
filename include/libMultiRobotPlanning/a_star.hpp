@@ -126,12 +126,12 @@ class AStar {
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
-            // std::cout << "  this is a new node " << fScore << "," <<
-            // tentative_gScore << std::endl;
+//            std::cout << "  this is a new node " << fScore << ","  << neighbor.state.state.x << ", " << neighbor.state.state.y << ", " <<
+//             tentative_gScore << std::endl;
           } else {
             auto handle = iter->second;
-            // std::cout << "  this is an old node: " << tentative_gScore << ","
-            // << (*handle).gScore << std::endl;
+//             std::cout << "  this is an old node: " << tentative_gScore << "," << neighbor.state.State.x << ", " << neighbor.state.State.y << ", "
+//             << (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
               continue;

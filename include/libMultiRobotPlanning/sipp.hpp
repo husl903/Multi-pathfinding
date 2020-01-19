@@ -100,6 +100,10 @@ class SIPP {
 	  m_env.sortCollisionVertex();
   }
 
+  void sortCollisionEdgeConstraint(){
+	  m_env.sortCollisionEdgeConstraint();
+  }
+
   void setEdgeConstraint(const Location& location, int time, Action ac, bool is_first){
 	  m_env.setEdgeConstraint(location, time, ac, is_first);
   }
@@ -133,6 +137,9 @@ class SIPP {
     if (!m_env.findSafeInterval(startState, startTime, interval)) {
       return false;
     }
+
+ //  std::cout << "Start " << startState.x << " " << startState.y << " Goal " << " ++++++++++++++++++++++++++++++++++\n";
+
     bool success = m_astar.search(SIPPState(startState, interval),
                                   astarsolution, startTime);
     solution.cost = astarsolution.cost - startTime;
@@ -220,10 +227,12 @@ class SIPP {
     }
 
     bool isSolution(const SIPPState& s) {
+//      std::cout << "Test goal \n";
       return m_env.isSolution(s.state) &&
              safeIntervals(m_env.getLocation(s.state)).at(s.interval).end ==
                  std::numeric_limits<Cost>::max();
     }
+
 
     void getNeighbors(
         const SIPPState& s,
@@ -235,7 +244,7 @@ class SIPP {
       m_env.getNeighbors(s.state, motions);
       for (const auto& m : motions) {
 //    	  m_env.num_generation++;
-        // std::cout << "gN " << m.state << std::endl;
+
         Cost m_time = m.cost;
         // std::cout << m_lastGScore;
         Cost start_t = m_lastGScore + m_time;
@@ -243,16 +252,17 @@ class SIPP {
             safeIntervals(m_env.getLocation(s.state)).at(s.interval).end;
 
         const auto& sis = safeIntervals(m_env.getLocation(m.state));
+//        std::cout << "Successors  " << m.state.x << "  "<< m.state.y << " " << sis.size() << std::endl;
         for (size_t i = 0; i < sis.size(); ++i) {
           const interval& si = sis[i];
 //          std::cout << m.state.x << " " << m.state.y << "  i " << i << ": " << si.start << " , " << si.end << " " << start_t << " " << end_t<< " \n";
-          // std::endl;
           if (si.start - m_time > end_t || si.end < start_t) {
             continue;
           }
 //          std::cout << " --------------\n";
           int t;
           unsigned int dir_1 = 0x00;
+          bool is_EdgeConstraint = true;
           Action a_temp;
           if(m.action == Action::Left) {a_temp = Action::Right;dir_1 = 0x01;}
           else if(m.action == Action::Right) {a_temp = Action::Left; dir_1 = 0x02;}
@@ -260,15 +270,31 @@ class SIPP {
           else if(m.action == Action::Down){ a_temp = Action::Up; dir_1 = 0x08;}
 
           if (m_env.isCommandValid(s.state, m.state, m.action, m_lastGScore,
-                                   end_t, si.start, si.end, t)
-        		  && !IsEdgeCollisions(m.state, edgeCollision(t - 1, a_temp))) {
+                                   end_t, si.start, si.end, t)) {
             // std::cout << "  gN: " << m.state << "," << i << "," << t << ","
             // << m_lastGScore << std::endl;
-        	m_env.num_generation++;
-            neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
-                SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
-                t - m_lastGScore));
-//               std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " \n";
+        	if(!IsEdgeCollisionsConstraint(m.state, edgeCollision(t - 1, a_temp))){
+            	m_env.num_generation++;
+                neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
+                    SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
+                    t - m_lastGScore));
+//                std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
+        	}else if(is_EdgeConstraint){
+        		t++;
+        		while(t - 1 <= end_t && t <= si.end){
+        			if(!IsEdgeCollisionsConstraint(m.state, edgeCollision(t - 1, a_temp))){
+                    	m_env.num_generation++;
+                        neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
+                            SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
+                            t - m_lastGScore));
+//                        std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " PPPPPPPPPPPPPPPPPPPPPPPPPPPPPp\n";
+                        break;
+        			}
+        			t++;
+        		}
+//        		std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " --------------\n";
+        	}
+
           }
         }
       }
@@ -300,9 +326,7 @@ class SIPP {
     	if(is_first){
     		m_safeIntervals_t[index].clear();
     	}
-    	std::cout << " Start Time " << startTime << " endTime " << endTime << " \n";
     	m_safeIntervals_t[index].push_back({startTime, endTime});
-    	std::cout<< (m_safeIntervals_t[index].back()).start << " \n";
     }
 
     void sortCollisionVertex(){
@@ -377,6 +401,19 @@ class SIPP {
     		m_edgeCollision_t[index].clear();
     	}
     	m_edgeCollision_t[index].push_back({time, ac});
+//    	std::cout << location.x << " " << location.y << " time " << time << " Action " << ac << " Edge constraint !!!!!!!!!!!!!-----------------------------------------------------\n";
+
+    }
+
+
+    void sortCollisionEdgeConstraint(){
+    	for(int i = 0; i < m_edgeCollision_t.size(); i++){
+    		if(m_edgeCollision_t[i].size() == 0) continue;
+    		sort(m_edgeCollision_t[i].begin(), m_edgeCollision_t[i].end());
+/*    		for(int j = 0; j < m_edgeCollision_t[i].size(); j++){
+    			std::cout << "Edge constraint i " << i << " " << m_edgeCollision_t[i][j].t << " Action " << m_edgeCollision_t[i][j].action << " !!!!!!!!!!!!!!!!!!!---\n";
+    		}*/
+    	}
     }
 
     void setEdgeCollisionSize(const int& dimx, const int& dimy){
@@ -399,10 +436,11 @@ class SIPP {
     }
 
     bool IsEdgeCollisions(const Location& location, const edgeCollision& ec){
-    	if(!m_env.stateValid(location) || !m_env.isTemporalObstacle(location)) return false;
+    	if(!m_env.stateValid(location)) return false; //|| !m_env.isTemporalObstacle(location)
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
     	bool flag_1 = false;
+
     	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
     	while (low <= high){
     		if(m_edgeCollision_t[index][low] == ec) return true;
@@ -422,6 +460,16 @@ class SIPP {
     	}
     	return false;*/
     }
+    bool IsEdgeCollisionsConstraint(const Location& location, const edgeCollision& ec){
+    	if(!m_env.stateValid(location)) return false; //|| !m_env.isTemporalObstacle(location)
+    	int index = m_env.getIndex(location);
+    	if(m_edgeCollision_t[index].size() == 0) return false;
+    	for(auto& cec : (m_edgeCollision_t[index])){
+    		if(cec == ec) return true;
+    	}
+    	return false;
+    }
+
 /*
     void setEdgeCollisions(const Location& location,
   		  	  	  	  	const std::vector<edgeCollision>& edge_collision) {

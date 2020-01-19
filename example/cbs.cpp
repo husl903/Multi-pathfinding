@@ -253,6 +253,7 @@ class Environment {
   Environment(size_t dimx, size_t dimy, std::unordered_set<Location> obstacles,
               std::vector<Location> goals, Location goal, std::vector<std::vector<bool>>m_obstacle_matrix,
 			  std::vector<std::vector<bool>>temporal_obstacle,
+			  std::vector<std::vector<int>>temporal_edge_constraint,
 			  std::vector<std::vector<bool>>jump_point_map_m,
 			  std::vector<std::vector<int>>last_ob_g,
   	  	  	  std::vector<std::vector<int>>nei_ob_g
@@ -264,6 +265,7 @@ class Environment {
 		m_goal(goal),
 		m_obstacles_m(std::move(m_obstacle_matrix)),
 		m_temporal_obstacle(std::move(temporal_obstacle)),
+		m_temporal_edge_constraint(std::move(temporal_edge_constraint)),
 		jump_point_map(std::move(jump_point_map_m)),
 		m_last_ob_g(std::move(last_ob_g)),
 		m_nei_ob_g(std::move(nei_ob_g)),
@@ -310,7 +312,10 @@ class Environment {
     return s.x == m_goals[m_agentIdx].x && s.y == m_goals[m_agentIdx].y &&
            s.time > m_lastGoalConstraint;
   }
-  bool isSolution(const Location& s) { return s == m_goal; }
+  bool isSolution(const Location& s) {
+//	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
+	  return s == m_goal;
+  }
 
 	void getNeighbors(const Location& s,
                   std::vector<Neighbor<Location, Action, int> >& neighbors) {
@@ -540,6 +545,10 @@ class Environment {
            con.end();
   }
 
+  bool isBorder(const Location& s){
+	return s.x == 0 || s.x == m_dimx - 1 || s.y == 0 || s.y == m_dimy - 1;
+  }
+
   bool isObstacle(const Location& location){
 		return location.x >= 0 && location.x < m_dimx && location.y >= 0 && location.y < m_dimy &&
 	           m_obstacles_m[location.x][location.y];
@@ -548,14 +557,75 @@ class Environment {
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
 			  m_temporal_obstacle[s.x][s.y];
   }
+
+  bool isTemporalEdgeConstraint(const Location& s){
+		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+			  m_temporal_edge_constraint[s.x][s.y] > 0;
+  }
+
+  bool isTemporalEdgeConstraintAfterT(const Location& s, int T){
+//	  std::cout << " IsSetEdge--- " << s.x <<", " << s.y << ", T "<< T  << ", va " << m_temporal_edge_constraint[s.x][s.y] <<"\n";
+		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+			  m_temporal_edge_constraint[s.x][s.y]>=T;
+  }
+
   bool isTemporalObstacleAfterT(const Location& s, int T){
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy
 			  && m_last_ob_g[s.x][s.y] >= T;
   }
+  void setTemporalEdgeConstraint(const Location& s){
+	  m_temporal_edge_constraint[s.x][s.y] = true;
+  }
+
+  void setTemporalEdgeConstraint(const Location& s, int T){
+//	  std::cout << " SetEdge--- " << s.x <<", " << s.y << ", "<< T <<"\n";
+	  m_temporal_edge_constraint[s.x][s.y] = std::max(T, m_temporal_edge_constraint[s.x][s.y]);
+      int xx[5] = {0, 1, -1};
+      int yy[5] = {0, 1, -1};
+      for(int xx_1 = 0; xx_1 < 3; xx_1++){
+    	  for(int yy_1 = 0; yy_1 < 3; yy_1++){
+    		  if(xx_1 == 0 && yy_1 == 0) continue;
+    		  Location temp_state(s.x + xx[xx_1], s.y + yy[yy_1]);
+    		  if(stateValid(temp_state)){
+    			  m_nei_ob_g[temp_state.x][temp_state.y] = std::max(m_nei_ob_g[temp_state.x][temp_state.y], T);
+    		  }
+    	  }
+      }
+  }
+
   void setTemporalObstacle(const Location& s){
 		m_temporal_obstacle[s.x][s.y] = true;
   }
 
+  void setTemporalObstacle(const Location& s, int T){
+		m_temporal_obstacle[s.x][s.y] = true;
+		m_last_ob_g[s.x][s.y] = std::max(m_last_ob_g[s.x][s.y], T);
+        int xx[5] = {0, 1, -1};
+        int yy[5] = {0, 1, -1};
+		for(int xx_1 = 0; xx_1 < 3; xx_1++){
+			for(int yy_1 = 0; yy_1 < 3; yy_1++){
+				if(xx_1 == 0 && yy_1 == 0) continue;
+				Location temp_state(s.x + xx[xx_1], s.y + yy[yy_1]);
+				if(stateValid(temp_state)){
+					m_nei_ob_g[temp_state.x][temp_state.y] = std::max(m_nei_ob_g[temp_state.x][temp_state.y], T);
+				}
+			 }
+		 }
+		return ;
+  }
+
+
+  void resetTemporalObstacle(){
+	  int len = m_temporal_obstacle[0].size();
+	  for(int i = 0; i < m_temporal_obstacle.size(); i++){
+		  for(int j = 0; j < m_temporal_obstacle[i].size(); j++){
+			  m_temporal_obstacle[i][j] = false;
+			  m_temporal_edge_constraint[i][j] = -1;
+			  m_last_ob_g[i][j] = 0;
+			  m_nei_ob_g[i][j] = 0;
+		  }
+	  }
+  }
   bool isJumpPoint(const Location& s) {
 		return jump_point_map[s.x][s.y];
   }
@@ -563,7 +633,6 @@ class Environment {
   bool isJumpPoint(const Location& s, int time) {
 		return jump_point_map[s.x][s.y] || m_nei_ob_g[s.x][s.y]>=time;
   }
-
 
   void setJumpPoint(const Location& s){
 		jump_point_map[s.x][s.y] = true;
@@ -575,6 +644,7 @@ class Environment {
   void setNoJPS(){
 		is_jps = false;
   }
+
   bool isJPS(){
 		return is_jps;
   }
@@ -720,6 +790,7 @@ public:
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
+  std::vector<std::vector<int>> m_temporal_edge_constraint;
   std::vector<std::vector<bool>> jump_point_map;
   std::vector<std::vector<int>> m_last_ob_g;
   std::vector<std::vector<int>> m_nei_ob_g;
@@ -753,6 +824,8 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  std::cout << "File " << inputFile << " \n";
+
   YAML::Node config = YAML::LoadFile(inputFile);
 
   std::unordered_set<Location> obstacles;
@@ -762,20 +835,18 @@ int main(int argc, char* argv[]) {
   const auto& dim = config["map"]["dimensions"];
   int dimx = dim[0].as<int>();
   int dimy = dim[1].as<int>();
-  std::cout << " Start build map---\n";
 
   std::vector<std::vector<bool>> map_jump_point(dimx+1, std::vector<bool>(dimy+1));
   std::vector<std::vector<bool>> map_obstacle(dimx+1, std::vector<bool>(dimy+1));
   std::vector<std::vector<bool>> map_temporal_obstacle(dimx, std::vector<bool>(dimy+1));
+  std::vector<std::vector<int>> map_temporal_edge_constraint(dimx, std::vector<int>(dimy+1));
   std::vector<std::vector<int>> last_ob_g(dimx+1, std::vector<int>(dimy+1));
   std::vector<std::vector<int>> nei_ob_g(dimx+1, std::vector<int>(dimy+1));
 
-  std::cout << " Start build map---\n";
   for (const auto& node : config["map"]["obstacles"]) {
     obstacles.insert(Location(node[0].as<int>(), node[1].as<int>()));
     map_obstacle[node[0].as<int>()][node[1].as<int>()] = true;
   }
-  std::cout << " Start build map---\n";
 
   for (const auto& ob:obstacles){
 	  Location temp1 = ob,temp2 = ob;
@@ -820,7 +891,8 @@ int main(int argc, char* argv[]) {
     goals.emplace_back(Location(goal[0].as<int>(), goal[1].as<int>()));
   }
 
-  Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g);
+  Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
+		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, last_ob_g, nei_ob_g);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<State, Action, int> > solution;
 
@@ -846,14 +918,14 @@ int main(int argc, char* argv[]) {
     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     out << "schedule:" << std::endl;
     for (size_t a = 0; a < solution.size(); ++a) {
-      // std::cout << "Solution for: " << a << std::endl;
-      // for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-      //   std::cout << solution[a].states[i].second << ": " <<
-      //   solution[a].states[i].first << "->" << solution[a].actions[i].first
-      //   << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-      // }
-      // std::cout << solution[a].states.back().second << ": " <<
-      // solution[a].states.back().first << std::endl;
+//       std::cout << "Solution for: " << a << std::endl;
+//       for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+//         std::cout << solution[a].states[i].second << ": " <<
+//         solution[a].states[i].first << "->" << solution[a].actions[i].first
+//         << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+//       }
+//       std::cout << solution[a].states.back().second << ": " <<
+//       solution[a].states.back().first << std::endl;
 
       out << "  agent" << a << ":" << std::endl;
       for (const auto& state : solution[a].states) {

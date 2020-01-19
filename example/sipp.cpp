@@ -140,6 +140,9 @@ class Environment {
   bool isTemporalObstacle(const State& s){
 	  return true;
   }
+  bool isTemporalEdgeConstraint(const State& s){
+	  return true;
+  }
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
            m_obstacles.find(s) == m_obstacles.end();
