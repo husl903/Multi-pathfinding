@@ -222,24 +222,24 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
-//        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristFalse();
         Timer timerJps;
         timerJps.reset();
-        m_env.setExactHeuristTrue();
+//        m_env.setExactHeuristTrue();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
         timerJps.stop();
         double tJps = timerJps.elapsedSeconds();
         int ExpJps = m_env.num_expansion;
         int GenJps = m_env.num_generation;
 
-        m_env.setExactHeuristFalse();
+/*        m_env.setExactHeuristFalse();
         timerJps.reset();
         bool isJpsSuccM = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
         timerJps.stop();
         double tJpsM = timerJps.elapsedSeconds();
         int ExpJpsM = m_env.num_expansion;
         int GenJpsM = m_env.num_generation;
-
+*/
         sipp_t sipp(m_env);
         sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
         PlanResult<Location, Action, int> solutionSipp;
@@ -289,21 +289,21 @@ class CBS {
 
         Timer timerSipp;
         timerSipp.reset();
-        m_env.setExactHeuristTrue();
+//        m_env.setExactHeuristTrue();
         bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSipp = timerSipp.elapsedSeconds();
         int ExpSipp = m_env.num_expansion;
         int GenSipp = m_env.num_generation;
 
-        timerSipp.reset();
+/*        timerSipp.reset();
         m_env.setExactHeuristFalse();
         bool isSippSuccM = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSippM = timerSipp.elapsedSeconds();
         int ExpSippM = m_env.num_expansion;
         int GenSippM = m_env.num_generation;
-
+*/
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 
@@ -319,23 +319,23 @@ class CBS {
 
         newNode.cost += newNode.solution[i].cost;
 
-        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+/*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
 				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
 				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
 				", Time , " << tAstar << " , " << tSipp << " , " << tJps << " , " << tSippM << " , " << tJpsM <<
 				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps << " , " << ExpSippM << " , " << ExpJpsM <<
 				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
-				" \n";
+				" \n";*/
 
-/*                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
                 		"), Goal, (" << goal.x << " " << goal.y <<
         				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
         				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
         				", Time , " << tAstar << " , " << tSipp << " , " << tJps <<
         				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
         				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				" \n";*/
+        				" \n";
 
         if(isSippSucc && success){
         	if(solutionSipp.cost != newNode.solution[i].cost){
