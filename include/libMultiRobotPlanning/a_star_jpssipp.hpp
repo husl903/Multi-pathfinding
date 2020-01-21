@@ -149,7 +149,6 @@ class JPSAStar {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
 
-
           if (iter == stateToHeap.end()) {  // Discover a new node
 
             Cost fScore =

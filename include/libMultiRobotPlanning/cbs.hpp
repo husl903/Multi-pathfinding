@@ -215,16 +215,30 @@ class CBS {
         }
         jps.sortCollisionVertex();
         jps.sortCollisionEdgeConstraint();
-        m_env.setGoal(i);
+
+        Location goal = m_env.setGoal(i);
+        m_env.Reset();
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
+//        m_env.setExactHeuristFalse();
         Timer timerJps;
         timerJps.reset();
+        m_env.setExactHeuristTrue();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
         timerJps.stop();
         double tJps = timerJps.elapsedSeconds();
+        int ExpJps = m_env.num_expansion;
+        int GenJps = m_env.num_generation;
+
+        m_env.setExactHeuristFalse();
+        timerJps.reset();
+        bool isJpsSuccM = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
+        timerJps.stop();
+        double tJpsM = timerJps.elapsedSeconds();
+        int ExpJpsM = m_env.num_expansion;
+        int GenJpsM = m_env.num_generation;
 
         sipp_t sipp(m_env);
         sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
@@ -267,30 +281,61 @@ class CBS {
 
         sipp.sortCollisionVertex();
         sipp.sortCollisionEdgeConstraint();
-        m_env.setGoal(i);
+        goal = m_env.setGoal(i);
+        m_env.Reset();
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
+
         Timer timerSipp;
         timerSipp.reset();
+        m_env.setExactHeuristTrue();
         bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSipp = timerSipp.elapsedSeconds();
+        int ExpSipp = m_env.num_expansion;
+        int GenSipp = m_env.num_generation;
 
+        timerSipp.reset();
+        m_env.setExactHeuristFalse();
+        bool isSippSuccM = sipp.search(startNode, Action::Wait, solutionSipp, 0);
+        timerSipp.stop();
+        double tSippM = timerSipp.elapsedSeconds();
+        int ExpSippM = m_env.num_expansion;
+        int GenSippM = m_env.num_generation;
 
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 
         Timer timerAstar;
         timerAstar.reset();
+        int ExpA =  m_env.lowLevelExpanded();
         bool success = lowLevel.search(initialStates[i], newNode.solution[i]);
         timerAstar.stop();
+        int ExpAstar = m_env.lowLevelExpanded() - ExpA;
+        int GenAstar = m_env.lowLevelGenerated();
         double tAstar = timerAstar.elapsedSeconds();
 
-//        std::cout << " Time " << tSipp << ", " << tJps << ", " << tAstar << " \n";
-        newNode.cost += newNode.solution[i].cost;
-//        std::cout << "Start " << initialStates[i].x << " " << initialStates[i].y << " Cost jps " << solutiontemp.cost << " Astar " << newNode.solution[i].cost << " Sipp " << solutionSipp.cost << " +++++++++++++++++++++++++++++++++++++++++++++==\n";
 
+        newNode.cost += newNode.solution[i].cost;
+
+        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+        		"), Goal, (" << goal.x << " " << goal.y <<
+				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+				", Time , " << tAstar << " , " << tSipp << " , " << tJps << " , " << tSippM << " , " << tJpsM <<
+				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps << " , " << ExpSippM << " , " << ExpJpsM <<
+				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
+				" \n";
+
+/*                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                		"), Goal, (" << goal.x << " " << goal.y <<
+        				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+        				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+        				", Time , " << tAstar << " , " << tSipp << " , " << tJps <<
+        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				" \n";*/
 
         if(isSippSucc && success){
         	if(solutionSipp.cost != newNode.solution[i].cost){

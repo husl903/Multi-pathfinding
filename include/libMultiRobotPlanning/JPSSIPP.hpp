@@ -276,6 +276,7 @@ public:
 
     		std::vector<Neighbor<State, Action, Cost> > motions;
             JPSSIPPState s_temp = s;
+            m_env.num_expansion++;
             if(!m_env.isJPS()){
             	m_env.getNeighbors(s_temp.state, motions);
                 for (const auto& m : motions) {
@@ -314,7 +315,7 @@ public:
       		  State state_re = s.state;
       		  flag_is_solution = false;
       		  std::vector<startTime> re_start;
-//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+//      		  std::cout << "Jps Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << ", Expan " << m_env.num_expansion << "  ********************************\n";
 
       		  jps_successors.clear();
       		  bool is_scan_op = (s.dir & 0xc);
@@ -621,7 +622,7 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+// 				  	  std::cout << "Jps Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }
@@ -1144,7 +1145,7 @@ public:
 
 
     void onExpandNode(const JPSSIPPState& s, Cost fScore, Cost gScore) {
-    	m_env.num_expansion++;
+//    	m_env.num_expansion++;
     	m_lastGScore = gScore;
         m_env.onExpandNode(s.state, fScore, gScore);
     }

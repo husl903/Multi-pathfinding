@@ -256,7 +256,8 @@ class Environment {
 			  std::vector<std::vector<int>>temporal_edge_constraint,
 			  std::vector<std::vector<bool>>jump_point_map_m,
 			  std::vector<std::vector<int>>last_ob_g,
-  	  	  	  std::vector<std::vector<int>>nei_ob_g
+  	  	  	  std::vector<std::vector<int>>nei_ob_g,
+			  std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic
 			  )
       : m_dimx(dimx),
         m_dimy(dimy),
@@ -269,11 +270,13 @@ class Environment {
 		jump_point_map(std::move(jump_point_map_m)),
 		m_last_ob_g(std::move(last_ob_g)),
 		m_nei_ob_g(std::move(nei_ob_g)),
+		m_eHeuristic(std::move(eHeuristic)),
         m_agentIdx(0),
         m_constraints(nullptr),
         m_lastGoalConstraint(-1),
         m_highLevelExpanded(0),
-        m_lowLevelExpanded(0) {
+        m_lowLevelExpanded(0),
+		m_lowLevelGeneration(0){
     // computeHeuristic();
   }
 
@@ -286,6 +289,7 @@ class Environment {
     m_goal = m_goals[agentIdx];
     m_constraints = constraints;
     m_lastGoalConstraint = -1;
+    m_lowLevelGeneration = 0;
     for (const auto& vc : constraints->vertexConstraints) {
       if (vc.x == m_goals[m_agentIdx].x && vc.y == m_goals[m_agentIdx].y) {
         m_lastGoalConstraint = std::max(m_lastGoalConstraint, vc.time);
@@ -297,6 +301,9 @@ class Environment {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
+	if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+	else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+
     return std::abs(s.x - m_goals[m_agentIdx].x) +
            std::abs(s.y - m_goals[m_agentIdx].y);
   }
@@ -304,7 +311,10 @@ class Environment {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
-    return std::abs(s.x - m_goals[m_agentIdx].x) +
+	if(isExact){
+		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
            std::abs(s.y - m_goals[m_agentIdx].y);
   }
 
@@ -351,12 +361,31 @@ class Environment {
     //   std::cout << "  " << vc.time << "," << vc.x << "," << vc.y <<
     //   std::endl;
     // }
+//	  if(isOutput) std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  -----------\n";
     neighbors.clear();
+/*   if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
+    		|| isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
+			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1), s.time)
+			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
+			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
+			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
+			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
+			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))*/
+       if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
+        		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
+    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
+    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
+    			|| isTemporalObstacle(Location(s.x + 1, s.y)) || isTemporalObstacle(Location(s.x - 1, s.y))
+    			|| isTemporalObstacle(Location(s.x, s.y - 1)) || isTemporalObstacle(Location(s.x, s.y + 1))
+    			|| isTemporalObstacle(Location(s.x + 1, s.y - 1)) || isTemporalObstacle(Location(s.x - 1, s.y - 1))
+    			|| isTemporalObstacle(Location(s.x + 1, s.y + 1)) || isTemporalObstacle(Location(s.x - 1, s.y + 1)))
     {
       State n(s.time + 1, s.x, s.y);
+      m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Wait, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
@@ -364,26 +393,33 @@ class Environment {
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Left, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
       State n(s.time + 1, s.x + 1, s.y);
+      m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Right, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
       State n(s.time + 1, s.x, s.y + 1);
+      m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(Neighbor<State, Action, int>(n, Action::Up, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
       State n(s.time + 1, s.x, s.y - 1);
+      m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Down, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
   }
@@ -471,7 +507,7 @@ class Environment {
   int highLevelExpanded() { return m_highLevelExpanded; }
 
   int lowLevelExpanded() const { return m_lowLevelExpanded; }
-
+  int lowLevelGenerated() const { return m_lowLevelGeneration; }
  private:
   State getState(size_t agentIdx,
                  const std::vector<PlanResult<State, Action, int> >& solution,
@@ -560,7 +596,7 @@ class Environment {
 
   bool isTemporalEdgeConstraint(const Location& s){
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
-			  m_temporal_edge_constraint[s.x][s.y] > 0;
+			  m_temporal_edge_constraint[s.x][s.y] >= 0;
   }
 
   bool isTemporalEdgeConstraintAfterT(const Location& s, int T){
@@ -621,8 +657,8 @@ class Environment {
 		  for(int j = 0; j < m_temporal_obstacle[i].size(); j++){
 			  m_temporal_obstacle[i][j] = false;
 			  m_temporal_edge_constraint[i][j] = -1;
-			  m_last_ob_g[i][j] = 0;
-			  m_nei_ob_g[i][j] = 0;
+			  m_last_ob_g[i][j] = -1;
+			  m_nei_ob_g[i][j] = -1;
 		  }
 	  }
   }
@@ -651,11 +687,23 @@ class Environment {
 
   void Reset(){
 		num_generation = 0;
-		num_expansion =0;
+		num_expansion = 0;
   }
-  void setGoal(int agentId){
+Location  setGoal(int agentId){
 	  m_goal = m_goals[agentId];
+	  m_agentIdx = agentId;
+	  Location goal = m_goal;
+	  isOutput = true;
+	  isExact = false;
+	  return goal;
   }
+  bool setExactHeuristTrue(){
+	  isExact = true;
+  }
+  bool setExactHeuristFalse(){
+	  isExact = false;
+  }
+
 #if 0
   // We use another A* search for simplicity
   // we compute the shortest path to each goal by using the fact that our getNeighbor function is
@@ -785,8 +833,11 @@ public:
   int m_lastGoalConstraint;
   int m_highLevelExpanded;
   int m_lowLevelExpanded;
+  int m_lowLevelGeneration;
   bool is_limit = false;
   bool is_jps = true;
+  bool isOutput = false;
+  bool isExact = false;
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
@@ -794,8 +845,41 @@ public:
   std::vector<std::vector<bool>> jump_point_map;
   std::vector<std::vector<int>> m_last_ob_g;
   std::vector<std::vector<int>> m_nei_ob_g;
-
+  std::unordered_map<Location, std::vector<std::vector<int>>> m_eHeuristic;
 };
+
+
+void getExactHeuristic(std::vector<std::vector<int>>& eHeuristic, std::vector<std::vector<bool>>map_obstacle, Location goal, int dimx, int dimy){
+    int xx[5] = {0, 0, -1, 1};
+    int yy[5] = {1, -1, 0, 0};
+
+	eHeuristic[goal.x][goal.y] = 0;
+	std::queue<Location> que;
+	que.push(goal);
+
+	while(true){
+		int queSize = que.size();
+		if(queSize == 0) break;
+		for(int i = 0; i < queSize; i++){
+			Location curr = que.front();
+			int currValue = eHeuristic[curr.x][curr.y];
+			que.pop();
+			for(int ii = 0; ii < 4; ii++){
+				Location nei(curr.x + xx[ii], curr.y + yy[ii]);
+				if(curr.x + xx[ii] < 0 || curr.y + yy[ii] < 0 || curr.x + xx[ii] >= dimx || curr.y + yy[ii] >= dimy
+						|| map_obstacle[nei.x][nei.y]) continue;
+				if(eHeuristic[nei.x][nei.y] == -1){
+					eHeuristic[nei.x][nei.y] = currValue + 1;
+					que.push(nei);
+				}
+			}
+		}
+	}
+
+
+
+}
+
 
 int main(int argc, char* argv[]) {
   namespace po = boost::program_options;
@@ -803,11 +887,15 @@ int main(int argc, char* argv[]) {
   po::options_description desc("Allowed options");
   std::string inputFile;
   std::string outputFile;
+  int numAgent = INT_MAX;
   desc.add_options()("help", "produce help message")(
       "input,i", po::value<std::string>(&inputFile)->required(),
       "input file (YAML)")("output,o",
                            po::value<std::string>(&outputFile)->required(),
-                           "output file (YAML)");
+                           "output file (YAML)")
+						   ("agents,a",
+						     po::value<int>(&numAgent)->required(),
+						      "number agents");
 
   try {
     po::variables_map vm;
@@ -883,16 +971,39 @@ int main(int argc, char* argv[]) {
 
   }
 
+  int num_agent = 0;
+  std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
+  Timer t;
   for (const auto& node : config["agents"]) {
     const auto& start = node["start"];
     const auto& goal = node["goal"];
     startStates.emplace_back(State(0, start[0].as<int>(), start[1].as<int>()));
     // std::cout << "s: " << startStates.back() << std::endl;
     goals.emplace_back(Location(goal[0].as<int>(), goal[1].as<int>()));
-  }
 
+    std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
+    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[num_agent], dimx, dimy);
+    eHeuristic[goals[num_agent]] = eHeuristicGoal;
+
+    num_agent++;
+    if(num_agent > numAgent) break;
+  }
+  t.stop();
+  double preT = t.elapsedSeconds();
+/*  for(int ii = 0; ii < eHeuristic.size(); ii++){
+//	  std::vector<std::vector<int>> temp = eHeuristic[ii];
+	for(int i = 0; i < dimx; i++){
+		for(int j = 0; j < dimy; j++){
+			std::cout << eHeuristic[goals[ii]][i][j] <<" ";
+		}
+		std::cout << "\n";
+	}
+  }
+	std::cout << " ---------------------\n";
+*/
+  std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
   Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
-		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, last_ob_g, nei_ob_g);
+		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, last_ob_g, nei_ob_g, eHeuristic);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<State, Action, int> > solution;
 
