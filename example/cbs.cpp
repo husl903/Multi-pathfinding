@@ -301,11 +301,14 @@ class Environment {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
-/*	if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
-	else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];*/
+	if(isExact){
+		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
+	           std::abs(s.y - m_goals[m_agentIdx].y);
 
-    return std::abs(s.x - m_goals[m_agentIdx].x) +
-           std::abs(s.y - m_goals[m_agentIdx].y);
+/*    return std::abs(s.x - m_goals[m_agentIdx].x) +
+           std::abs(s.y - m_goals[m_agentIdx].y);*/
   }
   int admissibleHeuristic(const Location& s) {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
@@ -326,6 +329,9 @@ class Environment {
 //	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
 	  return s == m_goal;
   }
+
+  bool isSameXY(const State& s){return (s.x == m_goal.x || s.y == m_goal.y);}
+  bool isSameXY(const Location& s) {return s == m_goal;}
 
 	void getNeighbors(const Location& s,
                   std::vector<Neighbor<Location, Action, int> >& neighbors) {
@@ -694,7 +700,6 @@ Location  setGoal(int agentId){
 	  m_agentIdx = agentId;
 	  Location goal = m_goal;
 	  isOutput = true;
-	  isExact = false;
 	  return goal;
   }
   bool setExactHeuristTrue(){
@@ -837,7 +842,7 @@ public:
   bool is_limit = false;
   bool is_jps = true;
   bool isOutput = false;
-  bool isExact = false;
+  bool isExact = true;
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
@@ -875,9 +880,6 @@ void getExactHeuristic(std::vector<std::vector<int>>& eHeuristic, std::vector<st
 			}
 		}
 	}
-
-
-
 }
 
 

@@ -287,6 +287,7 @@ class SIPP {
                         neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
                             SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
                             t - m_lastGScore));
+//                        std::cout << " Sipp Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
 //                        std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " \n";
                         break;
         			}

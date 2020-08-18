@@ -207,7 +207,7 @@ class JPSAStar {
       // Our heap is a maximum heap, so we invert the comperator function here
       if (fScore != other.fScore) {
         return fScore > other.fScore;
-      } else if(gScore != other.fScore){
+      } else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else {
     	  return state.dir < other.state.dir;

@@ -91,7 +91,8 @@ class Environment {
 
 	Environment(size_t dimx, size_t dimy, std::vector<std::vector<bool>> obstacles, std::vector<std::vector<bool>> t_obstacle,
               std::vector<std::vector<bool>>jump_point_map, std::vector<std::vector<int>>last_ob_g,
-			  std::vector<std::vector<int>>nei_ob_g, State goal)
+			  std::vector<std::vector<int>>nei_ob_g,
+			  std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic, State goal)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
@@ -99,13 +100,24 @@ class Environment {
 		jump_point_map(std::move(jump_point_map)),
 		last_ob_g(std::move(last_ob_g)),
 		nei_ob_g(std::move(nei_ob_g)),
+		m_eHeuristic(std::move(m_eHeuristic)),
         m_goal(goal) {}
 
 	float admissibleHeuristic(const State& s) {
-		return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
+
+		if(isExact){
+			if(m_eHeuristic[m_goal][s.x][s.y] == -1) return INT_MAX;
+			else return m_eHeuristic[m_goal][s.x][s.y];
+		} else return std::abs(s.x - m_goal.x) +
+		           std::abs(s.y - m_goal.y);
+
+//		return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
 	}
 
 	bool isSolution(const State& s) { return s == m_goal; }
+
+	bool isSameXY(const State& s){return (s.x == m_goal.x || s.y == m_goal.y);}
+//	bool isSameXY(const Location& s) {return s == m_goal;}
 
 	State getLocation(const State& s) { return s; }
 	int getIndex(const State& s){
@@ -239,10 +251,18 @@ class Environment {
 		num_generation = 0;
 		num_expansion =0;
 	}
+	bool setExactHeuristTrue(){
+		isExact = true;
+	}
+	bool setExactHeuristFalse(){
+		isExact = false;
+	}
  public:
 	int num_generation = 0;
 	int num_expansion = 0;
-	int limit_jump = 32;
+	int limit_jump = 8;
+	bool isExact = false;
+
  private:
 	int m_dimx;
 	int m_dimy;
@@ -251,10 +271,40 @@ class Environment {
 	std::vector<std::vector<bool>> jump_point_map;
 	std::vector<std::vector<int>> last_ob_g;
 	std::vector<std::vector<int>> nei_ob_g;
+	std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic;
 	State m_goal;
 	bool is_limit = false;
 	bool is_jps = true;
 };
+
+
+void getExactHeuristic(std::vector<std::vector<int>>& eHeuristic, std::vector<std::vector<bool>>map_obstacle, State goal, int dimx, int dimy){
+    int xx[5] = {0, 0, -1, 1};
+    int yy[5] = {1, -1, 0, 0};
+
+	eHeuristic[goal.x][goal.y] = 0;
+	std::queue<State> que;
+	que.push(goal);
+
+	while(true){
+		int queSize = que.size();
+		if(queSize == 0) break;
+		for(int i = 0; i < queSize; i++){
+			State curr = que.front();
+			int currValue = eHeuristic[curr.x][curr.y];
+			que.pop();
+			for(int ii = 0; ii < 4; ii++){
+				State nei(curr.x + xx[ii], curr.y + yy[ii]);
+				if(curr.x + xx[ii] < 0 || curr.y + yy[ii] < 0 || curr.x + xx[ii] >= dimx || curr.y + yy[ii] >= dimy
+						|| map_obstacle[nei.x][nei.y]) continue;
+				if(eHeuristic[nei.x][nei.y] == -1){
+					eHeuristic[nei.x][nei.y] = currValue + 1;
+					que.push(nei);
+				}
+			}
+		}
+	}
+}
 
 int main(int argc, char* argv[]) {
 	namespace po = boost::program_options;
@@ -295,6 +345,7 @@ int main(int argc, char* argv[]) {
 
 	std::fstream res_sta(res, std::ios::app);
 	std::fstream res_Good(res+"_good", std::ios::app);
+	std::fstream res_Constraint("constraint.txt", std::ios::app);
 
 
 	// Configure SIPP based on config file
@@ -335,6 +386,7 @@ int main(int argc, char* argv[]) {
 
 
 	for (const auto& ob:obstacles){
+
 		State temp1 = ob,temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -389,24 +441,25 @@ int main(int argc, char* argv[]) {
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
-//  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(5, 5));
-//  allCollisionIntervals[State(1,1)].push_back(jps_sipp::interval(10, 15));
-//  allCollisionIntervals[State(2,1)].push_back(jps_sipp::interval(10, 16));
-
-//  allCollisionIntervals_sipp[State(1,1)].push_back(sipp_t::interval(5, 5));
-//  allCollisionIntervals_sipp[State(1,1)].push_back(sipp_t::interval(10, 15));
-//  allCollisionIntervals_sipp[State(2,1)].push_back(sipp_t::interval(10, 16));
-
-
   long cost = 0;
   int num_temporal_obstacle = 0;
-  num_path = 50;
-//  int num_path = 5;
-  for (size_t i = 0; i < goals.size(); ++i) {
+  Timer t;
+  for (size_t i = 1; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
+//	if(i > 46) break;
 
-    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, goals[i]);
+    t.reset();
+    std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
+    std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
+    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+    eHeuristic[goals[i]] = eHeuristicGoal;
+    t.stop();
+    double preTime = t.elapsedSeconds();
+
+
+    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
+    env.setExactHeuristTrue();
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
@@ -463,7 +516,7 @@ int main(int argc, char* argv[]) {
     // Plan
     env.Reset();
     PlanResult<State, Action, int> solution;
-    Timer t;
+
     t.reset();
     bool success = jpssipp.search(startStates[i], Action::Wait, solution,0, map_temporal_obstacle[startStates[i].x][startStates[i].y]);
     t.stop();
@@ -498,9 +551,9 @@ int main(int argc, char* argv[]) {
 
     env.Reset();
     env.setNoJPS();
-    PlanResult<State, Action, int> solution2;
+    PlanResult<State, Action, int> solution3;
     t.reset();
-    bool success_temp = sipp.search(startStates[i], Action::Wait, solution2);
+    bool success_temp = sipp.search(startStates[i], Action::Wait, solution3);
     t.stop();
 
      int num_expansion2 = env.num_expansion;
@@ -508,6 +561,14 @@ int main(int argc, char* argv[]) {
 
      double time2 = t.elapsedSeconds();
      std::cout<< t.elapsedSeconds() << std::endl;
+
+     env.Reset();
+     env.setNoJPS();
+     env.setExactHeuristFalse();
+     PlanResult<State, Action, int> solution2;
+     t.reset();
+     bool success_temp1 = sipp.search(startStates[i], Action::Wait, solution2);
+     t.stop();
 
     if (success_temp) {
       std::cout << "NoJPS Planning successful! Total cost: " << solution2.cost << " Expansion:"
@@ -519,8 +580,16 @@ int main(int argc, char* argv[]) {
       int xx[5] = {0, 1, -1};
       int yy[5] = {0, 1, -1};
       if(i < num_path){ //goals.size()
+    	  std::cout << "VC " << i << std::endl;
+    	  res_Constraint << " -1 -1 -1"<< std::endl;
     	  for (size_t i = 1; i < solution2.states.size(); ++i) {
     		  if (solution2.states[i].first != lastState.first) {
+    			  for(int timeStart = lastState.second; timeStart <= solution2.states[i].second - 1; timeStart++ ){
+    				  if(timeStart == 0) continue;
+    				  std::cout << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
+    				  res_Constraint << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
+    			  }
+
     			  allCollisionIntervals[lastState.first].push_back(
     					  jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
     			  allCollisionIntervals_sipp[lastState.first].push_back(
@@ -534,7 +603,6 @@ int main(int argc, char* argv[]) {
     					  State temp_state(lastState.first.x + xx[xx_1], lastState.first.y + yy[yy_1]);
     					  if(env.stateValid(temp_state)){
     						  nei_ob_g[temp_state.x][temp_state.y] = std::max(nei_ob_g[temp_state.x][temp_state.y], tt);
-//    						  std::cout << temp_state.x  << " " << temp_state.y <<  " " << nei_ob_g[temp_state.x][temp_state.y] << " ----\n";
     					  }
     				  }
     			  }
@@ -550,6 +618,10 @@ int main(int argc, char* argv[]) {
     			  jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
     	  allCollisionIntervals_sipp[solution2.states.back().first].push_back(
     			  sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+    	  std::cout << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
+    	  res_Constraint << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
+    	  res_Constraint << "-1 -1 -1" << std::endl;
+    	  std::cout << "ENDVC" << std::endl;
 		  for(int xx_1 = 0; xx_1 < 3; xx_1++){
 			  for(int yy_1 = 0; yy_1 < 3; yy_1++){
 				  if(xx_1 == 0 && yy_1 == 0) continue;
@@ -571,9 +643,16 @@ int main(int argc, char* argv[]) {
       cost += solution2.cost;
       // print solution
       if(i < num_path){ //goals.size()
+//    	  std::cout << "EC " << i << std::endl;
+    	  res_Constraint << "-1 -1 -1 -1 -1 " << std::endl;
     	  for (size_t i = 0; i < solution2.actions.size(); ++i) {
     		  if(solution2.actions[i].first != Action::Wait ){
     			  allEdgeCollisions[solution2.states[i].first].push_back(jps_sipp::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
+    			  assert(i+1 <= solution2.states.size());
+ //   			  std::cout << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
+ //   					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
+    			  res_Constraint << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
+    					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
     		  }
     		  if(solution2.actions[i].first != Action::Wait ){
     			  allEdgeCollisions_sipp[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
@@ -582,9 +661,21 @@ int main(int argc, char* argv[]) {
                   << "->" << solution2.actions[i].first
                   << "(cost: " << solution2.actions[i].second << ")" << std::endl;
     	  }
+
+    	  res_Constraint << "-1 -1 -1 -1 -1" << std::endl;
+//          std::cout << solution2.states.back().second << ": "
+//                    << solution2.states.back().first << std::endl;
+      }else{
+    	  for (size_t i = 0; i < solution2.actions.size(); ++i) {
+    		  std::cout << solution2.states[i].second << ": " << solution2.states[i].first
+                  << "->" << solution2.actions[i].first
+                  << "(cost: " << solution2.actions[i].second << ")" << std::endl;
+    	  }
+          std::cout << solution2.states.back().second << ": "
+                    << solution2.states.back().first << std::endl;
+
       }
-      std::cout << solution2.states.back().second << ": "
-                << solution2.states.back().first << std::endl;
+
 
       for (size_t i = 0; i < solution2.states.size(); ++i) {
         out << "    - x: " << solution2.states[i].first.x << std::endl
@@ -600,7 +691,6 @@ int main(int argc, char* argv[]) {
       res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << " -1 " << " -1 " << " -1 " << " -1 " <<" -1 \n";
 
       continue;
-//      break;
     }
 
 
@@ -623,15 +713,16 @@ int main(int argc, char* argv[]) {
     std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
 
-    res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << time1 << " " << num_expansion1 << " "
+    res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << preTime << " " << time1 << " " << num_expansion1 << " "
     		<< num_generation1 << " " << num_temporal_obstacle <<" \n";
 
-    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<time2 << " " << num_expansion2 << " " << num_generation2 << " " << num_temporal_obstacle <<" \n";
+    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<preTime << " " << time2 << " " << num_expansion2 << " " << num_generation2 << " " << num_temporal_obstacle <<" \n";
 
     if (time1 < time2){
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
         res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
+
 
   }
 

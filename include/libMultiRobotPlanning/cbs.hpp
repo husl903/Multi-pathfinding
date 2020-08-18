@@ -136,7 +136,7 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration > 60){
+      if(duration > 1000){
     	  return false;
       }
 //      std::cout << duration1 << " \n";
@@ -225,7 +225,6 @@ class CBS {
         m_env.setExactHeuristFalse();
         Timer timerJps;
         timerJps.reset();
-//        m_env.setExactHeuristTrue();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
         timerJps.stop();
         double tJps = timerJps.elapsedSeconds();
@@ -304,6 +303,9 @@ class CBS {
         int ExpSippM = m_env.num_expansion;
         int GenSippM = m_env.num_generation;
 */
+
+
+        m_env.setExactHeuristFalse();
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 
@@ -317,7 +319,23 @@ class CBS {
         double tAstar = timerAstar.elapsedSeconds();
 
 
+        m_env.setExactHeuristTrue();
+        LowLevelEnvironment llenvP(m_env, i, newNode.constraints[i]);
+        LowLevelSearch_t lowLevelP(llenvP);
+
+        Timer timerAstarP;
+        timerAstarP.reset();
+        int ExpAP =  m_env.lowLevelExpanded();
+        bool successP = lowLevelP.search(initialStates[i], newNode.solution[i]);
+        timerAstarP.stop();
+        int ExpAstarP = m_env.lowLevelExpanded() - ExpAP;
+        int GenAstarP = m_env.lowLevelGenerated();
+        double tAstarP = timerAstarP.elapsedSeconds();
+
+
         newNode.cost += newNode.solution[i].cost;
+
+
 
 /*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<

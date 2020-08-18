@@ -315,7 +315,8 @@ public:
       		  State state_re = s.state;
       		  flag_is_solution = false;
       		  std::vector<startTime> re_start;
-//      		  std::cout << "Jps Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << ", Expan " << m_env.num_expansion << "  ********************************\n";
+
+//      		  std::cout << "Jps Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " Fvalue " << m_env.admissibleHeuristic(s.state) << " interval " << s.interval << " Direction " << s.dir << ", Expan " << m_env.num_expansion << "  ********************************\n";
 
       		  jps_successors.clear();
       		  bool is_scan_op = (s.dir & 0xc);
