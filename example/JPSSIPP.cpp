@@ -444,10 +444,10 @@ int main(int argc, char* argv[]) {
   long cost = 0;
   int num_temporal_obstacle = 0;
   Timer t;
-  for (size_t i = 1; i < goals.size(); ++i) {
+  for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
-//	if(i > 46) break;
+	if(i > 81) break;
 
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
@@ -580,13 +580,13 @@ int main(int argc, char* argv[]) {
       int xx[5] = {0, 1, -1};
       int yy[5] = {0, 1, -1};
       if(i < num_path){ //goals.size()
-    	  std::cout << "VC " << i << std::endl;
+//    	  std::cout << "VC " << i << std::endl;
     	  res_Constraint << " -1 -1 -1"<< std::endl;
     	  for (size_t i = 1; i < solution2.states.size(); ++i) {
     		  if (solution2.states[i].first != lastState.first) {
     			  for(int timeStart = lastState.second; timeStart <= solution2.states[i].second - 1; timeStart++ ){
     				  if(timeStart == 0) continue;
-    				  std::cout << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
+//    				  std::cout << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
     				  res_Constraint << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
     			  }
 
@@ -618,7 +618,7 @@ int main(int argc, char* argv[]) {
     			  jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
     	  allCollisionIntervals_sipp[solution2.states.back().first].push_back(
     			  sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
-    	  std::cout << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
+//    	  std::cout << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
     	  res_Constraint << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
     	  res_Constraint << "-1 -1 -1" << std::endl;
     	  std::cout << "ENDVC" << std::endl;
