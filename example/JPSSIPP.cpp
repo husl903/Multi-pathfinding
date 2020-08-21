@@ -47,6 +47,7 @@ struct State {
 	}
 	int x;
 	int y;
+	int dir;
 };
 
 
@@ -110,6 +111,61 @@ class Environment {
 			else return m_eHeuristic[m_goal][s.x][s.y];
 		} else return std::abs(s.x - m_goal.x) +
 		           std::abs(s.y - m_goal.y);
+	}
+
+	float admissibleHeuristic(const State& s, unsigned int dir) {
+
+		if(isExact){
+			if(m_eHeuristic[m_goal][s.x][s.y] == -1) return INT_MAX;
+			else{
+				if(s.x == m_goal.x){
+					if(s.y < m_goal.y && !(dir & 0x04)) {
+						if(isTemporalObstacle(State(s.x, s.y + 1)))  return m_eHeuristic[m_goal][s.x][s.y] + 1;
+						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
+					}
+					if(s.y > m_goal.y && !(dir & 0x08)) {
+						if(isTemporalObstacle(State(s.x, s.y - 1))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
+						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
+					}
+				}
+				if(s.y == m_goal.y){
+					if(s.x > m_goal.x && !(dir & 0x01)) {
+						if(isTemporalObstacle(State(s.x - 1, s.y))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
+						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
+					}
+					if(s.x < m_goal.x && !(dir & 0x02)) {
+						if(isTemporalObstacle(State(s.x + 1, s.y))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
+						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
+					}
+				}
+				return m_eHeuristic[m_goal][s.x][s.y];
+			}
+		} else {
+			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
+			if(s.x == m_goal.x){
+				if(s.y < m_goal.y && !(dir & 0x04)) {
+					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
+					else return hvalue + 2;
+				}
+				if(s.y > m_goal.y && !(dir & 0x08)) {
+					if(isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+			}
+			if(s.y == m_goal.y){
+				if(s.x > m_goal.x && !(dir & 0x01)) {
+					if(isTemporalObstacle(State(s.x - 1, s.y))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && !(dir & 0x02)) {
+					if(isTemporalObstacle(State(s.x + 1, s.y))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+			}
+
+			return hvalue;
+
+		}
 
 //		return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
 	}
@@ -441,13 +497,36 @@ int main(int argc, char* argv[]) {
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
+/*  allCollisionIntervals[State(0, 4)].push_back(jps_sipp::interval(1, 5));
+  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(3, 4));
+  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(9, 9));
+  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(3, 5));
+  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(7, 8));
+  allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(1, 2));
+  allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(7, 7));
+  allCollisionIntervals[State(4, 4)].push_back(jps_sipp::interval(5, 8));
+
+  allCollisionIntervals_sipp[State(0, 4)].push_back(sipp_t::interval(1, 5));
+  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(3, 4));
+  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(9, 9));
+  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(3, 5));
+  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(7, 8));
+  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(1, 2));
+  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(7, 7));
+  allCollisionIntervals_sipp[State(4, 4)].push_back(sipp_t::interval(5, 8));
+  last_ob_g[0][4] = 5;
+  last_ob_g[1][4] = 9;
+  last_ob_g[2][4] = 8;
+  last_ob_g[3][4] = 7;
+  last_ob_g[4][4] = 8;*/
+
   long cost = 0;
   int num_temporal_obstacle = 0;
   Timer t;
   for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
-	if(i > 81) break;
+//	if(i > 81) break;
 
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
@@ -459,15 +538,17 @@ int main(int argc, char* argv[]) {
 
 
     Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
-    env.setExactHeuristTrue();
+    env.setExactHeuristFalse();
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
     jpssipp.setEdgeCollisionSize(dimx, dimy);
     sipp.setEdgeCollisionSize(dimx, dimy);
     for (const auto& collisionIntervals : allCollisionIntervals) {
+
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
       State current_state = collisionIntervals.first;
+//      std::cout << current_state.x << " " << current_state.y << " " << collisionIntervals.second[0].start << collisionIntervals.second[0].end << " -----\n";
 /*      if(env.stateValid(State(current_state.x + 1, current_state.y))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
       }

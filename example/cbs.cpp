@@ -310,7 +310,20 @@ class Environment {
 /*    return std::abs(s.x - m_goals[m_agentIdx].x) +
            std::abs(s.y - m_goals[m_agentIdx].y);*/
   }
+
+
   int admissibleHeuristic(const Location& s) {
+    // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
+    // s.y] << std::endl;
+    // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
+	if(isExact){
+		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
+           std::abs(s.y - m_goals[m_agentIdx].y);
+  }
+
+  int admissibleHeuristic(const Location& s, unsigned int dir) {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
