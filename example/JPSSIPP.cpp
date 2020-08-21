@@ -316,7 +316,7 @@ class Environment {
  public:
 	int num_generation = 0;
 	int num_expansion = 0;
-	int limit_jump = 8;
+	int limit_jump = 32;
 	bool isExact = false;
 
  private:
@@ -503,7 +503,7 @@ int main(int argc, char* argv[]) {
   allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(3, 5));
   allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(7, 8));
   allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(1, 2));
-  allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(7, 7));
+  allCollisionIntervals[State(3, 4)].push_back(jps_siCpp::interval(7, 7));
   allCollisionIntervals[State(4, 4)].push_back(jps_sipp::interval(5, 8));
 
   allCollisionIntervals_sipp[State(0, 4)].push_back(sipp_t::interval(1, 5));
@@ -794,10 +794,8 @@ int main(int argc, char* argv[]) {
     std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
 
-    res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << solution.cost << " " << preTime << " " << time1 << " " << num_expansion1 << " "
-    		<< num_generation1 << " " << num_temporal_obstacle <<" \n";
-
-    res_sta << inputFile << " Agent " << i << " SIPP: " << " cost: " << solution2.cost << " " <<preTime << " " << time2 << " " << num_expansion2 << " " << num_generation2 << " " << num_temporal_obstacle <<" \n";
+    res_sta << inputFile << " Agent, " << i << ", "<< num_temporal_obstacle  << ", JPSSIPP cost, "  << solution.cost << ", " << preTime << ", "
+    		<< time1 << ", " << num_expansion1 << ", " << num_generation1 << ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2<<" \n";
 
     if (time1 < time2){
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
