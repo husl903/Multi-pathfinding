@@ -47,7 +47,6 @@ struct State {
 	}
 	int x;
 	int y;
-	int dir;
 };
 
 
@@ -142,6 +141,7 @@ class Environment {
 			}
 		} else {
 			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
+			return hvalue;
 			if(s.x == m_goal.x){
 				if(s.y < m_goal.y && !(dir & 0x04)) {
 					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
@@ -531,7 +531,7 @@ int main(int argc, char* argv[]) {
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
     std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
-    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+//    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
     eHeuristic[goals[i]] = eHeuristicGoal;
     t.stop();
     double preTime = t.elapsedSeconds();
@@ -632,9 +632,9 @@ int main(int argc, char* argv[]) {
 
     env.Reset();
     env.setNoJPS();
-    PlanResult<State, Action, int> solution3;
+    PlanResult<State, Action, int> solution2;
     t.reset();
-    bool success_temp = sipp.search(startStates[i], Action::Wait, solution3);
+    bool success_temp = sipp.search(startStates[i], Action::Wait, solution2);
     t.stop();
 
      int num_expansion2 = env.num_expansion;
@@ -642,14 +642,14 @@ int main(int argc, char* argv[]) {
 
      double time2 = t.elapsedSeconds();
      std::cout<< t.elapsedSeconds() << std::endl;
-
+/*
      env.Reset();
      env.setNoJPS();
      env.setExactHeuristFalse();
      PlanResult<State, Action, int> solution2;
      t.reset();
      bool success_temp1 = sipp.search(startStates[i], Action::Wait, solution2);
-     t.stop();
+     t.stop();*/
 
     if (success_temp) {
       std::cout << "NoJPS Planning successful! Total cost: " << solution2.cost << " Expansion:"
@@ -794,8 +794,10 @@ int main(int argc, char* argv[]) {
     std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1  << " " << num_expansion2 << "\n";
 
 
-    res_sta << inputFile << " Agent, " << i << ", "<< num_temporal_obstacle  << ", JPSSIPP cost, "  << solution.cost << ", " << preTime << ", "
-    		<< time1 << ", " << num_expansion1 << ", " << num_generation1 << ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2<<" \n";
+    double speedup = time2/time1;
+    res_sta << inputFile << " Agent, " << i << ", "<< num_temporal_obstacle  << ", " << preTime
+    		<< ", JPSSIPP cost, "  << solution.cost  << ", " << time1 << ", " << num_expansion1 << ", " << num_generation1
+			<< ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2 << ", " << speedup <<" \n";
 
     if (time1 < time2){
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";

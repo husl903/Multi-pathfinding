@@ -240,7 +240,7 @@ class SIPP {
       std::vector<Neighbor<State, Action, Cost> > motions;
 // 	  std::cout << "Sipp Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
 
-      m_env.num_expansion++;
+
       m_env.getNeighbors(s.state, motions);
       for (const auto& m : motions) {
 //    	  m_env.num_generation++;
@@ -310,7 +310,7 @@ class SIPP {
       // std::endl;
       // This is called before getNeighbors(). We use the callback to find the
       // current cost (=time) of the expanded node
-//      m_env.num_expansion++;
+      m_env.num_expansion++;
       m_lastGScore = gScore;
       m_env.onExpandNode(s.state, fScore, gScore);
     }
