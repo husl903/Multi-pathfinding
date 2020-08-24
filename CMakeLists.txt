@@ -80,12 +80,12 @@ add_custom_target(everything
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
 
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g")
+#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g")
 
 #link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so")
-link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.65.1")
+#link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.74.0")
 
 # Creates compile database used by clang-tidy.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
