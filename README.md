@@ -6,7 +6,7 @@ libMultiRobotPlanning is a library with search algorithms primarily for task and
 It is written in C++(14), highly templated for good performance, and comes with useful examples.
 
 The following algorithms are currently supported:
-
+hu
 * Single-Robot Algorithms
   * A*
   * A* epsilon (also known as focal search)
