@@ -316,7 +316,7 @@ class Environment {
  public:
 	int num_generation = 0;
 	int num_expansion = 0;
-	int limit_jump = 32;
+	int limit_jump = 8;
 	bool isExact = false;
 
  private:

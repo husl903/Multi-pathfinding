@@ -5,7 +5,7 @@
 
 #include "a_star.hpp"
 #include "sipp.hpp"
-#include "JPSSIPP.hpp"
+#include "JPSSIPPCBS.hpp"
 #include "planresult.hpp"
 #include "timer.hpp"
 //using libMultiRobotPlanning::SIPP;

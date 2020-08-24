@@ -46,6 +46,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/planresult.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/sipp.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPP.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPPCBS.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/assignment.cpp
@@ -79,7 +80,12 @@ add_custom_target(everything
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
+#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
+
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g")
+
+#link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so")
+link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.65.1")
 
 # Creates compile database used by clang-tidy.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -176,6 +182,7 @@ target_link_libraries(JPSSIPP
   ${Boost_LIBRARIES}
   yaml-cpp
 )
+
 
 
 
