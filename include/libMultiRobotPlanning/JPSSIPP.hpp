@@ -719,11 +719,17 @@ public:
     	             	}
     	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
-        	             	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-    	             		if(succ_f > par_f){
-    	             			current_successor.dir = 0x01;
-    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
-    	           				break ;
+    	             		if(m_env.isFCheck()){
+    	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+    	             			if(succ_f > par_f){
+    	             				current_successor.dir = 0x01;
+    	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
+    	             				break ;
+    	             			}
+    	             		}else{
+	             				current_successor.dir = 0x01;
+	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
+	             				break ;
     	             		}
     	             	}
     					current_cost_l++;
@@ -865,12 +871,18 @@ public:
 
     	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
-    	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-    	             		if(succ_f > par_f){
-    	             			current_successor.dir = 0x02;
-    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
-    	           				break ;
-    	             		}
+    	             		if(m_env.isFCheck()){
+    	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+    	             			if(succ_f > par_f){
+    	             				current_successor.dir = 0x02;
+    	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
+    	             				break ;
+    	             			}
+    	           			}else{
+	             				current_successor.dir = 0x02;
+	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
+	             				break ;
+    	           			}
     	             	}
     					current_cost_l++;
     					temp_s = current_successor;
@@ -972,13 +984,19 @@ public:
 
            	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //            	             	if(step > m_env.limit_jump){
+           	             		if(m_env.isFCheck()){
             	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             		if(succ_f > par_f){
             	             			current_successor.dir = 0x07;
             	             			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             	    	break ;
             	             		}
-            	             	}
+            	             	 }else{
+         	             			current_successor.dir = 0x07;
+         	             			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+         	             	    	break ;
+            	             	 }
+            	             }
             					current_cost_l++;
             					temp_s = current_successor;
             				} else break;
@@ -1051,11 +1069,17 @@ public:
             	             	}
             	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //            	             	if(step > m_env.limit_jump){
-            	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-            	             		if(succ_f > par_f){
-            	             			current_successor.dir = 0x0b;
-            	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-            	           				break ;
+            	             		if(m_env.isFCheck()){
+            	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+            	             			if(succ_f > par_f){
+            	             				current_successor.dir = 0x0b;
+            	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	           					break ;
+            	             			}
+            	             		}else{
+        	             				current_successor.dir = 0x0b;
+        	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+        	           					break ;
             	             		}
             	             	}
             					current_cost_l++;

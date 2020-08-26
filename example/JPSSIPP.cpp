@@ -303,6 +303,10 @@ class Environment {
 		return is_jps;
 	}
 
+	bool isFCheck(){
+		return isFI;
+	}
+
 	void Reset(){
 		num_generation = 0;
 		num_expansion =0;
@@ -310,14 +314,22 @@ class Environment {
 	bool setExactHeuristTrue(){
 		isExact = true;
 	}
+
 	bool setExactHeuristFalse(){
 		isExact = false;
 	}
+	bool setJumpLimit(int jumpStep){
+		limit_jump = jumpStep;
+	}
+	bool setFI(bool isF){
+		isFI = isF;
+	}
+
  public:
 	int num_generation = 0;
 	int num_expansion = 0;
 	int limit_jump = 8;
-	bool isExact = false;
+
 
  private:
 	int m_dimx;
@@ -331,6 +343,8 @@ class Environment {
 	State m_goal;
 	bool is_limit = false;
 	bool is_jps = true;
+	bool isExact = false;
+	bool isFI = false;
 };
 
 
@@ -370,14 +384,17 @@ int main(int argc, char* argv[]) {
 	std::string outputFile;
 	std::string res;
 	int num_path = 50;//goals.size();
-
+	int jumpLimit = 8;
+	bool isF = true;
 	desc.add_options()("help", "produce help message")(
       "input,i", po::value<std::string>(&inputFile)->required(),
       "input file (YAML)")("output,o",
                            po::value<std::string>(&outputFile)->required(),
                            "output file (YAML)")
 						   ("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")
-						   ("path num,N", po::value<int>(&num_path)->required(), "num path (TXT)")
+						   ("path num,N", po::value<int>(&num_path)->required(), "num path (int)")
+						   ("jump limit,J", po::value<int>(&jumpLimit)->required(), "jump limit (int)")
+						   ("is F inscreasing,F", po::value<bool>(&isF)->required(), "is F inscreasing")
       // ("url",
       // po::value<std::string>(&url)->default_value("http://0.0.0.0:8080"),
       // "server URL")
@@ -539,6 +556,8 @@ int main(int argc, char* argv[]) {
 
     Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
     env.setExactHeuristFalse();
+    env.setJumpLimit(jumpLimit);
+    env.setFI(isF);
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
 
