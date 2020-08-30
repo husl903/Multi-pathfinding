@@ -104,7 +104,7 @@ class Environment {
         m_goal(goal) {}
 
 	float admissibleHeuristic(const State& s) {
-
+		if(!stateValid(s)) return INT_MAX;
 		if(isExact){
 			if(m_eHeuristic[m_goal][s.x][s.y] == -1) return INT_MAX;
 			else return m_eHeuristic[m_goal][s.x][s.y];
@@ -114,34 +114,14 @@ class Environment {
 
 	float admissibleHeuristic(const State& s, unsigned int dir) {
 
+		if(!stateValid(s)) return INT_MAX;
 		if(isExact){
 			if(m_eHeuristic[m_goal][s.x][s.y] == -1) return INT_MAX;
 			else{
-				if(s.x == m_goal.x){
-					if(s.y < m_goal.y && !(dir & 0x04)) {
-						if(isTemporalObstacle(State(s.x, s.y + 1)))  return m_eHeuristic[m_goal][s.x][s.y] + 1;
-						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
-					}
-					if(s.y > m_goal.y && !(dir & 0x08)) {
-						if(isTemporalObstacle(State(s.x, s.y - 1))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
-						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
-					}
-				}
-				if(s.y == m_goal.y){
-					if(s.x > m_goal.x && !(dir & 0x01)) {
-						if(isTemporalObstacle(State(s.x - 1, s.y))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
-						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
-					}
-					if(s.x < m_goal.x && !(dir & 0x02)) {
-						if(isTemporalObstacle(State(s.x + 1, s.y))) return m_eHeuristic[m_goal][s.x][s.y] + 1;
-						else return m_eHeuristic[m_goal][s.x][s.y] + 2;
-					}
-				}
 				return m_eHeuristic[m_goal][s.x][s.y];
 			}
 		} else {
 			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
-			return hvalue;
 			if(s.x == m_goal.x){
 				if(s.y < m_goal.y && !(dir & 0x04)) {
 					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
@@ -311,19 +291,22 @@ class Environment {
 		num_generation = 0;
 		num_expansion =0;
 	}
-	bool setExactHeuristTrue(){
+	void setExactHeuristTrue(){
 		isExact = true;
 	}
 
-	bool setExactHeuristFalse(){
+	void setExactHeuristFalse(){
 		isExact = false;
 	}
-	bool setJumpLimit(int jumpStep){
+	void setJumpLimit(int jumpStep){
 		limit_jump = jumpStep;
 	}
-	bool setFI(bool isF){
+	void setFI(bool isF){
 		isFI = isF;
 	}
+
+	int getDimX(){return m_dimx;}
+	int getDimY(){return m_dimy;}
 
  public:
 	int num_generation = 0;
@@ -443,7 +426,7 @@ int main(int argc, char* argv[]) {
 	map_temporal_obstacle.resize(dimx + 2);
 	last_ob_g.resize(dimx + 2);
 	nei_ob_g.resize(dimx + 2);
-	for(int i = 0; i < map_jump_point.size();i++){
+	for(size_t i = 0; i < map_jump_point.size();i++){
 		map_jump_point[i].resize(dimy + 2);
 		map_obstacle[i].resize(dimy + 2);
 		map_temporal_obstacle[i].resize(dimy + 2);
@@ -459,7 +442,7 @@ int main(int argc, char* argv[]) {
 
 
 	for (const auto& ob:obstacles){
-
+		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob,temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -540,15 +523,15 @@ int main(int argc, char* argv[]) {
   long cost = 0;
   int num_temporal_obstacle = 0;
   Timer t;
-  for (size_t i = 0; i < goals.size(); ++i) {
+  for (int i = 0; i < (int)goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
-//	if(i > 81) break;
+//    break;
 
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
     std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
-//    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
     eHeuristic[goals[i]] = eHeuristicGoal;
     t.stop();
     double preTime = t.elapsedSeconds();
@@ -566,7 +549,7 @@ int main(int argc, char* argv[]) {
     for (const auto& collisionIntervals : allCollisionIntervals) {
 
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
-      State current_state = collisionIntervals.first;
+//      State current_state = collisionIntervals.first;
 //      std::cout << current_state.x << " " << current_state.y << " " << collisionIntervals.second[0].start << collisionIntervals.second[0].end << " -----\n";
 /*      if(env.stateValid(State(current_state.x + 1, current_state.y))){
     	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
@@ -618,7 +601,7 @@ int main(int argc, char* argv[]) {
     PlanResult<State, Action, int> solution;
 
     t.reset();
-    bool success = jpssipp.search(startStates[i], Action::Wait, solution,0, map_temporal_obstacle[startStates[i].x][startStates[i].y]);
+    bool success = jpssipp.search(startStates[i], Action::Wait, solution,0);
     t.stop();
     std::cout<< t.elapsedSeconds() << std::endl;
     int num_expansion1 = env.num_expansion;
@@ -822,7 +805,7 @@ int main(int argc, char* argv[]) {
         res_Good << inputFile << " Agent " << i << " JPSSIPP: "  <<" cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 <<"\n";
         res_Good << inputFile << " Agent " << i << " SIPP: "  <<" cost " << solution.cost << " "<< time2 << " " << num_expansion2 << " " << num_generation2 <<"\n";
     }
-
+//    if(i > 18) break;
 
   }
 

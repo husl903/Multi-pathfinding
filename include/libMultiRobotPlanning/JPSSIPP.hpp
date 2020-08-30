@@ -231,7 +231,9 @@ public:
     JPSSIPPEnvironment(Environment& env) : m_env(env) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
-      return m_env.admissibleHeuristic(s.state);
+      return m_env.admissibleHeuristic(s.state, s.dir);
+//        return m_env.admissibleHeuristic(s.state);
+
     }
 
     bool mightHaveSolution(const State& goal) {
@@ -571,7 +573,8 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
+// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }
@@ -717,6 +720,7 @@ public:
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
     	           			break ;
     	             	}
+    	             	if(current_successor.state.x == 0) break; //check the border
     	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
     	             		if(m_env.isFCheck()){
@@ -868,7 +872,7 @@ public:
     	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
     	           			break ;
     	             	}
-
+    	             	if(current_successor.state.x == m_env.getDimX() - 1) break; //check the border
     	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
     	             		if(m_env.isFCheck()){
@@ -982,21 +986,23 @@ public:
             	           			break ;
             	             	}
 
-           	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+            	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //            	             	if(step > m_env.limit_jump){
-           	             		if(m_env.isFCheck()){
-            	             		succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-            	             		if(succ_f > par_f){
-            	             			current_successor.dir = 0x07;
+            	             		if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
+            	             		else current_successor.dir = 0x07;
+            	             		if(m_env.isFCheck()){
+            	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+            	             			if(succ_f > par_f){
+//            	             				current_successor.dir = 0x07;
+            	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	             				break ;
+            	             			}
+            	             		}else {
+//            	             			current_successor.dir = 0x07;
             	             			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-            	             	    	break ;
+            	             			break ;
             	             		}
-            	             	 }else{
-         	             			current_successor.dir = 0x07;
-         	             			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-         	             	    	break ;
-            	             	 }
-            	             }
+            	             	}
             					current_cost_l++;
             					temp_s = current_successor;
             				} else break;
@@ -1067,17 +1073,21 @@ public:
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           			break ;
             	             	}
+
+
             	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //            	             	if(step > m_env.limit_jump){
+    	             				if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
+    	             				else current_successor.dir = 0x0b;
             	             		if(m_env.isFCheck()){
             	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             			if(succ_f > par_f){
-            	             				current_successor.dir = 0x0b;
+//            	             				current_successor.dir = 0x0b;
             	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           					break ;
             	             			}
             	             		}else{
-        	             				current_successor.dir = 0x0b;
+//        	             				current_successor.dir = 0x0b;
         	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
         	           					break ;
             	             		}
