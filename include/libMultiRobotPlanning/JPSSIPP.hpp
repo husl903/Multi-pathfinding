@@ -573,7 +573,7 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
+          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
 // 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
@@ -659,16 +659,19 @@ public:
     						}
     					}
         				Cost next_start_s = -1;
-        				bool is_right = false;
     					if(si_s_l.size() > temp_s.interval + 1){ // Whether the successor need to go back, that is, restart the right direction.
     						next_start_s = si_s_l.at(temp_s.interval + 1).start;
     						if(!IsEdgeCollisions(temp_s.state,edgeCollision(next_start_s - 1, Action::Left))
     								&& successor_end >= next_start_s - 1){
-    							is_right = true;
     							right_start_t = next_start_s - 1;
     							re_start.push_back(startTime(right_start_t, Action::Right, 0x02, true));
     						}
     					}
+    					Cost left_start_t = -1;
+						if(isTemporalObstacleAfterT(State(temp_s.state.x - 2, temp_s.state.y), m_lastGScore + current_cost_l + 1, left_start_t)
+								&& left_start_t <= successor_end){
+							re_start.push_back(startTime(left_start_t, Action::Left, 0x01, true));
+						}
 
     					std::sort(re_start.begin(), re_start.end()); //For the re-start direction, choose the minimum re-start time.
     					Cost re_ac = -1;
@@ -688,7 +691,7 @@ public:
     						}
     						break;
     					}
-    					if(re_ac == -1){ // There is no re-start direction.
+/*    					if(re_ac == -1){ // There is no re-start direction.
     						Cost left_t = -1;
     						if(isTemporalObstacleAfterT(State(temp_s.state.x - 2, temp_s.state.y), m_lastGScore + current_cost_l + 1, left_t)
     								&& left_t <= successor_end){
@@ -713,6 +716,13 @@ public:
     		          					Action::Left, re_ac - m_lastGScore));
     		          			break;
     		          		}
+    					}*/
+
+    					if(re_ac != -1){
+    						current_successor.dir = current_dir;
+		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
+		          					Action::Left, re_ac - m_lastGScore));
+		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
     					}
     	             	if (isSolution(current_successor)) {
     	             		current_successor.dir = 0x01;
@@ -809,17 +819,19 @@ public:
     						}
     					}
         				Cost next_start_s = -1;
-        				bool is_right = false;
-    					if(si_s_l.size() > temp_s.interval + 1){ // Whether the successor need to go back, that is, restart the right direction.
+    					if(si_s_l.size() > temp_s.interval + 1){ // Whether the successor need to go back, that is, restart the left direction.
     						next_start_s = si_s_l.at(temp_s.interval + 1).start;
     						if(!IsEdgeCollisions(temp_s.state,edgeCollision(next_start_s - 1, Action::Right))
     								&& successor_end >= next_start_s - 1){
-    							is_right = true;
     							right_start_t = next_start_s - 1;
     							re_start.push_back(startTime(right_start_t, Action::Left, 0x01, true));
     						}
     					}
-
+						Cost left_t = -1;
+						if(isTemporalObstacleAfterT(State(temp_s.state.x + 2, temp_s.state.y), m_lastGScore + current_cost_l + 1, left_t)
+								&& left_t <= successor_end){
+							re_start.push_back(startTime(left_t, Action::Right, 0x02, true));
+						}
     					std::sort(re_start.begin(), re_start.end()); //For the re-start direction, choose the minimum re-start time.
     					Cost re_ac = -1;
     					unsigned int current_dir = 0x00;
@@ -838,7 +850,8 @@ public:
     						}
     						break;
     					}
-    					if(re_ac == -1){ // There is no re-start direction.
+
+/*    					if(re_ac == -1){ // There is no re-start direction.
     						Cost left_t = -1;
     						if(isTemporalObstacleAfterT(State(temp_s.state.x + 2, temp_s.state.y), m_lastGScore + current_cost_l + 1, left_t)
     								&& left_t <= successor_end){
@@ -864,6 +877,12 @@ public:
     		          					Action::Right, re_ac - m_lastGScore));
     		          			break;
     		          		}
+    					}*/
+    					if(re_ac != -1){
+    						current_successor.dir = current_dir;
+  		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
+    		          					Action::Right, re_ac - m_lastGScore));
+  		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
     					}
 
     	             	if (isSolution(current_successor)) {
@@ -942,6 +961,7 @@ public:
                 			findSafeInterval(current_successor.state, m_lastGScore + current_cost_l + 1, successor_interval,
                       				          				successor_start, successor_end, successor_next_start, successor_next_end);
             				up_start_t = -1; down_start_t = -1;
+            				std::vector<startTime> re_start;
             				if(successor_start != -1){
             					current_successor.interval = successor_interval;
             					current_successor.dir = 0x00;
@@ -954,10 +974,11 @@ public:
                							temp_state.dir = 0x08;
                							down_start_t = next_start_s -1;
                							flag_re_down = true;
+               							re_start.push_back(startTime(down_start_t, Action::Down, 0x0b, true));
                						}
                					}
 
-             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
+/*             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
             							|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
              							|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
          							){
@@ -977,7 +998,41 @@ public:
                     					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
                     					break;
                 					}
-                				}
+                				}*/
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)){
+               						re_start.push_back(startTime(up_start_t, Action::Up, 0x07, true));
+               					}
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)){
+               						re_start.push_back(startTime(up_left_t, Action::Left, 0x01, true));
+               					}
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)){
+               						re_start.push_back(startTime(up_right_t, Action::Right, 0x02, true));
+               					}
+
+            					std::sort(re_start.begin(), re_start.end()); //For the re-start direction, choose the minimum re-start time.
+            					Cost re_ac = -1;
+            					unsigned int current_dir = 0x00;
+            					for(int re_i = 0; re_i < re_start.size(); re_i++){
+            						if(re_start[re_i].rt == -1) continue;
+            						current_successor.action = Action::Up;
+            						current_dir = re_start[re_i].dir;
+            						for(int re_ii = re_i + 1; re_ii < re_start.size(); re_ii++){
+            							if(re_start[re_ii].rt == re_start[re_i].rt){
+            								current_dir |= re_start[re_ii].dir;
+            							}else break;
+            						}
+            						re_ac = re_start[re_i].rt;
+            						if(re_ac == m_lastGScore + current_cost_l + 1){
+            							current_dir |= 0x07;
+            						}
+            						break;
+            					}
+            					if(re_ac != -1){
+            						current_successor.dir = current_dir;
+          		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
+            		          					Action::Up, re_ac - m_lastGScore));
+          		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
+            					}
 
             	             	if (isSolution(current_successor)) {
             	             		current_successor.dir = 0x07;
@@ -1031,22 +1086,57 @@ public:
                 			findSafeInterval(current_successor.state, m_lastGScore + current_cost_l + 1, successor_interval,
                       				          				successor_start, successor_end, successor_next_start, successor_next_end);
             				up_start_t = -1; down_start_t = -1;
+            				std::vector<startTime> re_start;
             				if(successor_start != -1){
             					current_successor.interval = successor_interval;
             					current_successor.dir = 0x00;
             					Cost next_start_s = -1;
-            					bool flag_re_down = false;
+            					bool flag_re_up = false;
                					if(si_s_l.size() > temp_s.interval + 1){ // check whether go back
                						next_start_s = si_s_l.at(temp_s.interval + 1).start;
                						if(!IsEdgeCollisions(temp_s.state, edgeCollision(next_start_s - 1, Action::Down)) && successor_end >= next_start_s - 1){
                							JPSSIPPState temp_state = current_successor;
                							temp_state.dir = 0x08;
                							down_start_t = next_start_s -1;
-               							flag_re_down = true;
+               							flag_re_up = true;
+               							re_start.push_back(startTime(down_start_t, Action::Up, 0x07, true));
                						}
                					}
 
-             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y - 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y - 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)){
+               						re_start.push_back(startTime(up_start_t, Action::Down, 0x0b, true));
+               					}
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)){
+               						re_start.push_back(startTime(up_left_t, Action::Left, 0x01, true));
+               					}
+               					if((isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)){
+               						re_start.push_back(startTime(up_right_t, Action::Right, 0x02, true));
+               					}
+            					std::sort(re_start.begin(), re_start.end()); //For the re-start direction, choose the minimum re-start time.
+            					Cost re_ac = -1;
+            					unsigned int current_dir = 0x00;
+            					for(size_t re_i = 0; re_i < re_start.size(); re_i++){
+            						if(re_start[re_i].rt == -1) continue;
+            						current_successor.action = Action::Down;
+            						current_dir = re_start[re_i].dir;
+            						for(size_t re_ii = re_i + 1; re_ii < re_start.size(); re_ii++){
+            							if(re_start[re_ii].rt == re_start[re_i].rt){
+            								current_dir |= re_start[re_ii].dir;
+            							}else break;
+            						}
+            						re_ac = re_start[re_i].rt;
+            						if(re_ac == m_lastGScore + current_cost_l + 1){
+            							current_dir |= 0x0b;
+            						}
+            						break;
+            					}
+            					if(re_ac != -1){
+            						current_successor.dir = current_dir;
+          		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
+            		          					Action::Down, re_ac - m_lastGScore));
+          		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
+            					}
+/*             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y - 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
             							|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
              							|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
          							){
@@ -1065,7 +1155,7 @@ public:
                     						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
                     						break;
                 					}
-                				}
+                				}*/
 
             	             	if (isSolution(current_successor)) {
             	             		flag_is_solution = true;

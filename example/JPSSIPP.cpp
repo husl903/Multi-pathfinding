@@ -497,28 +497,12 @@ int main(int argc, char* argv[]) {
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
-/*  allCollisionIntervals[State(0, 4)].push_back(jps_sipp::interval(1, 5));
-  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(3, 4));
-  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(9, 9));
-  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(3, 5));
-  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(7, 8));
-  allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(1, 2));
-  allCollisionIntervals[State(3, 4)].push_back(jps_siCpp::interval(7, 7));
-  allCollisionIntervals[State(4, 4)].push_back(jps_sipp::interval(5, 8));
 
-  allCollisionIntervals_sipp[State(0, 4)].push_back(sipp_t::interval(1, 5));
-  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(3, 4));
-  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(9, 9));
-  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(3, 5));
-  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(7, 8));
-  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(1, 2));
-  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(7, 7));
-  allCollisionIntervals_sipp[State(4, 4)].push_back(sipp_t::interval(5, 8));
-  last_ob_g[0][4] = 5;
-  last_ob_g[1][4] = 9;
-  last_ob_g[2][4] = 8;
-  last_ob_g[3][4] = 7;
-  last_ob_g[4][4] = 8;*/
+/*  allCollisionIntervals[State(1, 1)].push_back(
+		  jps_sipp::interval(4, 5));
+  allCollisionIntervals_sipp[State(1,1)].push_back(
+		  sipp_t::interval(4, 5));*/
+
 
   long cost = 0;
   int num_temporal_obstacle = 0;
@@ -526,7 +510,7 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < (int)goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
-//    break;
+//    if(i > 3) break;
 
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
@@ -536,6 +520,20 @@ int main(int argc, char* argv[]) {
     t.stop();
     double preTime = t.elapsedSeconds();
 
+/*    map_temporal_obstacle[1][1]= true;
+    int xx1[5] = {0, 1, -1};
+    int yy1[5] = {0, 1, -1};
+    for(int xx_1 = 0; xx_1 < 3; xx_1++){
+  	  for(int yy_1 = 0; yy_1 < 3; yy_1++){
+  		  if(xx_1 == 0 && yy_1 == 0) continue;
+  		  State temp_state(1 + xx1[xx_1], 1 + yy1[yy_1]);
+//  		  if(env.stateValid(temp_state)){
+  			  nei_ob_g[temp_state.x][temp_state.y] = 5	;
+  //    						  std::cout << temp_state.x  << " " << temp_state.y <<  " " << nei_ob_g[temp_state.x][temp_state.y] << " ----\n";
+//  		  }
+  	  }
+    }
+    last_ob_g[1][1] = 5;*/
 
     Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
     env.setExactHeuristFalse();
@@ -543,6 +541,7 @@ int main(int argc, char* argv[]) {
     env.setFI(isF);
     jps_sipp jpssipp(env);
     sipp_t sipp(env);
+
 
     jpssipp.setEdgeCollisionSize(dimx, dimy);
     sipp.setEdgeCollisionSize(dimx, dimy);
