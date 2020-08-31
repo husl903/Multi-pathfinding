@@ -116,7 +116,6 @@ class JPSAStar {
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
-
 /*    	if(neighbor.state.flag_wait){
 //    		 std::cout << neighbor.state.state.x << " " << neighbor.state.state.y << " cost " << neighbor.state.g_cost << "\n";
             Cost tentative_gScore = current.gScore + neighbor.cost;
@@ -145,15 +144,12 @@ class JPSAStar {
                 std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                   tentative_gScore)));
 
-    	} else*/ if (closedSet.find(neighbor.state) == closedSet.end()) {
+    	} else*/if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
-
           if (iter == stateToHeap.end()) {  // Discover a new node
-
             Cost fScore =
                 tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
-
             auto handle =
                 openSet.push(Node(neighbor.state, fScore, tentative_gScore));
             (*handle).handle = handle;
@@ -162,18 +158,19 @@ class JPSAStar {
           } else {
 
         	  auto handle = iter->second;
-        	  if(tentative_gScore > (*handle).gScore) continue;
+        	  if(tentative_gScore > (*handle).gScore) {
+        		  continue;
+        	  }
         	  if((tentative_gScore == (*handle).gScore)){
 //        		  if((*handle).state.dir > neighbor.state.dir)
         		 (*handle).state.dir |= neighbor.state.dir;
         		  continue;
         	  }
-
             // update f and gScore
-            Cost delta = (*handle).gScore - tentative_gScore;
+//            Cost delta = (*handle).gScore - tentative_gScore;
             (*handle).state.dir =  neighbor.state.dir;
             (*handle).gScore = tentative_gScore;
-            (*handle).fScore -= delta;
+            (*handle).fScore = tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
             openSet.increase(handle);
             m_env.onDiscover(neighbor.state, (*handle).fScore,
                              (*handle).gScore);

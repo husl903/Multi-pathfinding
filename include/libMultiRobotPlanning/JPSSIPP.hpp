@@ -573,8 +573,8 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
-// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
+// 				  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }
@@ -1160,7 +1160,7 @@ public:
             	             	if (isSolution(current_successor)) {
             	             		flag_is_solution = true;
             	             		current_successor.dir = 0x0b;
-            	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
             	           			break ;
             	             	}
 
@@ -1173,12 +1173,12 @@ public:
             	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             			if(succ_f > par_f){
 //            	             				current_successor.dir = 0x0b;
-            	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
             	           					break ;
             	             			}
             	             		}else{
 //        	             				current_successor.dir = 0x0b;
-        	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+        	           					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
         	           					break ;
             	             		}
             	             	}

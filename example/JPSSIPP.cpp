@@ -123,6 +123,7 @@ class Environment {
 		} else {
 			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
 			if(s.x == m_goal.x){
+				std::cout << s.x << " "<< s.y << " dir "<< dir << std::endl;
 				if(s.y < m_goal.y && !(dir & 0x04)) {
 					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
 					else return hvalue + 2;
@@ -503,7 +504,7 @@ int main(int argc, char* argv[]) {
   allCollisionIntervals_sipp[State(1,1)].push_back(
 		  sipp_t::interval(4, 5));*/
 
-
+  if(num_path == -1) num_path = goals.size();
   long cost = 0;
   int num_temporal_obstacle = 0;
   Timer t;
@@ -778,6 +779,7 @@ int main(int argc, char* argv[]) {
 
     if(solution.cost != solution2.cost){
     	std::cout << inputFile <<  "Agent " << i << ": Not equal1" << std::endl;
+    	res_sta << inputFile << "Agent " << i << ": Not equal1" << std::endl;
     	break;
     }
 
