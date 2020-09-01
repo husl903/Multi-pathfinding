@@ -231,7 +231,7 @@ public:
     JPSSIPPEnvironment(Environment& env) : m_env(env) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
-      return m_env.admissibleHeuristic(s.state, s.dir);
+        return m_env.admissibleHeuristic(s.state, s.dir);
 //        return m_env.admissibleHeuristic(s.state);
 
     }
@@ -293,7 +293,7 @@ public:
       		  State state_re = s.state;
       		  flag_is_solution = false;
       		  std::vector<startTime> re_start;
-//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
 
 /*      		  flag_curr_i.resize(3); flag_next_i.resize(3);
       		  flag_curr_w.resize(3); flag_next_w.resize(3);
@@ -573,8 +573,8 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
-// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+           		  	  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state, m.state.dir);
+ 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }

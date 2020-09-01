@@ -162,6 +162,8 @@ class JPSAStar {
           } else {
 
         	  auto handle = iter->second;
+        	  std::cout << "Old nodes !!!!!" << neighbor.state.state.x << " " << neighbor.state.state.y << " " << neighbor.state.dir << " ---------\n";
+
         	  if(tentative_gScore > (*handle).gScore) continue;
         	  if((tentative_gScore == (*handle).gScore)){
 //        		  if((*handle).state.dir > neighbor.state.dir)
