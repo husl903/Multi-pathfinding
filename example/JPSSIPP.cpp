@@ -128,9 +128,11 @@ class Environment {
 					else return hvalue + 2;
 				}
 				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x04)){
-					return hvalue + 1;
+					if(isTemporalObstacle(State(s.x - 1, s.y)) || isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 1;
+					else return hvalue + 2;
 				}
 				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x04)){
+					return hvalue;
 					int xx;
 					for(xx = m_goal.x; xx <= s.x; xx++){
 						if(isTemporalObstacle(State(xx, s.y + 1)) || isObstacle(State(xx, s.y+1))) return hvalue;
@@ -144,10 +146,11 @@ class Environment {
 				}
 
 				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x04)){
-					std::cout << "State " << s.x << " " << s.y << " dir " << dir << "--------------------\n";
-					return hvalue + 1;
+					if(isTemporalObstacle(State(s.x + 1, s.y)) || isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 1;
+					else return hvalue + 2;
 				}
-/*				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+					return hvalue;
 					int xx;
 					for(xx = s.x; xx <= m_goal.x; xx++){
 						if(isTemporalObstacle(State(xx, s.y + 1)) || isObstacle(State(xx, s.y + 1))) return hvalue;
@@ -157,9 +160,9 @@ class Environment {
 				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x04)){
 					if(!isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 2;
 					else return hvalue + 1;
-				}*/
+				}
 			}
-			return hvalue;
+
 			if(s.y == m_goal.y){
 				if(s.x > m_goal.x && !(dir & 0x01)) {
 					if(isTemporalObstacle(State(s.x - 1, s.y))) return hvalue + 1;
@@ -170,7 +173,6 @@ class Environment {
 					else return hvalue + 2;
 				}
 			}
-			return hvalue;
 
 			if(s.y > m_goal.y ){
 				if(s.x == m_goal.x && !(dir & 0x08)){
@@ -178,45 +180,43 @@ class Environment {
 					else return hvalue + 2;
 				}
 				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x08)){
-					return hvalue + 2;
+					if(isTemporalObstacle(State(s.x - 1, s.y)) || isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+					else return hvalue + 2;
 				}
+
 				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+					return hvalue;
 					int xx;
-					for(xx = m_goal.x + 1; xx < s.x; xx++){
+					for(xx = m_goal.x; xx <= s.x; xx++){
 						if(isTemporalObstacle(State(xx, s.y - 1)) || isObstacle(State(xx, s.y - 1))) return hvalue;
 					}
-					if(xx == s.x) return hvalue + 1;
+					if(xx == s.x + 1) return hvalue + 1;
 				}
 
-				if(s.x < m_goal.x && !isTemporalObstacle(State(s.x, s.y - 1))){
-					return hvalue + 1;
+				if(s.x > m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+					if(!isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 2;
+					else return hvalue + 1;
 				}
+
+				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x08)){
+					if(isTemporalObstacle(State(s.x + 1, s.y)) || isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+					return hvalue;
+					int xx;
+					for(xx = s.x; xx <= m_goal.x; xx++){
+						if(isTemporalObstacle(State(xx, s.y - 1)) || isObstacle(State(xx, s.y - 1))) return hvalue;
+					}
+					if(xx == m_goal.x + 1) return hvalue + 1;
+				}
+				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+					if(!isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
 			}
 			return hvalue;
-
-			if(s.x == m_goal.x){
-				if(s.y < m_goal.y && !(dir & 0x04)) {
-					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
-					else return hvalue + 2;
-				}
-				if(s.y > m_goal.y && !(dir & 0x08)) {
-					if(isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
-					else return hvalue + 2;
-				}
-			}
-			if(s.y == m_goal.y){
-				if(s.x > m_goal.x && !(dir & 0x01)) {
-					if(isTemporalObstacle(State(s.x - 1, s.y))) return hvalue + 1;
-					else return hvalue + 2;
-				}
-				if(s.x < m_goal.x && !(dir & 0x02)) {
-					if(isTemporalObstacle(State(s.x + 1, s.y))) return hvalue + 1;
-					else return hvalue + 2;
-				}
-			}
-
-			return hvalue;
-
 		}
 
 //		return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
@@ -514,7 +514,7 @@ int main(int argc, char* argv[]) {
 
 
 	for (const auto& ob:obstacles){
-		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
+//		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob,temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
