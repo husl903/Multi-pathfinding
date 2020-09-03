@@ -231,7 +231,8 @@ public:
     JPSSIPPEnvironment(Environment& env) : m_env(env) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
-        return m_env.admissibleHeuristic(s.state, s.dir);
+    	return m_env.admissibleHeuristic(s.state, s.dir, s.g_cost);
+//        return m_env.admissibleHeuristic(s.state, s.dir);
 //        return m_env.admissibleHeuristic(s.state);
 
     }
