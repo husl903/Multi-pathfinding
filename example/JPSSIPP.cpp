@@ -122,16 +122,49 @@ class Environment {
 			}
 		} else {
 			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
-			if(s.x == m_goal.x){
-				if(s.y < m_goal.y && !(dir & 0x04)) {
-					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue+ 1;
+			if(s.y < m_goal.y ){
+				if(s.x == m_goal.x && !(dir & 0x04)){
+					if(isTemporalObstacle(State(s.x, s.y + 1)))  return hvalue + 1;
+					else return hvalue + 2;
+//					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y + 1))) return hvalue + 4;
+//					if(s.x - 1 >= 0 && isTemporalObstacle(State(s.x - 1, s.y + 1))) return hvalue + 2;
+				}
+				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x04)){
+					if(isTemporalObstacle(State(s.x - 1, s.y)) || isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 1;
 					else return hvalue + 2;
 				}
-				if(s.y > m_goal.y && !(dir & 0x08)) {
-					if(isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x04)){
+					return hvalue;
+					int xx;
+					for(xx = m_goal.x; xx <= s.x; xx++){
+						if(isTemporalObstacle(State(xx, s.y + 1)) || isObstacle(State(xx, s.y+1))) return hvalue;
+					}
+					if(xx == s.x + 1) return hvalue + 1;
+				}
+
+				if(s.x > m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+					if(!isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
+				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x04)){
+					if(isTemporalObstacle(State(s.x + 1, s.y)) || isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 1;
 					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+					return hvalue;
+					int xx;
+					for(xx = s.x; xx <= m_goal.x; xx++){
+						if(isTemporalObstacle(State(xx, s.y + 1)) || isObstacle(State(xx, s.y + 1))) return hvalue;
+					}
+					if(xx == m_goal.x + 1) return hvalue + 1;
+				}
+				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x04)){
+					if(!isTemporalObstacle(State(s.x, s.y + 1))) return hvalue + 2;
+					else return hvalue + 1;
 				}
 			}
+
 			if(s.y == m_goal.y){
 				if(s.x > m_goal.x && !(dir & 0x01)) {
 					if(isTemporalObstacle(State(s.x - 1, s.y))) return hvalue + 1;
@@ -143,11 +176,161 @@ class Environment {
 				}
 			}
 
+			if(s.y > m_goal.y ){
+				if(s.x == m_goal.x && !(dir & 0x08)){
+					if(isTemporalObstacle(State(s.x, s.y - 1)))  return hvalue+ 1;
+					else return hvalue + 2;
+//					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y - 1))) return hvalue + 4;
+//					if(s.x + 1 < m_dimx && isTemporalObstacle(State(s.x + 1, s.y - 1))) return hvalue + 1;
+				}
+				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x08)){
+					if(isTemporalObstacle(State(s.x - 1, s.y)) || isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+
+				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+					return hvalue;
+					int xx;
+					for(xx = m_goal.x; xx <= s.x; xx++){
+						if(isTemporalObstacle(State(xx, s.y - 1)) || isObstacle(State(xx, s.y - 1))) return hvalue;
+					}
+					if(xx == s.x + 1) return hvalue + 1;
+				}
+
+				if(s.x > m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+					if(!isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
+				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x08)){
+					if(isTemporalObstacle(State(s.x + 1, s.y)) || isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+					return hvalue;
+					int xx;
+					for(xx = s.x; xx <= m_goal.x; xx++){
+						if(isTemporalObstacle(State(xx, s.y - 1)) || isObstacle(State(xx, s.y - 1))) return hvalue;
+					}
+					if(xx == m_goal.x + 1) return hvalue + 1;
+				}
+				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+					if(!isTemporalObstacle(State(s.x, s.y - 1))) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
+			}
 			return hvalue;
-
 		}
+	}
 
-//		return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
+	float admissibleHeuristic(const State& s, unsigned int dir, int g_cost) {
+
+		if(!stateValid(s)) return INT_MAX;
+		if(isExact){
+			if(m_eHeuristic[m_goal][s.x][s.y] == -1) return INT_MAX;
+			else{
+				return m_eHeuristic[m_goal][s.x][s.y];
+			}
+		} else {
+			float hvalue = std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
+			if(s.y < m_goal.y ){
+				if(s.x == m_goal.x && !(dir & 0x04)){
+					if(isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost))  return hvalue + 1;
+//					else return hvalue + 2;
+					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y + 1)) && !(dir & 0x02)) return hvalue + 4;
+					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y + 1)) && !(dir & 0x01)) return hvalue + 4;
+					return hvalue + 2;
+//					if(s.x - 1 >= 0 && isTemporalObstacleAfterT(State(s.x - 1, s.y + 1), g_cost + 1)) return hvalue + 2;
+//					if(s.x + 1 < m_dimx && isTemporalObstacleAfterT(State(s.x + 1, s.y + 1), g_cost + 1)) return hvalue + 2;
+				}
+
+				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x04)){
+					if(isTemporalObstacleAfterT(State(s.x - 1, s.y), g_cost) || isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x04)){
+//					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y + 1))) return hvalue + 2;
+					return hvalue;
+					int xx;
+					for(xx = m_goal.x; xx <= s.x; xx++){
+						if(isTemporalObstacleAfterT(State(xx, s.y + 1), g_cost) || isObstacle(State(xx, s.y+1))) return hvalue;
+					}
+					if(xx == s.x + 1) return hvalue + 1;
+				}
+				if(s.x > m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+					if(!isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost)) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
+				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x04)){
+					if(isTemporalObstacleAfterT(State(s.x + 1, s.y), g_cost) || isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x04)){
+//					if(s.x == m_goal.x - 1 && isObstacle(State(s.x + 1, s.y + 1))) return hvalue + 2;
+					return hvalue;
+					int xx;
+					for(xx = s.x; xx <= m_goal.x; xx++){
+						if(isTemporalObstacleAfterT(State(xx, s.y + 1), g_cost) || isObstacle(State(xx, s.y + 1))) return hvalue;
+					}
+					if(xx == m_goal.x + 1) return hvalue + 1;
+				}
+				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x04)){
+					if(!isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost)) return hvalue + 2;
+					else return hvalue + 1;
+				}
+			}
+
+			if(s.y == m_goal.y){
+				if(s.x > m_goal.x && !(dir & 0x01)) {
+					if(isTemporalObstacleAfterT(State(s.x - 1, s.y), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && !(dir & 0x02)) {
+					if(isTemporalObstacleAfterT(State(s.x + 1, s.y), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+			}
+
+			if(s.y > m_goal.y ){
+				if(s.x == m_goal.x && !(dir & 0x08)){
+					if(isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost))  return hvalue + 1;
+//					else return hvalue + 2;
+					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y - 1)) && !(dir & 0x01)) return hvalue + 4;
+					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y - 1)) && !(dir & 0x02)) return hvalue + 4;
+					return hvalue + 2;
+				}
+				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x08)){
+					if(isTemporalObstacleAfterT(State(s.x - 1, s.y), g_cost) || isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+
+				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+//					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y - 1))) return hvalue + 2;
+					return hvalue;
+				}
+
+				if(s.x > m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+					if(!isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost)) return hvalue + 2;
+					else return hvalue + 1;
+				}
+
+				if(s.x < m_goal.x && !(dir & 0x02) && !(dir & 0x08)){
+					if(isTemporalObstacleAfterT(State(s.x + 1, s.y), g_cost) || isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost)) return hvalue + 1;
+					else return hvalue + 2;
+				}
+				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x08)){
+//					if(s.x == m_goal.x -1 && isObstacle(State(s.x + 1, s.y - 1))) return hvalue + 2;
+					return hvalue;
+				}
+				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x08)){
+					if(!isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost)) return hvalue + 2;
+					else return hvalue + 1;
+				}
+			}
+			return hvalue;
+		}
 	}
 
 	bool isSolution(const State& s) { return s == m_goal; }
@@ -442,7 +625,7 @@ int main(int argc, char* argv[]) {
 
 
 	for (const auto& ob:obstacles){
-		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
+//		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob,temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -504,6 +687,7 @@ int main(int argc, char* argv[]) {
 		  sipp_t::interval(4, 5));*/
 
 
+  if(num_path == -1) num_path = goals.size();
   long cost = 0;
   int num_temporal_obstacle = 0;
   Timer t;
@@ -515,7 +699,7 @@ int main(int argc, char* argv[]) {
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
     std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
-    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+//    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
     eHeuristic[goals[i]] = eHeuristicGoal;
     t.stop();
     double preTime = t.elapsedSeconds();
@@ -778,6 +962,7 @@ int main(int argc, char* argv[]) {
 
     if(solution.cost != solution2.cost){
     	std::cout << inputFile <<  "Agent " << i << ": Not equal1" << std::endl;
+    	res_sta << inputFile << " Agent, " << i << ", Not equal" << std::endl;
     	break;
     }
 

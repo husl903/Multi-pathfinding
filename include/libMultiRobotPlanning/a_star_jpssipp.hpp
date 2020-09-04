@@ -162,6 +162,8 @@ class JPSAStar {
           } else {
 
         	  auto handle = iter->second;
+//        	  std::cout << "Old nodes !!!!!" << neighbor.state.state.x << " " << neighbor.state.state.y << " " << neighbor.state.dir << " ---------\n";
+
         	  if(tentative_gScore > (*handle).gScore) continue;
         	  if((tentative_gScore == (*handle).gScore)){
 //        		  if((*handle).state.dir > neighbor.state.dir)
@@ -170,10 +172,11 @@ class JPSAStar {
         	  }
 
             // update f and gScore
-            Cost delta = (*handle).gScore - tentative_gScore;
+//            Cost delta = (*handle).gScore - tentative_gScore;
             (*handle).state.dir =  neighbor.state.dir;
             (*handle).gScore = tentative_gScore;
-            (*handle).fScore -= delta;
+            (*handle).fScore = tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
+
             openSet.increase(handle);
             m_env.onDiscover(neighbor.state, (*handle).fScore,
                              (*handle).gScore);
