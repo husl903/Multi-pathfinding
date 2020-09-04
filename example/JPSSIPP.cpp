@@ -237,9 +237,12 @@ class Environment {
 			if(s.y < m_goal.y ){
 				if(s.x == m_goal.x && !(dir & 0x04)){
 					if(isTemporalObstacleAfterT(State(s.x, s.y + 1), g_cost))  return hvalue + 1;
-					else return hvalue + 2;
-					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y + 1))) return hvalue + 4;
-					if(s.x - 1 >= 0 && isTemporalObstacleAfterT(State(s.x - 1, s.y + 1), g_cost + 1)) return hvalue + 2;
+//					else return hvalue + 2;
+					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y + 1)) && !(dir & 0x02)) return hvalue + 4;
+					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y + 1)) && !(dir & 0x01)) return hvalue + 4;
+					return hvalue + 2;
+//					if(s.x - 1 >= 0 && isTemporalObstacleAfterT(State(s.x - 1, s.y + 1), g_cost + 1)) return hvalue + 2;
+//					if(s.x + 1 < m_dimx && isTemporalObstacleAfterT(State(s.x + 1, s.y + 1), g_cost + 1)) return hvalue + 2;
 				}
 
 				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x04)){
@@ -247,7 +250,7 @@ class Environment {
 					else return hvalue + 2;
 				}
 				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x04)){
-					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y + 1))) return hvalue + 2;
+//					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y + 1))) return hvalue + 2;
 					return hvalue;
 					int xx;
 					for(xx = m_goal.x; xx <= s.x; xx++){
@@ -265,7 +268,7 @@ class Environment {
 					else return hvalue + 2;
 				}
 				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x04)){
-					if(s.x == m_goal.x - 1 && isObstacle(State(s.x + 1, s.y + 1))) return hvalue + 2;
+//					if(s.x == m_goal.x - 1 && isObstacle(State(s.x + 1, s.y + 1))) return hvalue + 2;
 					return hvalue;
 					int xx;
 					for(xx = s.x; xx <= m_goal.x; xx++){
@@ -293,9 +296,10 @@ class Environment {
 			if(s.y > m_goal.y ){
 				if(s.x == m_goal.x && !(dir & 0x08)){
 					if(isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost))  return hvalue + 1;
-					else return hvalue + 2;
-					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y - 1))) return hvalue + 4;
-					if(s.x + 1 < m_dimx && isTemporalObstacleAfterT(State(s.x + 1, s.y - 1), g_cost + 1)) return hvalue + 1;
+//					else return hvalue + 2;
+					if(s.x + 1 < m_dimx && isObstacle(State(s.x + 1, s.y - 1)) && !(dir & 0x01)) return hvalue + 4;
+					if(s.x - 1 >= 0 && isObstacle(State(s.x - 1, s.y - 1)) && !(dir & 0x02)) return hvalue + 4;
+					return hvalue + 2;
 				}
 				if(s.x > m_goal.x && !(dir & 0x01) && !(dir & 0x08)){
 					if(isTemporalObstacleAfterT(State(s.x - 1, s.y), g_cost) || isTemporalObstacleAfterT(State(s.x, s.y - 1), g_cost)) return hvalue + 1;
@@ -303,7 +307,7 @@ class Environment {
 				}
 
 				if(s.x > m_goal.x && (dir & 0x01) && !(dir & 0x08)){
-					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y - 1))) return hvalue + 2;
+//					if(s.x == m_goal.x + 1 && isObstacle(State(s.x - 1, s.y - 1))) return hvalue + 2;
 					return hvalue;
 				}
 
@@ -317,7 +321,7 @@ class Environment {
 					else return hvalue + 2;
 				}
 				if(s.x < m_goal.x && (dir & 0x02) && !(dir & 0x08)){
-					if(s.x == m_goal.x -1 && isObstacle(State(s.x + 1, s.y - 1))) return hvalue + 2;
+//					if(s.x == m_goal.x -1 && isObstacle(State(s.x + 1, s.y - 1))) return hvalue + 2;
 					return hvalue;
 				}
 				if(s.x < m_goal.x && (dir & 0x01) && !(dir & 0x08)){
