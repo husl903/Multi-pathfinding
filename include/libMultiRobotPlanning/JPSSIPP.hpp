@@ -231,9 +231,9 @@ public:
     JPSSIPPEnvironment(Environment& env) : m_env(env) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
-    	return m_env.admissibleHeuristic(s.state, s.dir, s.g_cost);
+//    	return m_env.admissibleHeuristic(s.state, s.dir, s.g_cost);
 //        return m_env.admissibleHeuristic(s.state, s.dir);
-//        return m_env.admissibleHeuristic(s.state);
+        return m_env.admissibleHeuristic(s.state);
 
     }
 
@@ -574,11 +574,7 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-<<<<<<< HEAD
-          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
-=======
-//           		  	  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state, m.state.dir);
->>>>>>> 64444f6f55313c88d9d385271731e16d81f9dcd3
+//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
 // 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
