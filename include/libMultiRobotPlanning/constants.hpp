@@ -23,9 +23,9 @@ namespace libMultiRobotPlanning
 	typedef uint8_t dbword;
 
 	// gridmap constants
-	static const uint32_t DBWORD_BITS = sizeof(warthog::dbword)*8;
-	static const uint32_t DBWORD_BITS_MASK = (warthog::DBWORD_BITS-1);
-	static const uint32_t LOG2_DBWORD_BITS = static_cast<uint32_t>(ceil(log10(warthog::DBWORD_BITS) / log10(2)));
+	static const uint32_t DBWORD_BITS = sizeof(libMultiRobotPlanning::dbword)*8;
+	static const uint32_t DBWORD_BITS_MASK = (libMultiRobotPlanning::DBWORD_BITS-1);
+	static const uint32_t LOG2_DBWORD_BITS = static_cast<uint32_t>(ceil(log10(libMultiRobotPlanning::DBWORD_BITS) / log10(2)));
 
 	// search and sort constants
 	static const double DBL_ONE = 1.0f;

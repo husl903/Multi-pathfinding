@@ -27,7 +27,7 @@ namespace libMultiRobotPlanning
 			{ 
 			}
 
-			gm_header(const warthog::gm_header& other) 
+			gm_header(const libMultiRobotPlanning::gm_header& other) 
 			{
 				(*this) = other;
 			}
@@ -36,7 +36,7 @@ namespace libMultiRobotPlanning
 			{ 
 			}
 
-			gm_header& operator=(const warthog::gm_header& other)
+			gm_header& operator=(const libMultiRobotPlanning::gm_header& other)
 			{
 				this->height_ = other.height_;
 				this->width_ = other.width_;
@@ -55,7 +55,7 @@ namespace libMultiRobotPlanning
 			gm_parser(const char* filename);
 			~gm_parser();
 
-			inline warthog::gm_header
+			inline libMultiRobotPlanning::gm_header
 			get_header()
 			{
 				return this->header_;

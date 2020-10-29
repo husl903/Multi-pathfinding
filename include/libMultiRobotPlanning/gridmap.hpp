@@ -19,7 +19,6 @@
 #include "constants.hpp"
 #include "grid.hpp"
 #include "gm_parser.hpp"
-#include "helpers.hpp"
 
 #include <climits>
 #include "stdint.h"
@@ -27,7 +26,7 @@
 namespace libMultiRobotPlanning
 {
 
-const uint32_t GRID_ID_MAX = (uint32_t)warthog::SN_ID_MAX;
+const uint32_t GRID_ID_MAX = (uint32_t)libMultiRobotPlanning::SN_ID_MAX;
 class gridmap
 {
 	public:
@@ -90,8 +89,8 @@ class gridmap
 		{
 			// 1. calculate the dbword offset for the node at index grid_id_p
 			// 2. convert grid_id_p into a dbword index.
-			uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 
 			// compute dbword indexes for tiles immediately above 
 			// and immediately below node_id
@@ -114,8 +113,8 @@ class gridmap
 		{
 			// 1. calculate the dbword offset for the node at index grid_id_p
 			// 2. convert grid_id_p into a dbword index.
-			uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 
 			// compute dbword indexes for tiles immediately above 
 			// and immediately below node_id
@@ -138,8 +137,8 @@ class gridmap
 		{
 			// 1. calculate the dbword offset for the node at index grid_id_p
 			// 2. convert grid_id_p into a dbword index.
-			uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
@@ -165,22 +164,22 @@ class gridmap
 			return this->get_label(y*padded_width_+x);
 		}
 
-		inline warthog::dbword 
+		inline libMultiRobotPlanning::dbword 
 		get_label(uint32_t grid_id_p)
 		{
 			// now we can fetch the label
 			uint32_t bitmask = 1;
-			bitmask <<=  (grid_id_p & warthog::DBWORD_BITS_MASK);
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+			bitmask <<=  (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			if(dbindex > max_id_) { return 0; }
 			return (db_[dbindex] & bitmask) != 0;
 		}
 
         // get a pointer to the word that contains the label of node @grid_id_p
-        inline warthog::dbword*
+        inline libMultiRobotPlanning::dbword*
         get_mem_ptr(uint32_t grid_id_p)
         {
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			if(dbindex > max_id_) { return 0; }
 			return &db_[dbindex];
         }
@@ -195,18 +194,18 @@ class gridmap
 		inline void 
 		set_label(uint32_t grid_id_p, bool label)
 		{
-			uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
-			uint32_t bitmask = 1u << (grid_id_p & warthog::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
+			uint32_t bitmask = 1u << (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
 
 			if(dbindex > max_id_) { return; }
 
 			if(label)
 			{
-				db_[dbindex] |= (warthog::dbword)bitmask;
+				db_[dbindex] |= (libMultiRobotPlanning::dbword)bitmask;
 			}
 			else
 			{
-				db_[dbindex] &= (warthog::dbword)~bitmask;
+				db_[dbindex] &= (libMultiRobotPlanning::dbword)~bitmask;
 			}
 		}
 
@@ -258,7 +257,7 @@ class gridmap
         {
             for(unsigned int i=0; i < db_size_; i++)
             {
-                db_[i] = (warthog::dbword)~db_[i];
+                db_[i] = (libMultiRobotPlanning::dbword)~db_[i];
             }
         }
 
@@ -273,13 +272,13 @@ class gridmap
 		mem()
 		{
 			return sizeof(*this) +
-			sizeof(warthog::dbword) * db_size_;
+			sizeof(libMultiRobotPlanning::dbword) * db_size_;
 		}
 
 
 	private:
-		warthog::gm_header header_;
-		warthog::dbword* db_;
+		libMultiRobotPlanning::gm_header header_;
+		libMultiRobotPlanning::dbword* db_;
 		char filename_[256];
 
 		uint32_t dbwidth_;
@@ -294,8 +293,8 @@ class gridmap
 		uint32_t max_id_;
         uint32_t num_traversable_;
 
-		gridmap(const warthog::gridmap& other) {}
-		gridmap& operator=(const warthog::gridmap& other) { return *this; }
+		gridmap(const libMultiRobotPlanning::gridmap& other) {}
+		gridmap& operator=(const libMultiRobotPlanning::gridmap& other) { return *this; }
 		void init_db();
 };
 

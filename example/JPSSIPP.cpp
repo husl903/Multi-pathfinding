@@ -9,6 +9,7 @@
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
+#include <libMultiRobotPlanning/gridmap.hpp>
 #include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
@@ -581,6 +582,8 @@ int main(int argc, char* argv[]) {
 	}
 
 
+	//Test gridmap
+	
 	std::fstream res_sta(res, std::ios::app);
 	std::fstream res_Good(res+"_good", std::ios::app);
 	std::fstream res_Constraint("constraint.txt", std::ios::app);
