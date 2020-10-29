@@ -112,7 +112,7 @@ class Environment {
 		           std::abs(s.y - m_goal.y);
 	}
 
-	float admissibleHeuristic(const State& s, unsigned int dir) {
+/*	float admissibleHeuristic(const State& s, unsigned int dir) {
 
 		if(!stateValid(s)) return INT_MAX;
 		if(isExact){
@@ -331,7 +331,7 @@ class Environment {
 			}
 			return hvalue;
 		}
-	}
+	}*/
 
 	bool isSolution(const State& s) { return s == m_goal; }
 
@@ -447,7 +447,6 @@ class Environment {
 	}
 
 	bool isJumpPoint(const State& s, int time) {
-//		std::cout << s.x << " " << s.y << " " << time << " nei" << nei_ob_g[s.x][s.y] << "\n";
 		return jump_point_map[s.x][s.y] || nei_ob_g[s.x][s.y]>=time;
 	}
 
@@ -680,28 +679,6 @@ int main(int argc, char* argv[]) {
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
-/*  allCollisionIntervals[State(0, 4)].push_back(jps_sipp::interval(1, 5));
-  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(3, 4));
-  allCollisionIntervals[State(1, 4)].push_back(jps_sipp::interval(9, 9));
-  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(3, 5));
-  allCollisionIntervals[State(2, 4)].push_back(jps_sipp::interval(7, 8));
-  allCollisionIntervals[State(3, 4)].push_back(jps_sipp::interval(1, 2));
-  allCollisionIntervals[State(3, 4)].push_back(jps_siCpp::interval(7, 7));
-  allCollisionIntervals[State(4, 4)].push_back(jps_sipp::interval(5, 8));
-
-  allCollisionIntervals_sipp[State(0, 4)].push_back(sipp_t::interval(1, 5));
-  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(3, 4));
-  allCollisionIntervals_sipp[State(1, 4)].push_back(sipp_t::interval(9, 9));
-  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(3, 5));
-  allCollisionIntervals_sipp[State(2, 4)].push_back(sipp_t::interval(7, 8));
-  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(1, 2));
-  allCollisionIntervals_sipp[State(3, 4)].push_back(sipp_t::interval(7, 7));
-  allCollisionIntervals_sipp[State(4, 4)].push_back(sipp_t::interval(5, 8));
-  last_ob_g[0][4] = 5;
-  last_ob_g[1][4] = 9;
-  last_ob_g[2][4] = 8;
-  last_ob_g[3][4] = 7;
-  last_ob_g[4][4] = 8;*/
 
   if(num_path == -1) num_path = goals.size();
   long cost = 0;
@@ -715,14 +692,14 @@ int main(int argc, char* argv[]) {
     t.reset();
     std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
     std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
-//    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+    getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
     eHeuristic[goals[i]] = eHeuristicGoal;
     t.stop();
     double preTime = t.elapsedSeconds();
 
 
     Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
-    env.setExactHeuristFalse();
+    env.setExactHeuristTrue();
     env.setJumpLimit(jumpLimit);
     env.setFI(isF);
     jps_sipp jpssipp(env);
@@ -731,41 +708,7 @@ int main(int argc, char* argv[]) {
     jpssipp.setEdgeCollisionSize(dimx, dimy);
     sipp.setEdgeCollisionSize(dimx, dimy);
     for (const auto& collisionIntervals : allCollisionIntervals) {
-
       jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
-//      State current_state = collisionIntervals.first;
-//      std::cout << current_state.x << " " << current_state.y << " " << collisionIntervals.second[0].start << collisionIntervals.second[0].end << " -----\n";
-/*      if(env.stateValid(State(current_state.x + 1, current_state.y))){
-    	  env.setJumpPoint(State(current_state.x + 1, current_state.y));
-      }
-
-      if(env.stateValid(State(current_state.x - 1, current_state.y))){
-    	  env.setJumpPoint(State(current_state.x - 1, current_state.y));
-      }
-
-      if(env.stateValid(State(current_state.x, current_state.y - 1))){
-    	  env.setJumpPoint(State(current_state.x, current_state.y - 1));
-      }
-
-      if(env.stateValid(State(current_state.x, current_state.y + 1))){
-    	  env.setJumpPoint(State(current_state.x, current_state.y + 1));
-      }
-
-      if(env.stateValid(State(current_state.x + 1, current_state.y - 1))){
-    	  env.setJumpPoint(State(current_state.x + 1, current_state.y - 1));
-      }
-
-      if(env.stateValid(State(current_state.x - 1, current_state.y - 1))){
-    	  env.setJumpPoint(State(current_state.x - 1, current_state.y - 1));
-      }
-
-      if(env.stateValid(State(current_state.x + 1, current_state.y + 1))){
-    	  env.setJumpPoint(State(current_state.x + 1, current_state.y + 1));
-      }
-
-      if(env.stateValid(State(current_state.x - 1, current_state.y + 1))){
-    	  env.setJumpPoint(State(current_state.x - 1, current_state.y + 1));
-      }*/
     }
 
 
@@ -818,9 +761,9 @@ int main(int argc, char* argv[]) {
 
     env.Reset();
     env.setNoJPS();
-    PlanResult<State, Action, int> solution2;
+    PlanResult<State, Action, int> solution3;
     t.reset();
-    bool success_temp = sipp.search(startStates[i], Action::Wait, solution2);
+    bool success_temp = sipp.search(startStates[i], Action::Wait, solution3);
     t.stop();
 
      int num_expansion2 = env.num_expansion;
@@ -828,17 +771,17 @@ int main(int argc, char* argv[]) {
 
      double time2 = t.elapsedSeconds();
      std::cout<< t.elapsedSeconds() << std::endl;
-/*
+
      env.Reset();
      env.setNoJPS();
      env.setExactHeuristFalse();
      PlanResult<State, Action, int> solution2;
      t.reset();
      bool success_temp1 = sipp.search(startStates[i], Action::Wait, solution2);
-     t.stop();*/
+     t.stop();
 
     if (success_temp) {
-      std::cout << "NoJPS Planning successful! Total cost: " << solution2.cost << " Expansion:"
+      std::cout << "NoJPS Planning successful! Total cost: " << solution3.cost << " Expansion:"
     		    << env.num_expansion << " Generation: " << env.num_generation
                 << std::endl;
 

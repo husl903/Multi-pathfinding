@@ -734,14 +734,14 @@ public:
     	             	if(current_successor.state.x == 0) break; //check the border
     	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
-    	             		if(m_env.isFCheck()){
+/*    	             		if(m_env.isFCheck()){
     	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
     	             			if(succ_f > par_f){
     	             				current_successor.dir = 0x01;
     	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
     	             				break ;
     	             			}
-    	             		}else{
+    	             		}else*/{
 	             				current_successor.dir = 0x01;
 	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_cost_l + 1));
 	             				break ;
@@ -895,14 +895,14 @@ public:
     	             	if(current_successor.state.x == m_env.getDimX() - 1) break; //check the border
     	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
 //    	             	if(step > m_env.limit_jump){
-    	             		if(m_env.isFCheck()){
+/*    	             		if(m_env.isFCheck()){
     	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
     	             			if(succ_f > par_f){
     	             				current_successor.dir = 0x02;
     	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
     	             				break ;
     	             			}
-    	           			}else{
+    	           			}else*/{
 	             				current_successor.dir = 0x02;
 	             				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_cost_l + 1));
 	             				break ;

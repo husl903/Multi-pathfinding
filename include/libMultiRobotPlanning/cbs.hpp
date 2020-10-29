@@ -223,7 +223,7 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
-        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristTrue();
         Timer timerJps;
         timerJps.reset();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
@@ -289,7 +289,7 @@ class CBS {
 
         Timer timerSipp;
         timerSipp.reset();
-//        m_env.setExactHeuristTrue();
+        m_env.setExactHeuristTrue();
         bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSipp = timerSipp.elapsedSeconds();
@@ -306,7 +306,7 @@ class CBS {
 */
 
 
-        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristTrue();
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 

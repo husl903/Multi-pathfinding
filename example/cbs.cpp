@@ -715,10 +715,10 @@ Location  setGoal(int agentId){
 	  isOutput = true;
 	  return goal;
   }
-  bool setExactHeuristTrue(){
+  void setExactHeuristTrue(){
 	  isExact = true;
   }
-  bool setExactHeuristFalse(){
+  void setExactHeuristFalse(){
 	  isExact = false;
   }
 
@@ -996,14 +996,21 @@ int main(int argc, char* argv[]) {
     // std::cout << "s: " << startStates.back() << std::endl;
     goals.emplace_back(Location(goal[0].as<int>(), goal[1].as<int>()));
 
+    t.reset();
     std::vector<std::vector<int>> eHeuristicGoal(dimx+1, std::vector<int>(dimy+1, -1));
     getExactHeuristic(eHeuristicGoal, map_obstacle, goals[num_agent], dimx, dimy);
     eHeuristic[goals[num_agent]] = eHeuristicGoal;
-
+    t.stop();
+    double preT1 = t.elapsedSeconds();
+    std::cout <<   "(" << startStates[num_agent].x << " " << startStates[num_agent].y <<
+    		")" << " , " <<  "(" << goals[num_agent].x << " " << goals[num_agent].y <<
+    		")" << ", " << preT1 << "\n";
     num_agent++;
     if(num_agent > numAgent) break;
   }
   t.stop();
+
+//  return 0;
   double preT = t.elapsedSeconds();
 /*  for(int ii = 0; ii < eHeuristic.size(); ii++){
 //	  std::vector<std::vector<int>> temp = eHeuristic[ii];

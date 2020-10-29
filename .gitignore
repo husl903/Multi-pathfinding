@@ -2,4 +2,7 @@
 /build-1/
 /build-2/
 /example/*.scen
+/include/libMultiRobotPlanning-0117/
+/include/libMultiRobotPlanning-11-8/
+/include/libMultiRobotPlanning-1117/
 
