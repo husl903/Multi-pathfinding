@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 
+namespace libMultiRobotPlanning {
 gridmap::gridmap(unsigned int h, unsigned int w)
 	: header_(h, w, "octile")
 {	
@@ -11,7 +12,7 @@ gridmap::gridmap(unsigned int h, unsigned int w)
 gridmap::gridmap(const char* filename)
 {
 	strcpy(filename_, filename);
-	warthog::gm_parser parser(filename);
+	libMultiRobotPlanning::gm_parser parser(filename);
 	this->header_ = parser.get_header();
 
 	init_db();
@@ -50,17 +51,17 @@ gridmap::init_db()
 	this->dbheight_ = this->header_.height_ + 
 		padded_rows_after_last_row_ +
 		padded_rows_before_first_row_;
-	this->dbwidth_  = (this->header_.width_ >> warthog::LOG2_DBWORD_BITS) + 1;
+	this->dbwidth_  = (this->header_.width_ >> libMultiRobotPlanning::LOG2_DBWORD_BITS) + 1;
 
 	// calculate # of extra/redundant padding bits required,
 	// per row, to align map width with dbword size
 	this->padded_height_ = this->dbheight_;
-	this->padded_width_ = (this->dbwidth_ * warthog::DBWORD_BITS);
+	this->padded_width_ = (this->dbwidth_ * libMultiRobotPlanning::DBWORD_BITS);
 	this->padding_per_row_ = this->padded_width_ - this->header_.width_;
 	this->db_size_ = this->dbwidth_ * this->dbheight_;
 
 	// create a one dimensional dbword array to store the grid
-	this->db_ = new warthog::dbword[db_size_];
+	this->db_ = new libMultiRobotPlanning::dbword[db_size_];
 	for(unsigned int i=0; i < db_size_; i++)
 	{
 		db_[i] = 0;
@@ -87,10 +88,11 @@ gridmap::print(std::ostream& out)
 	{
 		for(unsigned int x=0; x < this->width(); x++)
 		{
-			warthog::dbword c = this->get_label(y*this->width()+x);
+			libMultiRobotPlanning::dbword c = this->get_label(y*this->width()+x);
 			out << (c ? '.' : '@');
 		}
 		out << std::endl;
 	}	
+}
 }
 

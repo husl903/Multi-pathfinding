@@ -3,6 +3,7 @@
 #include <map>
 
 #include "a_star_epsilon.hpp"
+#include "timer.hpp"
 
 namespace libMultiRobotPlanning {
 

@@ -10,13 +10,15 @@
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
-#include "timer.hpp"
+#include <libMultiRobotPlanning/timer.hpp>
+//#include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
 using libMultiRobotPlanning::JPSSIPPAN;
 using libMultiRobotPlanning::SIPP;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
+using libMultiRobotPlanning::gridmap;
 
 
 enum class Action {
@@ -583,6 +585,10 @@ int main(int argc, char* argv[]) {
 
 
 	//Test gridmap
+	char filename[10] = "map";
+	uint32_t ww = 10, hh = 10;
+	// gridmap gtest(filename);
+	gridmap gtest("maptest");
 	
 	std::fstream res_sta(res, std::ios::app);
 	std::fstream res_Good(res+"_good", std::ios::app);

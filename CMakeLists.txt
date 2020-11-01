@@ -180,15 +180,14 @@ target_link_libraries(sipp
 
 ## jpssipp
 add_executable(JPSSIPP
-  example/JPSSIPP.cpp
+  example/gridmap.cpp
+  example/gm_parser.cpp
+  example/JPSSIPP.cpp 
 )
 target_link_libraries(JPSSIPP
   ${Boost_LIBRARIES}
   yaml-cpp
 )
-
-
-
 
 ## mapf_prioritized_sipp
 add_executable(mapf_prioritized_sipp
@@ -198,3 +197,21 @@ target_link_libraries(mapf_prioritized_sipp
   ${Boost_LIBRARIES}
   yaml-cpp
 )
+
+## grid
+# add_executable(grid
+#   example/grid.cpp
+# )
+# target_link_libraries(grid
+#   ${Boost_LIBRARIES}
+#   yaml-cpp
+# )
+
+# gridmap
+# add_executable(gridmap
+#   example/gridmap.cpp
+# )
+# target_link_libraries(gridmap
+#   ${Boost_LIBRARIES}
+#   yaml-cpp
+# )

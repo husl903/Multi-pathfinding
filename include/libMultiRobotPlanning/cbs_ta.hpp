@@ -3,6 +3,7 @@
 #include <map>
 
 #include "a_star.hpp"
+#include "timer.hpp"
 
 namespace libMultiRobotPlanning {
 

@@ -3,6 +3,7 @@
 #include <map>
 
 #include "a_star_epsilon.hpp"
+#include "timer.hpp"
 
 // #define CHECK_FOCAL_LIST
 #define REBUILT_FOCAL_LIST
