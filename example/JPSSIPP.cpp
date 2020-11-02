@@ -11,6 +11,7 @@
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
+#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
 //#include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
@@ -585,10 +586,7 @@ int main(int argc, char* argv[]) {
 
 
 	//Test gridmap
-	char filename[10] = "map";
-	uint32_t ww = 10, hh = 10;
-	// gridmap gtest(filename);
-	gridmap gtest("maptest");
+	gridmap gtest("../example/Berlin_1_256.map");
 	
 	std::fstream res_sta(res, std::ios::app);
 	std::fstream res_Good(res+"_good", std::ios::app);

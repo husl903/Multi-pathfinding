@@ -14,31 +14,29 @@
 // @created: 03/09/2012
 //
 
-#include "jps.h"
+#include "jps.hpp"
 #include <vector>
-#include "gridmap.h"
+#include "gridmap.hpp"
 
-namespace warthog
+namespace libMultiRobotPlanning
 {
 
-namespace jps
-{
 
 class online_jump_point_locator2
 {
 	public: 
-		online_jump_point_locator2(warthog::gridmap* map);
+		online_jump_point_locator2(libMultiRobotPlanning::gridmap* map);
 		~online_jump_point_locator2();
 
 		void
-		jump(warthog::jps::direction d, uint32_t node_id, uint32_t goalid, 
+		jump(libMultiRobotPlanning::direction d, uint32_t node_id, uint32_t goalid, 
 				std::vector<uint32_t>& jpoints,
 				std::vector<double>& costs);
 
         // similar to ::jump but assuming the parent is in the opposite 
         // direction to @param d
 		void
-		rjump(warthog::jps::direction d, uint32_t node_id, uint32_t goalid, 
+		rjump(libMultiRobotPlanning::direction d, uint32_t node_id, uint32_t goalid, 
 				std::vector<uint32_t>& jpoints,
 				std::vector<double>& costs);
 
@@ -88,19 +86,19 @@ class online_jump_point_locator2
 		void
 		__jump_north(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost,
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 		void
 		__jump_south(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost, 
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 		void
 		__jump_east(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost, 
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 		void
 		__jump_west(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost, 
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 
 		// these versions perform a single diagonal jump, returning
 		// the intermediate diagonal jump point and the straight 
@@ -139,19 +137,19 @@ class online_jump_point_locator2
 		void
 		__rjump_east(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost, 
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 
 		void
 		__rjump_west(uint32_t node_id, uint32_t goal_id, 
 				uint32_t& jumpnode_id, double& jumpcost, 
-				warthog::gridmap* mymap);
+				libMultiRobotPlanning::gridmap* mymap);
 
 
 		// functions to convert map indexes to rmap indexes
 		inline uint32_t
 		map_id_to_rmap_id(uint32_t mapid)
 		{
-            if(mapid == warthog::INF32) { return mapid; }
+            if(mapid == libMultiRobotPlanning::INF32) { return mapid; }
 
 			uint32_t x, y;
 			uint32_t rx, ry;
@@ -165,7 +163,7 @@ class online_jump_point_locator2
 		inline uint32_t
 		rmap_id_to_map_id(uint32_t rmapid)
 		{
-            if(rmapid == warthog::INF32) { return rmapid; }
+            if(rmapid == libMultiRobotPlanning::INF32) { return rmapid; }
 
 			uint32_t x, y;
 			uint32_t rx, ry;
@@ -175,11 +173,11 @@ class online_jump_point_locator2
 			return map_->to_padded_id(x, y);
 		}
 
-		warthog::gridmap*
+		libMultiRobotPlanning::gridmap*
 		create_rmap();
 
-		warthog::gridmap* map_;
-		warthog::gridmap* rmap_;
+		libMultiRobotPlanning::gridmap* map_;
+		libMultiRobotPlanning::gridmap* rmap_;
 		//uint32_t jumplimit_;
 
 		uint32_t current_goal_id_;
@@ -189,17 +187,15 @@ class online_jump_point_locator2
 
         // these function pointers allow us to switch between forward jumping
         // and backward jumping (i.e. with the parent direction reversed)
-        void (warthog::jps::online_jump_point_locator2::*__jump_east_fp)
+        void (libMultiRobotPlanning::online_jump_point_locator2::*__jump_east_fp)
             (uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, 
-             double& jumpcost, warthog::gridmap* mymap);
+             double& jumpcost, libMultiRobotPlanning::gridmap* mymap);
 
-        void (warthog::jps::online_jump_point_locator2::*__jump_west_fp)
+        void (libMultiRobotPlanning::online_jump_point_locator2::*__jump_west_fp)
             (uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, 
-             double& jumpcost, warthog::gridmap* mymap);
+             double& jumpcost, libMultiRobotPlanning::gridmap* mymap);
 
 };
-}
-
 }
 
 #endif
