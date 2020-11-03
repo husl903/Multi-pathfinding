@@ -799,13 +799,12 @@ int main(int argc, char* argv[]) {
       int yy[5] = {0, 1, -1};
       if(i < num_path){ //goals.size()
 //    	  std::cout << "VC " << i << std::endl;
-    	  res_Constraint << " -1 -1 -1"<< std::endl;
+//    	  res_Constraint << " -1 -1 -1"<< std::endl;
     	  for (size_t i = 1; i < solution2.states.size(); ++i) {
     		  if (solution2.states[i].first != lastState.first) {
     			  for(int timeStart = lastState.second; timeStart <= solution2.states[i].second - 1; timeStart++ ){
     				  if(timeStart == 0) continue;
-//    				  std::cout << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
-    				  res_Constraint << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
+//    				  res_Constraint << timeStart << " "<< lastState.first.x << " " << lastState.first.y << " \n";
     			  }
 
     			  allCollisionIntervals[lastState.first].push_back(
@@ -837,16 +836,14 @@ int main(int argc, char* argv[]) {
     	  allCollisionIntervals_sipp[solution2.states.back().first].push_back(
     			  sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
 //    	  std::cout << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
-    	  res_Constraint << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
-    	  res_Constraint << "-1 -1 -1" << std::endl;
-    	  std::cout << "ENDVC" << std::endl;
+//    	  res_Constraint << lastState.first.x << " " << lastState.first.y << " " << std::numeric_limits<int>::max() << " \n";
+//    	  res_Constraint << "-1 -1 -1" << std::endl;
 		  for(int xx_1 = 0; xx_1 < 3; xx_1++){
 			  for(int yy_1 = 0; yy_1 < 3; yy_1++){
 				  if(xx_1 == 0 && yy_1 == 0) continue;
 				  State temp_state(lastState.first.x + xx[xx_1], lastState.first.y + yy[yy_1]);
 				  if(env.stateValid(temp_state)){
 					  nei_ob_g[temp_state.x][temp_state.y] = std::numeric_limits<int>::max();
-//    						  std::cout << temp_state.x  << " " << temp_state.y <<  " " << nei_ob_g[temp_state.x][temp_state.y] << " ----\n";
 				  }
 			  }
 		  }
@@ -856,33 +853,30 @@ int main(int argc, char* argv[]) {
     	  }
       }
 
-//      std::cout << ""
+
       // update statistics
       cost += solution2.cost;
       // print solution
       if(i < num_path){ //goals.size()
 //    	  std::cout << "EC " << i << std::endl;
-    	  res_Constraint << "-1 -1 -1 -1 -1 " << std::endl;
+//    	  res_Constraint << "-1 -1 -1 -1 -1 " << std::endl;
     	  for (size_t i = 0; i < solution2.actions.size(); ++i) {
     		  if(solution2.actions[i].first != Action::Wait ){
     			  allEdgeCollisions[solution2.states[i].first].push_back(jps_sipp::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
     			  assert(i+1 <= solution2.states.size());
- //   			  std::cout << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
- //   					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
-    			  res_Constraint << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
-    					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
+//   			  std::cout << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
+//   					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
+//    			  res_Constraint << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
+//    					  " " << solution2.states[i+1].first.x << " " << solution2.states[i+1].first.y << std::endl;
     		  }
     		  if(solution2.actions[i].first != Action::Wait ){
     			  allEdgeCollisions_sipp[solution2.states[i].first].push_back(sipp_t::edgeCollision(solution2.states[i].second,solution2.actions[i].first));
     		  }
-        std::cout << solution2.states[i].second << ": " << solution2.states[i].first
+              std::cout << solution2.states[i].second << ": " << solution2.states[i].first
                   << "->" << solution2.actions[i].first
                   << "(cost: " << solution2.actions[i].second << ")" << std::endl;
     	  }
-
-    	  res_Constraint << "-1 -1 -1 -1 -1" << std::endl;
-//          std::cout << solution2.states.back().second << ": "
-//                    << solution2.states.back().first << std::endl;
+//    	  res_Constraint << "-1 -1 -1 -1 -1" << std::endl;
       }else{
     	  for (size_t i = 0; i < solution2.actions.size(); ++i) {
     		  std::cout << solution2.states[i].second << ": " << solution2.states[i].first
@@ -895,14 +889,14 @@ int main(int argc, char* argv[]) {
       }
 
 
-      for (size_t i = 0; i < solution2.states.size(); ++i) {
-        out << "    - x: " << solution2.states[i].first.x << std::endl
-            << "      y: " << solution2.states[i].first.y << std::endl
-            << "      t: " << solution2.states[i].second << std::endl;
-      }
+    //   for (size_t i = 0; i < solution2.states.size(); ++i) {
+    //     out << "    - x: " << solution2.states[i].first.x << std::endl
+    //         << "      y: " << solution2.states[i].first.y << std::endl
+    //         << "      t: " << solution2.states[i].second << std::endl;
+    //   }
     } else {
       std::cout << inputFile  <<  " SIPP Planning NOT successful from Agent: " << i << std::endl;
-      out << "    []" << std::endl;
+    //   out << "    []" << std::endl;
       res_sta << inputFile << " Agent " << i << " JPSSIPP: " << " cost: " << " -1 " <<  " -1 " << " -1 "
       		<< " -1 " <<" -1 \n";
 

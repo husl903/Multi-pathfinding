@@ -606,7 +606,7 @@ public:
      		JPSSIPPState temp_s = s;
      		Cost current_cost_l = current_cost;
      		while(true){
-     			 m_env.num_generation++;
+     			m_env.num_generation++;
         		current_successor.state.x = temp_s.state.x - 1;
         		current_successor.state.y = temp_s.state.y;
          		up_left_t = -1; down_left_t = -1; up_right_t = -1; down_right_t = -1;
