@@ -11,8 +11,7 @@
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
-#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
-//#include "timer.hpp"
+
 
 using libMultiRobotPlanning::JPSSIPP;
 using libMultiRobotPlanning::JPSSIPPAN;
@@ -96,7 +95,7 @@ class Environment {
 	Environment(size_t dimx, size_t dimy, std::vector<std::vector<bool>> obstacles, std::vector<std::vector<bool>> t_obstacle,
               std::vector<std::vector<bool>>jump_point_map, std::vector<std::vector<int>>last_ob_g,
 			  std::vector<std::vector<int>>nei_ob_g,
-			  std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic, State goal)
+			  std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic, State goal, gridmap* mmap_)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
@@ -105,7 +104,8 @@ class Environment {
 		last_ob_g(std::move(last_ob_g)),
 		nei_ob_g(std::move(nei_ob_g)),
 		m_eHeuristic(std::move(m_eHeuristic)),
-        m_goal(goal) {}
+        m_goal(goal),
+		map_(mmap_) {}
 
 	float admissibleHeuristic(const State& s) {
 		if(!stateValid(s)) return INT_MAX;
@@ -514,6 +514,7 @@ class Environment {
 	bool is_jps = true;
 	bool isExact = false;
 	bool isFI = false;
+	gridmap* map_;
 };
 
 
@@ -705,7 +706,7 @@ int main(int argc, char* argv[]) {
     double preTime = t.elapsedSeconds();
 
 
-    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i]);
+    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &gtest);
     env.setExactHeuristTrue();
     env.setJumpLimit(jumpLimit);
     env.setFI(isF);

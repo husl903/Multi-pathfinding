@@ -1,4 +1,6 @@
 
+#ifndef WARTHOG_GRID_H
+#define WARTHOG_GRID_H
 
 // domains/grid.h
 //
@@ -32,5 +34,5 @@ typedef enum
 }
 
 }
-
+#endif
 

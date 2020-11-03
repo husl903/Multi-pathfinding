@@ -71,11 +71,13 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 
 class Environment {
  public:
-  Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles,
+  Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles, 
+              std::unordered_set<State> temporal_obstacles,
               State goal)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
+        m_temporal_obstacle(std::move(temporal_obstacles)),
         m_goal(goal) {}
 
   float admissibleHeuristic(const State& s) {
@@ -137,11 +139,13 @@ class Environment {
     return true;
   }
 
-  bool isTemporalObstacle(const State& s){
-	  return true;
-  }
+	bool isTemporalObstacle(const State& s){
+      return m_temporal_obstacle.find(s) != m_temporal_obstacle.end();
+	}
+
   bool isTemporalEdgeConstraint(const State& s){
-	  return true;
+	  return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
+          m_temporal_obstacle.find(s) == m_temporal_obstacle.end();
   }
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
@@ -157,6 +161,7 @@ class Environment {
   int m_dimx;
   int m_dimy;
   std::unordered_set<State> m_obstacles;
+  std::unordered_set<State> m_temporal_obstacle;
   State m_goal;
 };
 
@@ -194,18 +199,39 @@ int main(int argc, char* argv[]) {
   // Configure SIPP based on config file
   YAML::Node config = YAML::LoadFile(inputFile);
 
-  State goal(config["goal"][0].as<int>(), config["goal"][1].as<int>());
-  State start(config["start"][0].as<int>(), config["start"][1].as<int>());
+
+	const auto& dim = config["map"]["dimensions"];
+	int dimx = dim[0].as<int>();
+	int dimy = dim[1].as<int>();
+
+  std::cout << dimx  << " " << dimy << std::endl;
+  State start(-1, -1), goal(-1, -1);
+  for (const auto& node : config["agents"]) {
+	  const auto& startNode = node["start"];
+	  const auto& goalNode = node["goal"];
+	  State start1(startNode[0].as<int>(), startNode[1].as<int>());
+	  State goal1(goalNode[0].as<int>(), goalNode[1].as<int>());
+    start = start1;
+    goal = goal1;
+  }
+
+ // State goal(config["goal"][0].as<int>(), config["goal"][1].as<int>());
+ // State start(config["start"][0].as<int>(), config["start"][1].as<int>());
+
 
   std::unordered_set<State> obstacles;
+  std::unordered_set<State> m_temporal_obstacles;
   for (const auto& node : config["environment"]["obstacles"]) {
     obstacles.insert(State(node[0].as<int>(), node[1].as<int>()));
   }
-  Environment env(config["environment"]["size"][0].as<int>(),
-                  config["environment"]["size"][1].as<int>(), obstacles, goal);
+
+  Environment env(dimx, dimy, obstacles, m_temporal_obstacles, goal);
 
   typedef SIPP<State, State, Action, int, Environment> sipp_t;
   sipp_t sipp(env);
+  sipp.setEdgeCollisionSize(dimx, dimy);
+  std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
+
 
   for (const auto& node : config["environment"]["collisionIntervals"]) {
     State state(node["location"][0].as<int>(), node["location"][1].as<int>());
@@ -217,6 +243,7 @@ int main(int argc, char* argv[]) {
           sipp_t::interval(interval[0].as<int>(), interval[1].as<int>()));
     }
     sipp.setCollisionIntervals(state, collisionIntervals);
+    m_temporal_obstacles.insert(state);
   }
 
   // Plan

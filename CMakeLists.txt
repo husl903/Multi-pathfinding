@@ -67,6 +67,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/example/sipp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/JPSSIPP.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/timer.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/online_jump_point_locator2.cpp
 )
 
 add_custom_target(clang-format
@@ -184,6 +185,7 @@ target_link_libraries(sipp
 add_executable(JPSSIPP
   example/gridmap.cpp
   example/gm_parser.cpp
+  example/online_jump_point_locator2.cpp
   example/JPSSIPP.cpp 
 )
 target_link_libraries(JPSSIPP

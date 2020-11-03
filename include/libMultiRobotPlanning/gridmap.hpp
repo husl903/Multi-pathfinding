@@ -1,3 +1,6 @@
+#ifndef WARTHOG_GRIDMAP_H
+#define WARTHOG_GRIDMAP_H
+
 
 // gridmap.h
 //
@@ -300,5 +303,4 @@ class gridmap
 
 }
 
-
-
+#endif

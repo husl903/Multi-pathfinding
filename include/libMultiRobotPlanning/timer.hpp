@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NHOG_TIMER_H
+#define NHOG_TIMER_H
 
 #include <chrono>
 #include <iostream>
@@ -33,3 +34,5 @@ class ScopedTimer : public Timer {
     std::cout << "Elapsed: " << elapsedSeconds() << " s" << std::endl;
   }
 };
+
+#endif

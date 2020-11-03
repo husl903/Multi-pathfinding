@@ -80,10 +80,12 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 class Environment {
  public:
   Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles,
+              std::unordered_set<State> temporal_obstacles,
               State goal)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
+        m_temporal_obstacles(std::move(temporal_obstacles)),
         m_goal(goal) {}
 
   float admissibleHeuristic(const State& s) {
@@ -146,8 +148,9 @@ class Environment {
     return true;
   }
   bool isTemporalObstacle(const State& s){
-	  return true;
+    return m_temporal_obstacles.find(s) != m_obstacles.end();
   }
+
   bool stateValid(const State& s) {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
            m_obstacles.find(s) == m_obstacles.end();
@@ -162,6 +165,7 @@ class Environment {
   int m_dimx;
   int m_dimy;
   std::unordered_set<State> m_obstacles;
+  std::unordered_set<State> m_temporal_obstacles;
   State m_goal;
 };
 
@@ -200,6 +204,7 @@ int main(int argc, char* argv[]) {
   YAML::Node config = YAML::LoadFile(inputFile);
 
   std::unordered_set<State> obstacles;
+  std::unordered_set<State> temporal_obstacles;
   std::vector<State> goals;
   std::vector<State> startStates;
 
@@ -224,18 +229,24 @@ int main(int argc, char* argv[]) {
 
   // Plan (sequentially)
   std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals;
+  std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
+
   long cost = 0;
   for (size_t i = 0; i < goals.size(); ++i) {
     std::cout << "Planning for agent " << i << std::endl;
     out << "  agent" << i << ":" << std::endl;
 
-    Environment env(dimx, dimy, obstacles, goals[i]);
+    Environment env(dimx, dimy, obstacles, temporal_obstacles, goals[i]);
     sipp_t sipp(env);
+    sipp.setEdgeCollisionSize(dimx, dimy);
 
     for (const auto& collisionIntervals : allCollisionIntervals) {
       sipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
     }
-
+    for (const auto& ec: allEdgeCollisions_sipp) {
+    	sipp.setEdgeCollisions(ec.first, ec.second);
+    }    
+    
     // Plan
     PlanResult<State, Action, int> solution;
     bool success = sipp.search(startStates[i], Action::Wait, solution);
@@ -251,10 +262,12 @@ int main(int argc, char* argv[]) {
           allCollisionIntervals[lastState.first].push_back(
             sipp_t::interval(lastState.second, solution.states[i].second - 1));
           lastState = solution.states[i];
+          temporal_obstacles.insert(lastState.first);
         }
       }
       allCollisionIntervals[solution.states.back().first].push_back(
             sipp_t::interval(solution.states.back().second, std::numeric_limits<int>::max()));
+      temporal_obstacles.insert(solution.states.back().first);
       // update statistics
       cost += solution.cost;
 
@@ -263,6 +276,9 @@ int main(int argc, char* argv[]) {
         std::cout << solution.states[i].second << ": " << solution.states[i].first
                   << "->" << solution.actions[i].first
                   << "(cost: " << solution.actions[i].second << ")" << std::endl;
+    		if(solution.actions[i].first != Action::Wait ){
+    		  allEdgeCollisions_sipp[solution.states[i].first].push_back(sipp_t::edgeCollision(solution.states[i].second,solution.actions[i].first));
+    		}                  
       }
       std::cout << solution.states.back().second << ": "
                 << solution.states.back().first << std::endl;

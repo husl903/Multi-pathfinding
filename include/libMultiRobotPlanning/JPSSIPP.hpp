@@ -10,6 +10,8 @@
 #include <unordered_set>
 
 #include "a_star_jpssipp.hpp"
+#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
+
 //#include "timer.hpp"
 
 

@@ -1,33 +1,33 @@
-#include "gridmap.h"
-#include "jps.h"
-#include "online_jump_point_locator2.h"
+#include <libMultiRobotPlanning/gridmap.hpp>
+#include <libMultiRobotPlanning/jps.hpp>
+#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
 
 #include <cassert>
 #include <climits>
 
-warthog::jps::online_jump_point_locator2::online_jump_point_locator2(
-        warthog::gridmap* map) : map_(map)//, jumplimit_(UINT32_MAX)
+libMultiRobotPlanning::online_jump_point_locator2::online_jump_point_locator2(
+        libMultiRobotPlanning::gridmap* map) : map_(map)//, jumplimit_(UINT32_MAX)
 {
 	rmap_ = create_rmap();
-	current_node_id_ = current_rnode_id_ = warthog::INF32;
-	current_goal_id_ = current_rgoal_id_ = warthog::INF32;
+	current_node_id_ = current_rnode_id_ = libMultiRobotPlanning::INF32;
+	current_goal_id_ = current_rgoal_id_ = libMultiRobotPlanning::INF32;
 }
 
-warthog::jps::online_jump_point_locator2::~online_jump_point_locator2()
+libMultiRobotPlanning::online_jump_point_locator2::~online_jump_point_locator2()
 {
 	delete rmap_;
 }
 
 // create a copy of the grid map which is rotated by 90 degrees clockwise.
 // this version will be used when jumping North or South. 
-warthog::gridmap*
-warthog::jps::online_jump_point_locator2::create_rmap()
+libMultiRobotPlanning::gridmap*
+libMultiRobotPlanning::online_jump_point_locator2::create_rmap()
 {
 	uint32_t maph = map_->header_height();
 	uint32_t mapw = map_->header_width();
 	uint32_t rmaph = mapw;
 	uint32_t rmapw = maph;
-	warthog::gridmap* rmap = new warthog::gridmap(rmaph, rmapw);
+	libMultiRobotPlanning::gridmap* rmap = new libMultiRobotPlanning::gridmap(rmaph, rmapw);
 
 	for(uint32_t x = 0; x < mapw; x++) 
 	{
@@ -49,15 +49,15 @@ warthog::jps::online_jump_point_locator2::create_rmap()
 // search instance. If encountered, the goal node is always returned as a 
 // jump point successor.
 //
-// @return: the id of a jump point successor or warthog::INF if no jp exists.
+// @return: the id of a jump point successor or libMultiRobotPlanning::INF if no jp exists.
 void
-warthog::jps::online_jump_point_locator2::jump(warthog::jps::direction d,
+libMultiRobotPlanning::online_jump_point_locator2::jump(libMultiRobotPlanning::jps::direction d,
 	   	uint32_t node_id, uint32_t goal_id, 
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
-    __jump_east_fp = &warthog::jps::online_jump_point_locator2::__jump_east;
-    __jump_west_fp = &warthog::jps::online_jump_point_locator2::__jump_west;
+    __jump_east_fp = &libMultiRobotPlanning::online_jump_point_locator2::__jump_east;
+    __jump_west_fp = &libMultiRobotPlanning::online_jump_point_locator2::__jump_west;
 
 	// cache node and goal ids so we don't need to convert all the time
 	if(goal_id != current_goal_id_)
@@ -74,28 +74,28 @@ warthog::jps::online_jump_point_locator2::jump(warthog::jps::direction d,
 
 	switch(d)
 	{
-		case warthog::jps::NORTH:
+		case libMultiRobotPlanning::jps::NORTH:
 			jump_north(jpoints, costs);
 			break;
-		case warthog::jps::SOUTH:
+		case libMultiRobotPlanning::jps::SOUTH:
 			jump_south(jpoints, costs);
 			break;
-		case warthog::jps::EAST:
+		case libMultiRobotPlanning::jps::EAST:
 			jump_east(jpoints, costs);
 			break;
-		case warthog::jps::WEST:
+		case libMultiRobotPlanning::jps::WEST:
 			jump_west(jpoints, costs);
 			break;
-		case warthog::jps::NORTHEAST:
+		case libMultiRobotPlanning::jps::NORTHEAST:
 			jump_northeast(jpoints, costs);
 			break;
-		case warthog::jps::NORTHWEST:
+		case libMultiRobotPlanning::jps::NORTHWEST:
 			jump_northwest(jpoints, costs);
 			break;
-		case warthog::jps::SOUTHEAST:
+		case libMultiRobotPlanning::jps::SOUTHEAST:
 			jump_southeast(jpoints, costs);
 			break;
-		case warthog::jps::SOUTHWEST:
+		case libMultiRobotPlanning::jps::SOUTHWEST:
 			jump_southwest(jpoints, costs);
 			break;
 		default:
@@ -107,15 +107,15 @@ warthog::jps::online_jump_point_locator2::jump(warthog::jps::direction d,
 // is assumed to be reversed; i.e. in the opposite direction to the jump 
 // direction (usually the parent and the jump direction are the same)
 //
-// @return: the id of a jump point successor or warthog::INF if no jp exists.
+// @return: the id of a jump point successor or libMultiRobotPlanning::INF if no jp exists.
 void
-warthog::jps::online_jump_point_locator2::rjump(warthog::jps::direction d,
+libMultiRobotPlanning::online_jump_point_locator2::rjump(libMultiRobotPlanning::jps::direction d,
 	   	uint32_t node_id, uint32_t goal_id, 
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
-    __jump_east_fp = &warthog::jps::online_jump_point_locator2::__rjump_east;
-    __jump_west_fp = &warthog::jps::online_jump_point_locator2::__rjump_west;
+    __jump_east_fp = &libMultiRobotPlanning::online_jump_point_locator2::__rjump_east;
+    __jump_west_fp = &libMultiRobotPlanning::online_jump_point_locator2::__rjump_west;
 
 	// cache node and goal ids so we don't need to convert all the time
 	if(goal_id != current_goal_id_)
@@ -132,28 +132,28 @@ warthog::jps::online_jump_point_locator2::rjump(warthog::jps::direction d,
 
 	switch(d)
 	{
-		case warthog::jps::NORTH:
+		case libMultiRobotPlanning::jps::NORTH:
 			jump_north(jpoints, costs);
 			break;
-		case warthog::jps::SOUTH:
+		case libMultiRobotPlanning::jps::SOUTH:
 			jump_south(jpoints, costs);
 			break;
-		case warthog::jps::EAST:
+		case libMultiRobotPlanning::jps::EAST:
 			jump_east(jpoints, costs);
 			break;
-		case warthog::jps::WEST:
+		case libMultiRobotPlanning::jps::WEST:
 			jump_west(jpoints, costs);
 			break;
-		case warthog::jps::NORTHEAST:
+		case libMultiRobotPlanning::jps::NORTHEAST:
 			jump_northeast(jpoints, costs);
 			break;
-		case warthog::jps::NORTHWEST:
+		case libMultiRobotPlanning::jps::NORTHWEST:
 			jump_northwest(jpoints, costs);
 			break;
-		case warthog::jps::SOUTHEAST:
+		case libMultiRobotPlanning::jps::SOUTHEAST:
 			jump_southeast(jpoints, costs);
 			break;
-		case warthog::jps::SOUTHWEST:
+		case libMultiRobotPlanning::jps::SOUTHWEST:
 			jump_southwest(jpoints, costs);
 			break;
 		default:
@@ -162,7 +162,7 @@ warthog::jps::online_jump_point_locator2::rjump(warthog::jps::direction d,
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_north(
+libMultiRobotPlanning::online_jump_point_locator2::jump_north(
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
@@ -173,19 +173,19 @@ warthog::jps::online_jump_point_locator2::jump_north(
 
 	__jump_north(rnode_id, rgoal_id, jumpnode_id, jumpcost, rmap_);
 
-	if(jumpnode_id != warthog::INF32)
+	if(jumpnode_id != libMultiRobotPlanning::INF32)
 	{
 		jumpnode_id = current_node_id_ - (uint32_t)(jumpcost) * map_->width();
-		*(((uint8_t*)&jumpnode_id)+3) = warthog::jps::NORTH;
+		*(((uint8_t*)&jumpnode_id)+3) = libMultiRobotPlanning::jps::NORTH;
 		jpoints.push_back(jumpnode_id);
 		costs.push_back(jumpcost);
 	}
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_north(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__jump_north(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost,
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	// jumping north in the original map is the same as jumping
 	// east when we use a version of the map rotated 90 degrees.
@@ -193,7 +193,7 @@ warthog::jps::online_jump_point_locator2::__jump_north(uint32_t node_id,
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_south(
+libMultiRobotPlanning::online_jump_point_locator2::jump_south(
 		std::vector<uint32_t>& jpoints, 
 		std::vector<double>& costs)
 {
@@ -204,19 +204,19 @@ warthog::jps::online_jump_point_locator2::jump_south(
 
 	__jump_south(rnode_id, rgoal_id, jumpnode_id, jumpcost, rmap_);
 
-	if(jumpnode_id != warthog::INF32)
+	if(jumpnode_id != libMultiRobotPlanning::INF32)
 	{
 		jumpnode_id = current_node_id_ + (uint32_t)(jumpcost ) * map_->width();
-		*(((uint8_t*)&jumpnode_id)+3) = warthog::jps::SOUTH;
+		*(((uint8_t*)&jumpnode_id)+3) = libMultiRobotPlanning::jps::SOUTH;
 		jpoints.push_back(jumpnode_id);
 		costs.push_back(jumpcost);
 	}
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_south(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__jump_south(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost,
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	// jumping north in the original map is the same as jumping
 	// west when we use a version of the map rotated 90 degrees.
@@ -224,7 +224,7 @@ warthog::jps::online_jump_point_locator2::__jump_south(uint32_t node_id,
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_east(
+libMultiRobotPlanning::online_jump_point_locator2::jump_east(
 		std::vector<uint32_t>& jpoints, 
 		std::vector<double>& costs)
 {
@@ -235,9 +235,9 @@ warthog::jps::online_jump_point_locator2::jump_east(
 
 	(this->*(__jump_east_fp))(node_id, goal_id, jumpnode_id, jumpcost, map_);
 
-	if(jumpnode_id != warthog::INF32)
+	if(jumpnode_id != libMultiRobotPlanning::INF32)
 	{
-		*(((uint8_t*)&jumpnode_id)+3) = warthog::jps::EAST;
+		*(((uint8_t*)&jumpnode_id)+3) = libMultiRobotPlanning::jps::EAST;
 		jpoints.push_back(jumpnode_id);
 		costs.push_back(jumpcost);
 	}
@@ -245,9 +245,9 @@ warthog::jps::online_jump_point_locator2::jump_east(
 
 
 void
-warthog::jps::online_jump_point_locator2::__jump_east(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__jump_east(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost, 
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	jumpnode_id = node_id;
 
@@ -304,16 +304,16 @@ warthog::jps::online_jump_point_locator2::__jump_east(uint32_t node_id,
 		// correct here since we just inverted neis[1] and then
 		// looked for the first set bit. need -1 to fix it.
 		num_steps -= (1 && num_steps);
-		jumpnode_id = warthog::INF32;
+		jumpnode_id = libMultiRobotPlanning::INF32;
 	}
 	jumpcost = num_steps ;
 	
 }
 
 void
-warthog::jps::online_jump_point_locator2::__rjump_east(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__rjump_east(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost, 
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	jumpnode_id = node_id;
 
@@ -375,7 +375,7 @@ warthog::jps::online_jump_point_locator2::__rjump_east(uint32_t node_id,
 		// looked for the first set bit. need -1 to fix it.
 		num_steps -= (1 && num_steps);
         //num_steps++; // fix sideeffect of previous hacky fix
-		jumpnode_id = warthog::INF32;
+		jumpnode_id = libMultiRobotPlanning::INF32;
 	}
 	jumpcost = num_steps ;
 	
@@ -383,7 +383,7 @@ warthog::jps::online_jump_point_locator2::__rjump_east(uint32_t node_id,
 
 // analogous to ::jump_east 
 void
-warthog::jps::online_jump_point_locator2::jump_west(
+libMultiRobotPlanning::online_jump_point_locator2::jump_west(
 		std::vector<uint32_t>& jpoints, 
 		std::vector<double>& costs)
 {
@@ -394,18 +394,18 @@ warthog::jps::online_jump_point_locator2::jump_west(
 
 	(this->*(__jump_west_fp))(node_id, goal_id, jumpnode_id, jumpcost, map_);
 
-	if(jumpnode_id != warthog::INF32)
+	if(jumpnode_id != libMultiRobotPlanning::INF32)
 	{
-		*(((uint8_t*)&jumpnode_id)+3) = warthog::jps::WEST;
+		*(((uint8_t*)&jumpnode_id)+3) = libMultiRobotPlanning::jps::WEST;
 		jpoints.push_back(jumpnode_id);
 		costs.push_back(jumpcost);
 	}
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_west(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__jump_west(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost, 
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	bool deadend = false;
 	uint32_t neis[3] = {0, 0, 0};
@@ -454,15 +454,15 @@ warthog::jps::online_jump_point_locator2::__jump_west(uint32_t node_id,
 		// correct here since we just inverted neis[1] and then
 		// counted leading zeroes. need -1 to fix it.
 		num_steps -= (1 && num_steps);
-		jumpnode_id = warthog::INF32;
+		jumpnode_id = libMultiRobotPlanning::INF32;
 	}
 	jumpcost = num_steps ;
 }
 
 void
-warthog::jps::online_jump_point_locator2::__rjump_west(uint32_t node_id, 
+libMultiRobotPlanning::online_jump_point_locator2::__rjump_west(uint32_t node_id, 
 		uint32_t goal_id, uint32_t& jumpnode_id, double& jumpcost, 
-		warthog::gridmap* mymap)
+		libMultiRobotPlanning::gridmap* mymap)
 {
 	bool deadend = false;
 	uint32_t neis[3] = {0, 0, 0};
@@ -514,13 +514,13 @@ warthog::jps::online_jump_point_locator2::__rjump_west(uint32_t node_id,
 		// counted leading zeroes. need -1 to fix it.
 		num_steps -= (1 && num_steps);
         //num_steps++;  // fix sideeffect of hacky fix
-		jumpnode_id = warthog::INF32;
+		jumpnode_id = libMultiRobotPlanning::INF32;
 	}
 	jumpcost = num_steps ;
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_northeast(
+libMultiRobotPlanning::online_jump_point_locator2::jump_northeast(
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
@@ -543,7 +543,7 @@ warthog::jps::online_jump_point_locator2::jump_northeast(
 	// (validity of subsequent steps is checked by straight jump functions)
 	if((neis & 1542) != 1542) { return; }
 
-	while(node_id != warthog::INF32)
+	while(node_id != libMultiRobotPlanning::INF32)
 	{
 		__jump_northeast(
 				node_id, rnode_id,
@@ -551,18 +551,18 @@ warthog::jps::online_jump_point_locator2::jump_northeast(
 				jumpnode_id, jumpcost, jp1_id, jp1_cost, 
 				jp2_id, jp2_cost);
 
-		if(jp1_id != warthog::INF32)
+		if(jp1_id != libMultiRobotPlanning::INF32)
 		{
 			jp1_id = node_id - (uint32_t)(jp1_cost ) * map_->width();
-			*(((uint8_t*)&jp1_id)+3) = warthog::jps::NORTH;
+			*(((uint8_t*)&jp1_id)+3) = libMultiRobotPlanning::jps::NORTH;
 			jpoints.push_back(jp1_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp1_cost);
 			if(jp2_cost == 0) { break; } // no corner cutting
 		}
 
-		if(jp2_id != warthog::INF32)
+		if(jp2_id != libMultiRobotPlanning::INF32)
 		{
-			*(((uint8_t*)&jp2_id)+3) = warthog::jps::EAST;
+			*(((uint8_t*)&jp2_id)+3) = libMultiRobotPlanning::jps::EAST;
 			jpoints.push_back(jp2_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp2_cost);
 			if(jp1_cost == 0) { break; } // no corner cutting
@@ -573,7 +573,7 @@ warthog::jps::online_jump_point_locator2::jump_northeast(
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_northeast(
+libMultiRobotPlanning::online_jump_point_locator2::__jump_northeast(
 		uint32_t& node_id, uint32_t& rnode_id, 
 		uint32_t goal_id, uint32_t rgoal_id,
 		uint32_t& jumpnode_id, double& jumpcost, 
@@ -595,22 +595,22 @@ warthog::jps::online_jump_point_locator2::__jump_northeast(
 		// (ensures we do not miss any optimal turning points)
 		__jump_north(rnode_id, rgoal_id, jp_id1, cost1, rmap_);
 		(this->*(__jump_east_fp))(node_id, goal_id, jp_id2, cost2, map_);
-		if((jp_id1 & jp_id2) != warthog::INF32) { break; }
+		if((jp_id1 & jp_id2) != libMultiRobotPlanning::INF32) { break; }
 
 		// couldn't move in a straight dir; next step is an obstacle
 		if(!((uint64_t)cost1 && (uint64_t)cost2)) 
 		{ 
-			node_id = jp_id1 = jp_id2 = warthog::INF32; 
+			node_id = jp_id1 = jp_id2 = libMultiRobotPlanning::INF32; 
 			break; 
 		}
 
 	}
 	jumpnode_id = node_id;
-	jumpcost = num_steps*warthog::DBL_ROOT_TWO;
+	jumpcost = num_steps*libMultiRobotPlanning::DBL_ROOT_TWO;
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_northwest(
+libMultiRobotPlanning::online_jump_point_locator2::jump_northwest(
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
@@ -633,7 +633,7 @@ warthog::jps::online_jump_point_locator2::jump_northwest(
 	// (validity of subsequent steps is checked by straight jump functions)
 	if((neis & 771) != 771) { return; }
 
-	while(node_id != warthog::INF32)
+	while(node_id != libMultiRobotPlanning::INF32)
 	{
 		__jump_northwest(
 				node_id, rnode_id,
@@ -641,18 +641,18 @@ warthog::jps::online_jump_point_locator2::jump_northwest(
 				jumpnode_id, jumpcost, jp1_id, jp1_cost, 
 				jp2_id, jp2_cost);
 
-		if(jp1_id != warthog::INF32)
+		if(jp1_id != libMultiRobotPlanning::INF32)
 		{
 			jp1_id = node_id - (uint32_t)(jp1_cost ) * map_->width();
-			*(((uint8_t*)&jp1_id)+3) = warthog::jps::NORTH;
+			*(((uint8_t*)&jp1_id)+3) = libMultiRobotPlanning::jps::NORTH;
 			jpoints.push_back(jp1_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp1_cost);
 			if(jp2_cost == 0) { break; } // no corner cutting
 		}
 
-		if(jp2_id != warthog::INF32)
+		if(jp2_id != libMultiRobotPlanning::INF32)
 		{
-			*(((uint8_t*)&jp2_id)+3) = warthog::jps::WEST;
+			*(((uint8_t*)&jp2_id)+3) = libMultiRobotPlanning::jps::WEST;
 			jpoints.push_back(jp2_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp2_cost);
 			if(jp1_cost == 0) { break; } // no corner cutting
@@ -663,7 +663,7 @@ warthog::jps::online_jump_point_locator2::jump_northwest(
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_northwest(
+libMultiRobotPlanning::online_jump_point_locator2::__jump_northwest(
 		uint32_t& node_id, uint32_t& rnode_id, 
 		uint32_t goal_id, uint32_t rgoal_id,
 		uint32_t& jumpnode_id, double& jumpcost,
@@ -686,21 +686,21 @@ warthog::jps::online_jump_point_locator2::__jump_northwest(
 		// (ensures we do not miss any optimal turning points)
 		__jump_north(rnode_id, rgoal_id, jp_id1, cost1, rmap_);
 		(this->*(__jump_west_fp))(node_id, goal_id, jp_id2, cost2, map_);
-		if((jp_id1 & jp_id2) != warthog::INF32) { break; }
+		if((jp_id1 & jp_id2) != libMultiRobotPlanning::INF32) { break; }
 
 		// couldn't move in a straight dir; next step is an obstacle
 		if(!((uint64_t)cost1 && (uint64_t)cost2)) 
 		{ 
-			node_id = jp_id1 = jp_id2 = warthog::INF32;
+			node_id = jp_id1 = jp_id2 = libMultiRobotPlanning::INF32;
 		   	break; 
 		}
 	}
 	jumpnode_id = node_id;
-	jumpcost = num_steps*warthog::DBL_ROOT_TWO;
+	jumpcost = num_steps*libMultiRobotPlanning::DBL_ROOT_TWO;
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_southeast(
+libMultiRobotPlanning::online_jump_point_locator2::jump_southeast(
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
@@ -723,7 +723,7 @@ warthog::jps::online_jump_point_locator2::jump_southeast(
 	// (validity of subsequent steps is checked by straight jump functions)
 	if((neis & 394752) != 394752) { return; }
 
-	while(node_id != warthog::INF32)
+	while(node_id != libMultiRobotPlanning::INF32)
 	{
 		__jump_southeast(
 				node_id, rnode_id,
@@ -731,18 +731,18 @@ warthog::jps::online_jump_point_locator2::jump_southeast(
 				jumpnode_id, jumpcost, jp1_id, jp1_cost, 
 				jp2_id, jp2_cost);
 
-		if(jp1_id != warthog::INF32)
+		if(jp1_id != libMultiRobotPlanning::INF32)
 		{
 			jp1_id = node_id + (uint32_t)(jp1_cost ) * map_->width();
-			*(((uint8_t*)&jp1_id)+3) = warthog::jps::SOUTH;
+			*(((uint8_t*)&jp1_id)+3) = libMultiRobotPlanning::jps::SOUTH;
 			jpoints.push_back(jp1_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp1_cost);
 			if(jp2_cost == 0) { break; } // no corner cutting
 		}
 
-		if(jp2_id != warthog::INF32)
+		if(jp2_id != libMultiRobotPlanning::INF32)
 		{
-			*(((uint8_t*)&jp2_id)+3) = warthog::jps::EAST;
+			*(((uint8_t*)&jp2_id)+3) = libMultiRobotPlanning::jps::EAST;
 			jpoints.push_back(jp2_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp2_cost);
 			if(jp1_cost == 0) { break; } // no corner cutting
@@ -753,7 +753,7 @@ warthog::jps::online_jump_point_locator2::jump_southeast(
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_southeast(
+libMultiRobotPlanning::online_jump_point_locator2::__jump_southeast(
 		uint32_t& node_id, uint32_t& rnode_id, 
 		uint32_t goal_id, uint32_t rgoal_id,
 		uint32_t& jumpnode_id, double& jumpcost,
@@ -776,21 +776,21 @@ warthog::jps::online_jump_point_locator2::__jump_southeast(
 		// (ensures we do not miss any optimal turning points)
 		__jump_south(rnode_id, rgoal_id, jp_id1, cost1, rmap_);
 		(this->*(__jump_east_fp))(node_id, goal_id, jp_id2, cost2, map_);
-		if((jp_id1 & jp_id2) != warthog::INF32) { break; }
+		if((jp_id1 & jp_id2) != libMultiRobotPlanning::INF32) { break; }
 
 		// couldn't move in a straight dir; next step is an obstacle
 		if(!((uint64_t)cost1 && (uint64_t)cost2)) 
 		{ 
-			node_id = jp_id1 = jp_id2 = warthog::INF32; 
+			node_id = jp_id1 = jp_id2 = libMultiRobotPlanning::INF32; 
 			break; 
 		}
 	}
 	jumpnode_id = node_id;
-	jumpcost = num_steps*warthog::DBL_ROOT_TWO;
+	jumpcost = num_steps*libMultiRobotPlanning::DBL_ROOT_TWO;
 }
 
 void
-warthog::jps::online_jump_point_locator2::jump_southwest(
+libMultiRobotPlanning::online_jump_point_locator2::jump_southwest(
 		std::vector<uint32_t>& jpoints,
 		std::vector<double>& costs)
 {
@@ -812,7 +812,7 @@ warthog::jps::online_jump_point_locator2::jump_southwest(
 	// early termination (first step is invalid)
 	if((neis & 197376) != 197376) { return; }
 
-	while(node_id != warthog::INF32)
+	while(node_id != libMultiRobotPlanning::INF32)
 	{
 		__jump_southwest(
 				node_id, rnode_id,
@@ -820,18 +820,18 @@ warthog::jps::online_jump_point_locator2::jump_southwest(
 				jumpnode_id, jumpcost, 
 				jp1_id, jp1_cost, jp2_id, jp2_cost);
 
-		if(jp1_id != warthog::INF32)
+		if(jp1_id != libMultiRobotPlanning::INF32)
 		{
 			jp1_id = node_id + (uint32_t)(jp1_cost ) * map_->width();
-			*(((uint8_t*)&jp1_id)+3) = warthog::jps::SOUTH;
+			*(((uint8_t*)&jp1_id)+3) = libMultiRobotPlanning::jps::SOUTH;
 			jpoints.push_back(jp1_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp1_cost);
 			if(jp2_cost == 0) { break; }
 		}
 
-		if(jp2_id != warthog::INF32)
+		if(jp2_id != libMultiRobotPlanning::INF32)
 		{
-			*(((uint8_t*)&jp2_id)+3) = warthog::jps::WEST;
+			*(((uint8_t*)&jp2_id)+3) = libMultiRobotPlanning::jps::WEST;
 			jpoints.push_back(jp2_id);
 			costs.push_back(cost_to_nodeid + jumpcost + jp2_cost);
 			if(jp1_cost == 0) { break; }
@@ -842,7 +842,7 @@ warthog::jps::online_jump_point_locator2::jump_southwest(
 }
 
 void
-warthog::jps::online_jump_point_locator2::__jump_southwest(
+libMultiRobotPlanning::online_jump_point_locator2::__jump_southwest(
 		uint32_t& node_id, uint32_t& rnode_id, 
 		uint32_t goal_id, uint32_t rgoal_id,
 		uint32_t& jumpnode_id, double& jumpcost,
@@ -863,16 +863,16 @@ warthog::jps::online_jump_point_locator2::__jump_southwest(
 		// (ensures we do not miss any optimal turning points)
 		__jump_south(rnode_id, rgoal_id, jp_id1, cost1, rmap_);
 		(this->*(__jump_west_fp))(node_id, goal_id, jp_id2, cost2, map_);
-		if((jp_id1 & jp_id2) != warthog::INF32) { break; }
+		if((jp_id1 & jp_id2) != libMultiRobotPlanning::INF32) { break; }
 
 		// couldn't move in a straight dir; next step is an obstacle
 		if(!((uint64_t)cost1 && (uint64_t)cost2)) 
 		{ 
-			node_id = jp_id1 = jp_id2 = warthog::INF32;
+			node_id = jp_id1 = jp_id2 = libMultiRobotPlanning::INF32;
 		   	break; 
 		}
 	}
 	jumpnode_id = node_id;
-	jumpcost = num_steps*warthog::DBL_ROOT_TWO;
+	jumpcost = num_steps*libMultiRobotPlanning::DBL_ROOT_TWO;
 }
 

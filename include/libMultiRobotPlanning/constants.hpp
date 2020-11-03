@@ -1,4 +1,5 @@
-
+#ifndef WARTHOG_CONSTANTS_H
+#define WARTHOG_CONSTANTS_H
 
 // constants.h
 //
@@ -50,5 +51,4 @@ namespace libMultiRobotPlanning
 }
 
 
-
-
+#endif

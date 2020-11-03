@@ -1,4 +1,5 @@
-
+#ifndef WARTHOG_GRIDMAP_PARSER_H
+#define WARTHOG_GRIDMAP_PARSER_H
 
 // gm_parser.h
 //
@@ -91,4 +92,4 @@ namespace libMultiRobotPlanning
 	};
 }
 
-
+#endif

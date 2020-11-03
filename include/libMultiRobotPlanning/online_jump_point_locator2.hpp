@@ -29,14 +29,14 @@ class online_jump_point_locator2
 		~online_jump_point_locator2();
 
 		void
-		jump(libMultiRobotPlanning::direction d, uint32_t node_id, uint32_t goalid, 
+		jump(libMultiRobotPlanning::jps::direction d, uint32_t node_id, uint32_t goalid, 
 				std::vector<uint32_t>& jpoints,
 				std::vector<double>& costs);
 
         // similar to ::jump but assuming the parent is in the opposite 
         // direction to @param d
 		void
-		rjump(libMultiRobotPlanning::direction d, uint32_t node_id, uint32_t goalid, 
+		rjump(libMultiRobotPlanning::jps::direction d, uint32_t node_id, uint32_t goalid, 
 				std::vector<uint32_t>& jpoints,
 				std::vector<double>& costs);
 

@@ -134,11 +134,12 @@ class SIPP {
     solution.actions.clear();
     solution.states.clear();
     size_t interval;
+
     if (!m_env.findSafeInterval(startState, startTime, interval)) {
       return false;
     }
 
- //  std::cout << "Start " << startState.x << " " << startState.y << " Goal " << " ++++++++++++++++++++++++++++++++++\n";
+//   std::cout << "Start " << startState.x << " " << startState.y << " Goal " << " ++++++++++++++++++++++++++++++++++\n";
 
     bool success = m_astar.search(SIPPState(startState, interval),
                                   astarsolution, startTime);
@@ -238,7 +239,7 @@ class SIPP {
         const SIPPState& s,
         std::vector<Neighbor<SIPPState, SIPPAction, Cost> >& neighbors) {
       std::vector<Neighbor<State, Action, Cost> > motions;
-// 	  std::cout << "Sipp Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
+//  	  std::cout << "Sipp Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
 
 
       m_env.getNeighbors(s.state, motions);
@@ -441,6 +442,7 @@ class SIPP {
     	if(!m_env.stateValid(location)) return false; //|| !m_env.isTemporalObstacle(location)
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
+
     	bool flag_1 = false;
 
     	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
@@ -502,7 +504,9 @@ class SIPP {
     const std::vector<interval>& safeIntervals(const Location& location) {
       static std::vector<interval> defaultInterval(
           1, {0, std::numeric_limits<Cost>::max()});
-      if(!m_env.isTemporalObstacle(m_env.getLocation(location))) return defaultInterval;
+      if(!m_env.isTemporalObstacle(m_env.getLocation(location))){
+        return defaultInterval;
+      }
       int index = m_env.getIndex(location);
 //      const auto iter = m_safeIntervals_t[index];
 //      std::cout << location.x << " " << location.y << "size " << iter.size() << " \n";
