@@ -7,18 +7,23 @@
 #include <yaml-cpp/yaml.h>
 
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
+#include <libMultiRobotPlanning/JPSSIPP_BIT.hpp>
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
+#include <libMultiRobotPlanning/jpst_gridmap.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
+#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
 
 
 using libMultiRobotPlanning::JPSSIPP;
 using libMultiRobotPlanning::JPSSIPPAN;
+using libMultiRobotPlanning::JPSSIPP_BIT;
 using libMultiRobotPlanning::SIPP;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
 using libMultiRobotPlanning::gridmap;
+using libMultiRobotPlanning::jpst_gridmap;
 
 
 enum class Action {
@@ -95,7 +100,7 @@ class Environment {
 	Environment(size_t dimx, size_t dimy, std::vector<std::vector<bool>> obstacles, std::vector<std::vector<bool>> t_obstacle,
               std::vector<std::vector<bool>>jump_point_map, std::vector<std::vector<int>>last_ob_g,
 			  std::vector<std::vector<int>>nei_ob_g,
-			  std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic, State goal, gridmap* mmap_)
+			  std::unordered_map<State, std::vector<std::vector<int>>> m_eHeuristic, State goal, jpst_gridmap* mmap_)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
@@ -105,7 +110,7 @@ class Environment {
 		nei_ob_g(std::move(nei_ob_g)),
 		m_eHeuristic(std::move(m_eHeuristic)),
         m_goal(goal),
-		map_(mmap_) {}
+		jpst_gm_(mmap_) {}
 
 	float admissibleHeuristic(const State& s) {
 		if(!stateValid(s)) return INT_MAX;
@@ -339,6 +344,14 @@ class Environment {
 
 	bool isSolution(const State& s) { return s == m_goal; }
 
+	int getGoalId(){
+		return getNodeId(m_goal);
+	}
+
+	int getNodeId(const State& s){
+		return (s.y*m_dimx + s.x);
+	}
+
 	bool isSameXY(const State& s){return (s.x == m_goal.x || s.y == m_goal.y);}
 //	bool isSameXY(const Location& s) {return s == m_goal;}
 
@@ -499,7 +512,6 @@ class Environment {
 	int num_expansion = 0;
 	int limit_jump = 8;
 
-
  private:
 	int m_dimx;
 	int m_dimy;
@@ -514,7 +526,9 @@ class Environment {
 	bool is_jps = true;
 	bool isExact = false;
 	bool isFI = false;
-	gridmap* map_;
+public:
+	jpst_gridmap* jpst_gm_;
+
 };
 
 
@@ -553,6 +567,7 @@ int main(int argc, char* argv[]) {
 	std::string inputFile;
 	std::string outputFile;
 	std::string res;
+//	std::string mapfile;
 	int num_path = 50;//goals.size();
 	int jumpLimit = 8;
 	bool isF = true;
@@ -561,6 +576,7 @@ int main(int argc, char* argv[]) {
       "input file (YAML)")("output,o",
                            po::value<std::string>(&outputFile)->required(),
                            "output file (YAML)")
+//						   ("map,m", po::value<std::string>(&mapfile)->required(), "map file (MAP)")
 						   ("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")
 						   ("path num,N", po::value<int>(&num_path)->required(), "num path (int)")
 						   ("jump limit,J", po::value<int>(&jumpLimit)->required(), "jump limit (int)")
@@ -585,10 +601,6 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-
-	//Test gridmap
-	gridmap gtest("../example/Berlin_1_256.map");
-	
 	std::fstream res_sta(res, std::ios::app);
 	std::fstream res_Good(res+"_good", std::ios::app);
 	std::fstream res_Constraint("constraint.txt", std::ios::app);
@@ -611,6 +623,8 @@ int main(int argc, char* argv[]) {
 	int dimx = dim[0].as<int>();
 	int dimy = dim[1].as<int>();
 
+//	const char *mapfile_ = mapfile.c_str(); 
+
 	map_jump_point.resize(dimx + 2);
 	map_obstacle.resize(dimx + 2);
 	map_temporal_obstacle.resize(dimx + 2);
@@ -624,12 +638,22 @@ int main(int argc, char* argv[]) {
 		nei_ob_g[i].resize(dimy + 2);
 	}
 
-
+	std::cout << "dimy dimx " << dimy << " " << dimx;
+	gridmap gm(dimy, dimx);
 	for (const auto& node : config["map"]["obstacles"]) {
 		obstacles.insert(State(node[0].as<int>(), node[1].as<int>()));
 		map_obstacle[node[0].as<int>()][node[1].as<int>()] = true;
 	}
-
+	for(int i = 0;i < dimy; i++){
+		for(int j = 0; j < dimx; j++){
+			if(map_obstacle[i][j]){
+				gm.set_label(gm.to_padded_id(i, j), 0);
+			}else{
+				gm.set_label(gm.to_padded_id(i, j), 1);
+			}
+		}
+	}
+	jpst_gridmap jpst_gm_(&gm);
 
 	for (const auto& ob:obstacles){
 //		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
@@ -674,7 +698,7 @@ int main(int argc, char* argv[]) {
 	  startStates.emplace_back(State(start[0].as<int>(), start[1].as<int>()));
 	  goals.emplace_back(State(goal[0].as<int>(), goal[1].as<int>()));
   }
-  typedef JPSSIPP<State, State, Action, int, Environment> jps_sipp;
+  typedef JPSSIPP_BIT<State, State, Action, int, Environment> jps_sipp;
   typedef SIPP<State, State, Action, int, Environment> sipp_t;
 
   std::ofstream out(outputFile);
@@ -706,7 +730,7 @@ int main(int argc, char* argv[]) {
     double preTime = t.elapsedSeconds();
 
 
-    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &gtest);
+    Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &jpst_gm_);
     env.setExactHeuristTrue();
     env.setJumpLimit(jumpLimit);
     env.setFI(isF);
@@ -736,7 +760,7 @@ int main(int argc, char* argv[]) {
     PlanResult<State, Action, int> solution;
 
     t.reset();
-    bool success = jpssipp.search(startStates[i], Action::Wait, solution,0);
+    bool success = jpssipp.search(startStates[i], Action::Wait, solution);
     t.stop();
     std::cout<< t.elapsedSeconds() << std::endl;
     int num_expansion1 = env.num_expansion;
@@ -785,7 +809,7 @@ int main(int argc, char* argv[]) {
      env.setExactHeuristFalse();
      PlanResult<State, Action, int> solution2;
      t.reset();
-     bool success_temp1 = sipp.search(startStates[i], Action::Wait, solution2);
+     sipp.search(startStates[i], Action::Wait, solution2);
      t.stop();
 
     if (success_temp) {

@@ -46,10 +46,12 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/planresult.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/sipp.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPP.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPP_BIT.hpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPPCBS.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/constants.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/gridmap.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/grid.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/jpst_gridmap.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/gm_parser.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/online_jump_point_locator2.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/jps.hpp
@@ -68,6 +70,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/example/JPSSIPP.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/timer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/online_jump_point_locator2.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/jpst_gridmap.cpp
 )
 
 add_custom_target(clang-format
@@ -87,7 +90,7 @@ add_custom_target(everything
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -w -O3 -g -Wextra")
 
 #set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g")
 
@@ -186,6 +189,7 @@ add_executable(JPSSIPP
   example/gridmap.cpp
   example/gm_parser.cpp
   example/online_jump_point_locator2.cpp
+  example/jpst_gridmap.cpp
   example/JPSSIPP.cpp 
 )
 target_link_libraries(JPSSIPP
