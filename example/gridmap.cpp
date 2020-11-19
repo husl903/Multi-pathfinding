@@ -54,6 +54,7 @@ namespace libMultiRobotPlanning {
 		this->dbheight_ = this->header_.height_ + 
 			padded_rows_after_last_row_ +
 			padded_rows_before_first_row_;
+		std::cout << "LOG2_DBWOR " << libMultiRobotPlanning::LOG2_DBWORD_BITS;
 		this->dbwidth_  = (this->header_.width_ >> libMultiRobotPlanning::LOG2_DBWORD_BITS) + 1;
 
 		// calculate # of extra/redundant padding bits required,

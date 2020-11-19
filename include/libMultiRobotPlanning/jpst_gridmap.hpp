@@ -52,6 +52,20 @@ class jpst_gridmap
             t_gm_->set_label(gm_id, true);
         }
 
+        inline void
+        add_obstacle(uint32_t x, uint32_t y
+                    //  warthog::cbs::move action = warthog::cbs::move::WAIT
+                     )
+        {
+            // sipp_map_->add_obstacle(x, y, start_time, end_time, action);
+
+            // record the fact that there are temporal obstacles at this location
+            uint32_t node_id = y * t_gm_->header_width() + x;
+            uint32_t gm_id = t_gm_->to_padded_id(node_id);
+            t_gm_->set_label(gm_id, true);
+        }
+
+
 
         // remove all temporal obstacles at location (@param x, @param y)
         // after the call this location has a single safe interval. 
