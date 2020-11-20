@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
 
 	for (const auto &ob : obstacles)
 	{
-		//		if(ob.x >=52 && ob.x <= 90 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
+		if(ob.x >=7 && ob.x <= 18 && ob.y >= 17 && ob.y <= 25) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob, temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -780,13 +780,14 @@ int main(int argc, char *argv[])
 	std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
 	std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
-	if (num_path == -1)
+//		if (num_path == -1)
 		num_path = goals.size();
 	long cost = 0;
 	int num_temporal_obstacle = 0;
 	Timer t;
 	for (int i = 0; i < (int)goals.size(); ++i)
 	{
+//		break;
 		std::cout << "Planning for agent " << i << std::endl;
 		out << "  agent" << i << ":" << std::endl;
 		// if(i == 2)    break;
@@ -801,6 +802,7 @@ int main(int argc, char *argv[])
 
 		Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &jpst_gm_);
 		env.setExactHeuristTrue();
+		jumpLimit = 32;
 		env.setJumpLimit(jumpLimit);
 		env.setFI(isF);
 		jps_sipp jpssipp(env);
