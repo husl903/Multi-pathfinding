@@ -780,7 +780,7 @@ int main(int argc, char *argv[])
 	std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
 	std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
-//		if (num_path == -1)
+    if (num_path == -1)
 		num_path = goals.size();
 	long cost = 0;
 	int num_temporal_obstacle = 0;
@@ -790,7 +790,6 @@ int main(int argc, char *argv[])
 //		break;
 		std::cout << "Planning for agent " << i << std::endl;
 		out << "  agent" << i << ":" << std::endl;
-		// if(i == 2)    break;
 
 		t.reset();
 		std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
@@ -802,7 +801,7 @@ int main(int argc, char *argv[])
 
 		Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &jpst_gm_);
 		env.setExactHeuristTrue();
-		jumpLimit = 32;
+		// jumpLimit = 32;
 		env.setJumpLimit(jumpLimit);
 		env.setFI(isF);
 		jps_sipp jpssipp(env);
@@ -914,7 +913,6 @@ int main(int argc, char *argv[])
 								continue;
 						}	
 
-//						jpst_gm_.t_gm_->set_label(jpst_gm_.t_gm_->to_padded_id(0, 0), 1);
 						jpst_gm_.add_obstacle((uint32_t)lastState.first.x, (uint32_t)lastState.first.y);
 
 						allCollisionIntervals[lastState.first].push_back(
@@ -1049,6 +1047,8 @@ int main(int argc, char *argv[])
 		{
 			std::cout << inputFile << "Agent " << i << ": Not equal1" << std::endl;
 			res_sta << inputFile << " Agent, " << i << ", Not equal" << std::endl;
+			// jpst_gm_.gm_->print(std::cout);
+			// jpst_gm_.t_gm_->print(std::cout);
 			break;
 		}
 
