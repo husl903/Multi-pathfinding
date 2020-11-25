@@ -294,7 +294,7 @@ public:
       		  Cost end_t = sis_s.at(s.interval).end;
       		  flag_is_solution = false;
       		  std::vector<startTime> re_start;
-//      		  std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+      		  if(m_env.isDebug) std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
 
 /*      		  flag_curr_i.resize(3); flag_next_i.resize(3);
       		  flag_curr_w.resize(3); flag_next_w.resize(3);
@@ -574,8 +574,8 @@ public:
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
-//          		  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
-// 				  	  std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+          			  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
+ 				  	 if(m_env.isDebug) std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " Cost ++" << m.cost + m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }
@@ -598,10 +598,12 @@ public:
 
  		Cost par_f = (Cost)m_env.admissibleHeuristic(s.state) + current_cost;
  		Cost succ_f = 0;
+     	int step = 0;
      	if((dir & 0x01) && !flag_is_solution){ // the left direction
      		JPSSIPPState temp_s = s;
      		Cost current_cost_l = current_cost;
      		while(true){
+				step++;
      			m_env.num_generation++;
         		current_successor.state.x = temp_s.state.x - 1;
         		current_successor.state.y = temp_s.state.y;
@@ -723,6 +725,11 @@ public:
 		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
 		          					Action::Left, re_ac - m_lastGScore));
 		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
+    						// if(re_ac == m_lastGScore + current_cost_l + 1) current_successor.dir = current_dir;
+							// else current_successor.dir = 0x01;
+		        			// jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
+		        	 		// 	Action::Left, current_cost_l + 1));
+							// break;
     					}
     	             	if (isSolution(current_successor)) {
     	             		current_successor.dir = 0x01;
@@ -731,8 +738,8 @@ public:
     	           			break ;
     	             	}
     	             	if(current_successor.state.x == 0) break; //check the border
-    	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-//    	             	if(step > m_env.limit_jump){
+//    	             	if (current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+	   	             	if(step >= m_env.limit_jump){
 /*    	             		if(m_env.isFCheck()){
     	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
     	             			if(succ_f > par_f){
@@ -756,11 +763,13 @@ public:
      		}
      	}
 
+		step = 0;
      	if((dir & 0x02) && !flag_is_solution){ // the left direction
      		JPSSIPPState temp_s = s;
      		Cost current_cost_l = current_cost;
      		while(true){
-     			 m_env.num_generation++;
+     			m_env.num_generation++;
+				step++;
         		current_successor.state.x = temp_s.state.x + 1;
         		current_successor.state.y = temp_s.state.y;
          		up_left_t = -1; down_left_t = -1; up_right_t = -1; down_right_t = -1;
@@ -882,6 +891,14 @@ public:
   		          			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
     		          					Action::Right, re_ac - m_lastGScore));
   		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
+
+    						// if(re_ac == m_lastGScore + current_cost_l + 1) current_successor.dir = current_dir;
+							// else current_successor.dir = 0x02;
+							// //  std::cout << " Put it in right " << current_successor.state.x << " " << current_successor.state.y << " " << current_g + 1<< " \n";
+		        			// jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, 
+					 		// Action::Right, current_cost_l + 1));
+							//  break;
+
     					}
 
     	             	if (isSolution(current_successor)) {
@@ -891,8 +908,8 @@ public:
     	           			break ;
     	             	}
     	             	if(current_successor.state.x == m_env.getDimX() - 1) break; //check the border
-    	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-//    	             	if(step > m_env.limit_jump){
+    	             	// if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+    	             	if(step >= m_env.limit_jump){
 /*    	             		if(m_env.isFCheck()){
     	             			succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
     	             			if(succ_f > par_f){
@@ -977,27 +994,53 @@ public:
                						}
                					}
 
-/*             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
-            							|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
-             							|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
-         							){
-         							if(down_start_t == m_lastGScore + current_cost_l + 1){
-         								current_successor.dir = 0x0f;
-         							} else {
-         								current_successor.dir = 0x07;
-         							}
-             						current_successor.action = Action::Up;
+            					// if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
+            					// 		|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
+             					// 		|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
+         						// 	){
+								// 		current_successor.dir = 0x00;
+								// 		if(down_start_t == m_lastGScore + current_cost_l + 1 ){
+								// 			current_successor.dir = 0x08;
+								// 		} 
+								// 		if(!IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y + 2), edgeCollision(m_lastGScore + current_cost_l + 1, Action::Down))) {
+								// 			current_successor.dir |= 0x04;
+								// 		}
+										
+								// 		if(current_successor.dir == 0 && down_start_t != -1){
+								// 			if(up_left_t != -1 && up_left_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y + 1)))
+								// 				current_successor.dir |= 0x01;
+								// 			if(up_right_t != -1 && up_right_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y + 1)))
+								// 				current_successor.dir |= 0x02;
+								// 		}else{
+								// 			if(up_left_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y + 1)))
+								// 				current_successor.dir |= 0x01;
+								// 			if(up_right_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y + 1)))
+								// 				current_successor.dir |= 0x02;
 
-             						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-             						break;
-             					} else {
-                					if(flag_re_down){
-                						if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
-                						else current_successor.dir = 0x07;
-                    					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-                    					break;
-                					}
-                				}*/
+								// 		}
+										
+								// 		if(current_successor.dir != 0x00){
+								// 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+								// 			break;
+								// 		}
+
+         						// 	// if(down_start_t == m_lastGScore + current_cost_l + 1){
+         						// 	// 	current_successor.dir = 0x0f;
+         						// 	// } else {
+         						// 	// 	current_successor.dir = 0x07;
+         						// 	// }
+             					// 	// current_successor.action = Action::Up;
+
+             					// 	// jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+             					// 	// break;
+             					// } else {
+                				// 	if(flag_re_down){
+                				// 		if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
+                				// 		else current_successor.dir = 0x07;
+                    			// 		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+                    			// 		break;
+                				// 	}
+                				// }
                					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y + 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)){
                						re_start.push_back(startTime(up_start_t, Action::Up, 0x07, true));
                					}
@@ -1040,8 +1083,8 @@ public:
             	           			break ;
             	             	}
 
-            	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-//            	             	if(step > m_env.limit_jump){
+            	             	// if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+            	             	if(step >= m_env.limit_jump){
             	             		if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
             	             		else current_successor.dir = 0x07;
             	             		if(m_env.isFCheck()){
@@ -1133,26 +1176,53 @@ public:
             		          					Action::Down, re_ac - m_lastGScore));
           		          			if(re_ac == m_lastGScore + current_cost_l + 1) break;
             					}
-/*             					if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y - 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
-            							|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
-             							|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
-         							){
-         							if(down_start_t == m_lastGScore + current_cost_l + 1){
-         								current_successor.dir = 0x0f;
-         							} else {
-         								current_successor.dir = 0x0b;
-         							}
-             						current_successor.action = Action::Up;
-             						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-             						break;
-             					} else {
-                					if(flag_re_down){
-                							if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
-                							else current_successor.dir = 0x0b;
-                    						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-                    						break;
-                					}
-                				}*/
+								
+             					// if((isTemporalObstacleAfterT(State(temp_s.state.x, temp_s.state.y - 2), m_lastGScore + current_cost_l + 1, up_start_t) && up_start_t <= successor_end)
+            					// 		|| (isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_left_t) && up_left_t <= successor_end)
+             					// 		|| (isTemporalObstacleAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, up_right_t) && up_right_t <= successor_end)
+         						// 	){
+								// 		if(down_start_t == m_lastGScore + current_cost_l + 1){
+								// 			current_successor.dir = 0x04;
+								// 		} 
+								// 		if(!IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y - 2), edgeCollision(m_lastGScore + current_cost_l + 1, Action::Up))) {
+								// 			current_successor.dir |= 0x08;
+								// 		}
+										
+								// 		if(current_successor.dir == 0 && down_start_t != -1){
+								// 			if(up_left_t != -1 && up_left_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y - 1)))
+								// 			current_successor.dir |= 0x01;
+								// 			if(up_right_t !=  -1 && up_right_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y - 1)))
+								// 			current_successor.dir |= 0x02;
+								// 		}{
+								// 			if(up_left_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y - 1)))
+								// 			current_successor.dir |= 0x01;
+								// 			if(up_right_t != m_lastGScore + current_cost_l + 2 && m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y - 1)))
+								// 			current_successor.dir |= 0x02;
+
+								// 		}
+
+								// 		if(current_successor.dir != 0){
+								// 			current_successor.action = Action::Up;
+								// 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+								// 			break;
+								// 		}
+
+         						// 	// if(down_start_t == m_lastGScore + current_cost_l + 1){
+         						// 	// 	current_successor.dir = 0x0f;
+         						// 	// } else {
+         						// 	// 	current_successor.dir = 0x0b;
+         						// 	// }
+             					// 	// current_successor.action = Action::Up;
+             					// 	// jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+             					// 	// break;
+             					// } else {
+                				// 	if(flag_re_up){
+                				// 			if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
+                				// 			else current_successor.dir = 0x0b;
+                    			// 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+                    			// 			break;
+                				// 	}
+                				// }
 
             	             	if (isSolution(current_successor)) {
             	             		flag_is_solution = true;
@@ -1162,8 +1232,8 @@ public:
             	             	}
 
 
-            	             	if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-//            	             	if(step > m_env.limit_jump){
+            	             	// if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+           	             	if(step >= m_env.limit_jump){
     	             				if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
     	             				else current_successor.dir = 0x0b;
             	             		if(m_env.isFCheck()){

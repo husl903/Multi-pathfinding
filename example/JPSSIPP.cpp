@@ -3,6 +3,12 @@
 
 #include <boost/functional/hash.hpp>
 #include <boost/program_options.hpp>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#define   RUSAGE_SELF     0
+#define   RUSAGE_CHILDREN     -1
 
 #include <yaml-cpp/yaml.h>
 
@@ -575,7 +581,7 @@ private:
 	bool is_limit = false;
 	bool is_jps = true;
 	bool isExact = false;
-	bool isFI = false;
+	bool isFI = true;
 
 public:
 	jpst_gridmap *jpst_gm_;
@@ -661,7 +667,7 @@ int main(int argc, char *argv[])
 	}
 
 	std::fstream res_sta(res, std::ios::app);
-	std::fstream res_Good(res + "_good", std::ios::app);
+	// std::fstream res_Good(res + "_good", std::ios::app);
 	std::fstream res_Constraint("constraint.txt", std::ios::app);
 
 	// Configure SIPP based on config file
@@ -777,6 +783,7 @@ int main(int argc, char *argv[])
 	// Plan (sequentially)
 	std::map<State, std::vector<jps_sipp::interval>> allCollisionIntervals;
 	std::map<State, std::vector<jps_sipp::edgeCollision>> allEdgeCollisions;
+
 	std::map<State, std::vector<jpst_old::interval>> allCollisionIntervals_jpstold;
 	std::map<State, std::vector<jpst_old::edgeCollision>> allEdgeCollisions_jpstold;
 
@@ -789,12 +796,18 @@ int main(int argc, char *argv[])
 	long cost = 0;
 	int num_temporal_obstacle = 0;
 	Timer t;
+
+	struct rusage r_usage;
+	getrusage(RUSAGE_SELF, &r_usage);
 	for (int i = 0; i < (int)goals.size(); ++i)
 	{
-//		break;
+		getrusage(RUSAGE_SELF, &r_usage);
+		std::cout << "Memory usage: " << r_usage.ru_maxrss << " kilobytes\n";
+
 		std::cout << "Planning for agent " << i << std::endl;
 		out << "  agent" << i << ":" << std::endl;
-
+		
+	    // if(i >= 233) break;
 		t.reset();
 		std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
 		std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
@@ -813,6 +826,7 @@ int main(int argc, char *argv[])
 		sipp_t sipp(env);
 
 		jpssipp.setEdgeCollisionSize(dimx, dimy);
+		jpstold.setEdgeCollisionSize(dimx, dimy);
 		sipp.setEdgeCollisionSize(dimx, dimy);
 		for (const auto &collisionIntervals : allCollisionIntervals)
 		{
@@ -823,6 +837,17 @@ int main(int argc, char *argv[])
 		{
 			jpssipp.setEdgeCollisions(ec.first, ec.second);
 		}
+
+		for (const auto &collisionIntervals : allCollisionIntervals_jpstold)
+		{
+			jpstold.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
+		}
+
+		for (const auto &ec : allEdgeCollisions_jpstold)
+		{
+			jpstold.setEdgeCollisions(ec.first, ec.second);
+		}
+
 
 		for (const auto &collisionIntervals_sipp : allCollisionIntervals_sipp)
 		{
@@ -873,6 +898,36 @@ int main(int argc, char *argv[])
 			out << "    []" << std::endl;
 		}
 
+		env.Reset();
+		PlanResult<State, Action, int> solutionJpstOld;
+		t.reset();
+		// env.setJumpLimit(32);
+		success = jpstold.search(startStates[i], Action::Wait, solutionJpstOld);
+		t.stop();
+		std::cout << t.elapsedSeconds() << std::endl;
+		int num_expansionJpstOld = env.num_expansion;
+		int num_generationJpstOld = env.num_generation;
+		double timeJpstOld = t.elapsedSeconds();
+
+		if(success){
+			std::cout << "JPST-old path \n";
+			// print solution
+			for (size_t i = 0; i < solutionJpstOld.actions.size(); ++i)
+			{
+				std::cout << solutionJpstOld.states[i].second << ": " << solutionJpstOld.states[i].first
+						  << "->" << solutionJpstOld.actions[i].first
+						  << "(cost: " << solutionJpstOld.actions[i].second << ")" << std::endl;
+			}
+			std::cout << solutionJpstOld.states.back().second << ": "
+					  << solutionJpstOld.states.back().first << std::endl;
+
+		}
+
+		getrusage(RUSAGE_SELF, &r_usage);
+		std::cout << "Memory usage: " << r_usage.ru_maxrss << " kilobytes\n";
+
+
+		// env.setJumpLimit(jumpLimit);
 		env.Reset();
 		env.setNoJPS();
 		PlanResult<State, Action, int> solution3;
@@ -1056,7 +1111,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		if (solution.cost != solution2.cost)
+		if (solution.cost != solution2.cost || solutionJpstOld.cost != solution2.cost)
 		{
 			std::cout << inputFile << "Agent " << i << ": Not equal1" << std::endl;
 			res_sta << inputFile << " Agent, " << i << ", Not equal" << std::endl;
@@ -1079,18 +1134,20 @@ int main(int argc, char *argv[])
 		std::cout << inputFile << " All-Expansion Agent " << i << " " << num_expansion1 << " " << num_expansion2 << "\n";
 
 		double speedup = time2 / time1;
+		double speedupJpstOld = time2 / timeJpstOld;
 		res_sta << inputFile << " Agent, " << i << ", " << num_temporal_obstacle << ", " << preTime
-				<< ", JPSSIPP cost, " << solution.cost << ", " << time1 << ", " << num_expansion1 << ", " << num_generation1
-				<< ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2 << ", " << speedup << " \n";
+				<< ", JPSTOld cost, " << solutionJpstOld.cost << ", " << timeJpstOld << ", " << num_expansionJpstOld << ", " << num_generationJpstOld
+				<< ", JPSTNew cost, " << solution.cost << ", " << time1 << ", " << num_expansion1 << ", " << num_generation1
+				<< ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2 
+				<< ", " << speedup << ", " << speedupJpstOld << " \n";
 
-		if (time1 < time2)
-		{
-			res_Good << inputFile << " Agent " << i << " JPSSIPP: "
-					 << " cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 << "\n";
-			res_Good << inputFile << " Agent " << i << " SIPP: "
-					 << " cost " << solution.cost << " " << time2 << " " << num_expansion2 << " " << num_generation2 << "\n";
-		}
-
+		// if (time1 < time2)
+		// {
+		// 	res_Good << inputFile << " Agent " << i << " JPSSIPP: "
+		// 			 << " cost " << solution.cost << " " << time1 << " " << num_expansion1 << " " << num_generation1 << "\n";
+		// 	res_Good << inputFile << " Agent " << i << " SIPP: "
+		// 			 << " cost " << solution.cost << " " << time2 << " " << num_expansion2 << " " << num_generation2 << "\n";
+		// }
 	}
 
 	out << "statistics:" << std::endl;
