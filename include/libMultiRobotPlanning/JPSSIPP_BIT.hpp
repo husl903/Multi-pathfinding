@@ -1326,15 +1326,6 @@ public:
 							}
 						}
 					}
-					// for(size_t ii = temp_s.interval + 1; ii < si_s_l.size(); ii++){
-					// 	next_start_s = si_s_l[ii].start;
-					// 	if(si_s_l[ii].start >= current_g + 1
-					// 		&& !IsEdgeCollisions(temp_s.state,edgeCollision(next_start_s - 1, Action::Right)
-					// 		&&  successor_end >= next_start_s - 1){
-    				// 		right_start_t = next_start_s - 1;
-    				// 		re_start.push_back(startTime(right_start_t, Action::Left, 0x01, true));
-					// 	}
-					// }
     			}
 
 				Cost left_t = -1;
@@ -1362,8 +1353,8 @@ public:
     				}
     				break;
     			}
+
 //				std::cout << " TT \n";
-				
 //				std::cout << "choose the time\n";
     			if(re_ac != -1){		
     				if(re_ac == current_g + 1) current_successor.dir = current_dir;
@@ -2324,7 +2315,7 @@ public:
         	assert(interval.start <= interval.end);
         	assert(start <= interval.start);
 
-			// if(location.y == 19)  std::cout <<" XX, YY " << location.x << " " << location.y << " interval " << interval.start << " " << interval.end << " \n";
+			std::cout <<" XX, YY " << location.x << " " << location.y << " interval " << interval.start << " " << interval.end << " \n";
         	if (start <= interval.start - 1) {
         		m_safeIntervals_t[index].push_back({start, interval.start - 1});
         	}

@@ -585,7 +585,7 @@ private:
 
 public:
 	jpst_gridmap *jpst_gm_;
-	bool isDebug = false;
+	bool isDebug = true;
 };
 
 void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, std::vector<std::vector<bool>> map_obstacle, State goal, int dimx, int dimy)
@@ -791,6 +791,7 @@ int main(int argc, char *argv[])
 	std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
 	std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
+
     if (num_path == -1)
 		num_path = goals.size();
 	long cost = 0;
@@ -807,7 +808,7 @@ int main(int argc, char *argv[])
 		std::cout << "Planning for agent " << i << std::endl;
 		out << "  agent" << i << ":" << std::endl;
 		
-	    // if(i >= 233) break;
+	    // if(i >= 3) break;
 		t.reset();
 		std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
 		std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
@@ -830,6 +831,7 @@ int main(int argc, char *argv[])
 		sipp.setEdgeCollisionSize(dimx, dimy);
 		for (const auto &collisionIntervals : allCollisionIntervals)
 		{
+			std::cout << " Interval " << collisionIntervals.first.x << " " << collisionIntervals.first.y << " 2-----\n";
 			jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
 		}
 
@@ -840,6 +842,8 @@ int main(int argc, char *argv[])
 
 		for (const auto &collisionIntervals : allCollisionIntervals_jpstold)
 		{
+
+			std::cout << " Interval " << collisionIntervals.first.x << " " << collisionIntervals.first.y << " 3-----\n";
 			jpstold.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
 		}
 
@@ -851,6 +855,7 @@ int main(int argc, char *argv[])
 
 		for (const auto &collisionIntervals_sipp : allCollisionIntervals_sipp)
 		{
+			std::cout << " Interval " << collisionIntervals_sipp.first.x << " " << collisionIntervals_sipp.first.y << " 4-----\n";
 			sipp.setCollisionIntervals(collisionIntervals_sipp.first, collisionIntervals_sipp.second);
 		}
 		for (const auto &ec : allEdgeCollisions_sipp)
