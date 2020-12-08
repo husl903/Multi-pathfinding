@@ -592,7 +592,7 @@ private:
 
 public:
 	jpst_gridmap *jpst_gm_;
-	bool isDebug = false;
+	bool isDebug = true;
 };
 
 void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, std::vector<std::vector<bool>> map_obstacle, State goal, int dimx, int dimy)

@@ -587,38 +587,38 @@ public:
 
 	void JumpLeft(uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, Cost& jumpcost, unsigned int& dir, bool& deadend){
 		deadend = false;
-		uint32_t neis[3] = {0, 0, 0};
+		uint64_t neis[3] = {0, 0, 0};
 		jumpnode_id = node_id;
 		uint32_t min_id;
 		if(node_id >= m_env.limit_jump) min_id = node_id - m_env.limit_jump;
 		else min_id = 0;
-		// uint32_t xx, yy;
-		// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
-		// std::cout << xx << "  " << yy << " -!!!!!!!!!!!!!!!!---\n"; 
-		// std::cout << " jumpnode_id " << jumpnode_id << " !!!\n";
-//		m_env.jpst_gm_->gm_->print(std::cout);
+		uint32_t xx, yy;
+		m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
+		std::cout << xx << "  " << yy << " -!!!!!!!!!!!!!!!!---\n"; 
+		std::cout << " jumpnode_id " << jumpnode_id << " !!!\n";
+		m_env.jpst_gm_->gm_->print(std::cout);
 		dir = 0x01;
 		while(jumpnode_id >= min_id)
 		{
 			// cache 32 tiles from three adjacent rows.
 			// current tile is in the high byte of the middle row
-			m_env.jpst_gm_->gm_->get_neighbours_upper_32bit(jumpnode_id, neis);
+			m_env.jpst_gm_->gm_->get_neighbours_upper_64bit(jumpnode_id, neis);
 			
 			// identify forced and dead-end nodes
-			uint32_t 
+			uint64_t 
 			down_forced_bits = (~neis[0] >> 1) & neis[0];
-			uint32_t 
+			uint64_t 
 			up_forced_bits = (~neis[2] >> 1) & neis[2];
-			uint32_t
+			uint64_t
 			forced_bits = down_forced_bits | up_forced_bits;
-			uint32_t 
+			uint64_t 
 			deadend_bits = ~neis[1];
 
 			// stop if we encounter any forced or deadend nodes
-			uint32_t stop_bits = (forced_bits | deadend_bits);
+			uint64_t stop_bits = (forced_bits | deadend_bits);
 			if(stop_bits)
 			{
-				uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits);
+				uint64_t stop_pos = (uint64_t)__builtin_clz(stop_bits);
 				jumpnode_id -= stop_pos;
 
 				// std::cout << "STOP !!!!!! " << jumpnode_id << " \n"; 
@@ -659,7 +659,7 @@ public:
 	
 	void JumpRight(uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, Cost& jumpcost, unsigned int& dir, bool& deadend){
 		jumpnode_id = node_id;
-		uint32_t neis[3] = {0, 0, 0};
+		uint64_t neis[3] = {0, 0, 0};
 		deadend = false;
 		uint64_t max_id = node_id + m_env.limit_jump;
 		// std::cout << " jumpnode_id " << jumpnode_id << " !!!\n";
@@ -672,28 +672,28 @@ public:
 		{
 			// read in tiles from 3 adjacent rows. the curent node 
 			// is in the low byte of the middle row
-			m_env.jpst_gm_->gm_->get_neighbours_32bit(jumpnode_id, neis);
+			m_env.jpst_gm_->gm_->get_neighbours_64bit(jumpnode_id, neis);
 
 			// identify forced neighbours and deadend tiles. 
 			// forced neighbours are found in the top or bottom row. they 
 			// can be identified as a non-obstacle tile that follows
 			// immediately  after an obstacle tile. A dead-end tile is
 			// an obstacle found  on the middle row; 
-			uint32_t 
+			uint64_t 
 			down_forced_bits = (~neis[0] << 1) & neis[0];
-			uint32_t
+			uint64_t
 			up_forced_bits = (~neis[2] << 1) & neis[2];
-			uint32_t
+			uint64_t
 			forced_bits = down_forced_bits | up_forced_bits;
-			uint32_t 
+			uint64_t 
 			deadend_bits = ~neis[1];
 
 			// stop if we found any forced or dead-end tiles
-			int32_t stop_bits = (int32_t)(forced_bits | deadend_bits);
+			int64_t stop_bits = (int32_t)(forced_bits | deadend_bits);
 			if(stop_bits)
 			{
 				
-				int32_t stop_pos = __builtin_ffs(stop_bits)-1; // returns idx+1
+				int64_t stop_pos = __builtin_ffs(stop_bits)-1; // returns idx+1
 				jumpnode_id += (uint32_t)stop_pos; 
 
 				// std::cout << "STOP !!!!!! " << jumpnode_id << " stop_bits" << stop_pos << " \n"; 
@@ -762,16 +762,17 @@ public:
 		unsigned int dir_jump_s;
 		bool deadend;
 		JumpLeft(current_id, goal_id, jump_id, jump_cost, dir_jump_s, deadend);
-		// uint32_t xx1, yy1;	
-		// m_env.jpst_gm_->gm_->to_unpadded_xy(jump_id, xx1, yy1);
-		// if(m_env.isDebug) std::cout <<"SSSS " << s.state.x << " " << s.state.y <<  " Test JumpLeft jump_id " << jump_id << " " << xx1 << " " << yy1 << " -------\n";
+
+		uint32_t xx1, yy1;	
+		m_env.jpst_gm_->gm_->to_unpadded_xy(jump_id, xx1, yy1);
+		if(m_env.isDebug) std::cout <<"SSSS " << s.state.x << " " << s.state.y <<  " Test JumpLeft jump_id " << jump_id << " " << xx1 << " " << yy1 << " -------\n";
 
 		int jumplimit = m_env.limit_jump;
 		uint32_t min_id = 0;
 		if(current_id > jumplimit) min_id = current_id - jumplimit;
 		else min_id = 0;
 		
-		uint32_t neis[3] = {0, 0, 0};
+		uint64_t neis[3] = {0, 0, 0};
 		uint32_t jumpnode_id = current_id;
 
 		if(jump_id >= min_id){
@@ -785,7 +786,7 @@ public:
 		{
 			// read in tiles from 3 adjacent rows. the curent node 
 			// is in the low byte of the middle row
-			m_env.jpst_gm_->t_gm_->get_neighbours_upper_32bit(jumpnode_id, neis);
+			m_env.jpst_gm_->t_gm_->get_neighbours_upper_64bit(jumpnode_id, neis);
 			// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx1, yy1);
 			// uint32_t xx2, yy2;
 			// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx2, yy2);
@@ -795,7 +796,7 @@ public:
 			// stop if we try to jump over nodes with temporal events
 			// or which have neighbours with temporal events.
 			// we treat such nodes as jump points
-			uint32_t stop_bits = neis[0] | neis[1] | neis[2];
+			uint64_t stop_bits = neis[0] | neis[1] | neis[2];
 
 			if(stop_bits)
 			{

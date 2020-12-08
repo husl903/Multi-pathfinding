@@ -49,8 +49,8 @@ namespace libMultiRobotPlanning {
 		// when storing the grid we pad the edges of the map with
 		// zeroes. this eliminates the need for bounds checking when
 		// fetching the neighbours of a node. 
-		this->padded_rows_before_first_row_ = 3;
-		this->padded_rows_after_last_row_ = 3;
+		this->padded_rows_before_first_row_ = 5;
+		this->padded_rows_after_last_row_ = 5;
 		this->dbheight_ = this->header_.height_ + 
 			padded_rows_after_last_row_ +
 			padded_rows_before_first_row_;

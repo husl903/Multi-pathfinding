@@ -145,7 +145,7 @@ class gridmap
 			
 
 			std::cout <<libMultiRobotPlanning::DBWORD_BITS << " MASk " << libMultiRobotPlanning::DBWORD_BITS_MASK << " BITS " << libMultiRobotPlanning::LOG2_DBWORD_BITS << " \n";
-
+			std::cout << this->dbwidth_ << " width \n";
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
 			dbindex -= 4;
@@ -200,9 +200,10 @@ class gridmap
 			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
 			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			
+			std::cout << " dbindex " << dbindex << " \n";	
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
-			dbindex -= 4;
+			dbindex -= 8;
 
 			// compute dbword indexes for tiles immediately above 
 			// and immediately below node_id
@@ -212,9 +213,9 @@ class gridmap
 
 			// read 32bits of memory; grid_id_p is in the 
 			// highest bit position of tiles[1]
-			tiles[0] = (uint32_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset+1));
-			tiles[1] = (uint32_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
-			tiles[2] = (uint32_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset+1));
+			tiles[0] = (uint64_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset+1));
+			tiles[1] = (uint64_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
+			tiles[2] = (uint64_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset+1));
 		}
 
 
