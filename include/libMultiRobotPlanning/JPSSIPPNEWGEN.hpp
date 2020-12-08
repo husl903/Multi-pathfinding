@@ -912,12 +912,10 @@ public:
             	            if(m_env.isFCheck()){
             	             	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             	if(succ_f > par_f){
-//            	             		current_successor.dir = 0x07;
             	             		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             		break ;
             	             	}
             	            }else {
-//            	             	current_successor.dir = 0x07;
             	             	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             	break ;
             	            }

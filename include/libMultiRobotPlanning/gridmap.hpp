@@ -143,6 +143,9 @@ class gridmap
 			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
 			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			
+
+			std::cout <<libMultiRobotPlanning::DBWORD_BITS << " MASk " << libMultiRobotPlanning::DBWORD_BITS_MASK << " BITS " << libMultiRobotPlanning::LOG2_DBWORD_BITS << " \n";
+
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
 			dbindex -= 4;
@@ -159,6 +162,61 @@ class gridmap
 			tiles[1] = (uint32_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
 			tiles[2] = (uint32_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset+1));
 		}
+
+
+
+		// fetches a contiguous set of tiles from three adjacent rows. each row is
+		// 32 tiles long. the middle row begins with tile grid_id_p. the other tiles
+		// are from the row immediately above and immediately below grid_id_p.
+		void
+		get_neighbours_64bit(uint32_t grid_id_p, uint64_t tiles[3])
+		{
+			// 1. calculate the dbword offset for the node at index grid_id_p
+			// 2. convert grid_id_p into a dbword index.
+			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
+
+			// compute dbword indexes for tiles immediately above 
+			// and immediately below node_id
+			uint32_t pos1 = dbindex - dbwidth_;
+			uint32_t pos2 = dbindex;
+			uint32_t pos3 = dbindex + dbwidth_;
+
+			// read 32bits of memory; grid_id_p is in the 
+			// lowest bit position of tiles[1]
+			tiles[0] = (uint64_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset));
+			tiles[1] = (uint64_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset));
+			tiles[2] = (uint64_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset));
+		}
+
+		// similar to get_neighbours_32bit but grid_id_p is placed into the
+		// upper bit of the return value. this variant is useful when jumping
+		// toward smaller memory addresses (i.e. west instead of east).
+		inline void
+		get_neighbours_upper_64bit(uint32_t grid_id_p, uint64_t tiles[3])
+		{
+			// 1. calculate the dbword offset for the node at index grid_id_p
+			// 2. convert grid_id_p into a dbword index.
+			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
+			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
+			
+			// start reading from a prior index. this way everything
+			// up to grid_id_p is cached.
+			dbindex -= 4;
+
+			// compute dbword indexes for tiles immediately above 
+			// and immediately below node_id
+			uint32_t pos1 = dbindex - dbwidth_;
+			uint32_t pos2 = dbindex;
+			uint32_t pos3 = dbindex + dbwidth_;
+
+			// read 32bits of memory; grid_id_p is in the 
+			// highest bit position of tiles[1]
+			tiles[0] = (uint32_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset+1));
+			tiles[1] = (uint32_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
+			tiles[2] = (uint32_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset+1));
+		}
+
 
 		// get the label associated with the padded coordinate pair (x, y)
 		inline bool

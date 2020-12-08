@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+// #include <crtdbg.h>
 
 #define   RUSAGE_SELF     0
 #define   RUSAGE_CHILDREN     -1
@@ -561,6 +562,10 @@ public:
 		isFI = isF;
 	}
 
+	void setGoal(State goal){
+		m_goal = goal;
+	}
+
 	int getDimX() { return m_dimx; }
 	int getDimY() { return m_dimy; }
 
@@ -807,20 +812,24 @@ int main(int argc, char *argv[])
 
 	struct rusage r_usage;
 	getrusage(RUSAGE_SELF, &r_usage);
+
+	std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
+	// Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[0], &jpst_gm_);
+
 	for (int i = 0; i < (int)goals.size(); ++i)
 	{
+		// if(i > 1) break;
 		getrusage(RUSAGE_SELF, &r_usage);
 		std::cout << "Memory usage: " << r_usage.ru_maxrss << " kilobytes\n";
 
 		std::cout << "Planning for agent " << i << std::endl;
 		out << "  agent" << i << ":" << std::endl;
-		
-	    // if(i >= 3) break;
 		t.reset();
-		std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
-		std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
-		getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
-		eHeuristic[goals[i]] = eHeuristicGoal;
+
+		// std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
+		// std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
+		// getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+		// eHeuristic[goals[i]] = eHeuristicGoal;
 		t.stop();
 		double preTime = t.elapsedSeconds();
 
@@ -1174,8 +1183,8 @@ int main(int argc, char *argv[])
 		double speedupJpstOld = time2 / timeJpstOld;
 		double speedupJpstOld2 = time2 / timeJpstOld2;
 		res_sta << inputFile << " Agent, " << i << ", " << num_temporal_obstacle << ", " << preTime
-				<< ", JPSTOld cost, " << solutionJpstOld.cost << ", " << timeJpstOld << ", " << num_expansionJpstOld << ", " << num_generationJpstOld
-				<< ", JPSTOld cost, " << solutionJpstOld2.cost << ", " << timeJpstOld2 << ", " << num_expansionJpstOld2 << ", " << num_generationJpstOld2
+				<< ", JPSTOld1 cost, " << solutionJpstOld.cost << ", " << timeJpstOld << ", " << num_expansionJpstOld << ", " << num_generationJpstOld
+				<< ", JPSTOld2 cost, " << solutionJpstOld2.cost << ", " << timeJpstOld2 << ", " << num_expansionJpstOld2 << ", " << num_generationJpstOld2
 				<< ", JPSTNew cost, " << solution.cost << ", " << time1 << ", " << num_expansion1 << ", " << num_generation1
 				<< ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2 
 				<< ", " << speedup << ", " << speedupJpstOld << ", " << speedupJpstOld2 << " \n";

@@ -879,7 +879,6 @@ public:
 
 
        void getJPSVerticalSuccessors(JPSSIPPState s, unsigned int dir, Cost current_cost){
-
              	if (isSolution(s)) {
              		flag_is_solution = true;
            			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Left, current_cost));
