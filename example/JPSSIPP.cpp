@@ -14,6 +14,7 @@
 
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
 #include <libMultiRobotPlanning/JPSSIPP_BIT.hpp>
+#include <libMultiRobotPlanning/JPSSIPPNEWGEN.hpp>
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
@@ -24,6 +25,7 @@
 using libMultiRobotPlanning::gridmap;
 using libMultiRobotPlanning::JPSSIPP;
 using libMultiRobotPlanning::JPSSIPP_BIT;
+using libMultiRobotPlanning::JPSSIPPNEWGEN;
 using libMultiRobotPlanning::JPSSIPPAN;
 using libMultiRobotPlanning::jpst_gridmap;
 using libMultiRobotPlanning::Neighbor;
@@ -585,7 +587,7 @@ private:
 
 public:
 	jpst_gridmap *jpst_gm_;
-	bool isDebug = true;
+	bool isDebug = false;
 };
 
 void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, std::vector<std::vector<bool>> map_obstacle, State goal, int dimx, int dimy)
@@ -728,7 +730,7 @@ int main(int argc, char *argv[])
 
 	for (const auto &ob : obstacles)
 	{
-		if(ob.x >=666 && ob.x <= 671 && ob.y >= 84 && ob.y <= 88) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
+		// if(ob.x >=666 && ob.x <= 671 && ob.y >= 84 && ob.y <= 88) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob, temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -774,7 +776,9 @@ int main(int argc, char *argv[])
 		goals.emplace_back(State(goal[0].as<int>(), goal[1].as<int>()));
 	}
 	typedef JPSSIPP_BIT<State, State, Action, int, Environment> jps_sipp;
-	typedef JPSSIPP<State, State, Action, int, Environment> jpst_old;
+	typedef JPSSIPP<State, State, Action, int, Environment> jpst_old1;
+	typedef JPSSIPPNEWGEN<State, State, Action, int, Environment> jpst_old2;
+
 	typedef SIPP<State, State, Action, int, Environment> sipp_t;
 
 	std::ofstream out(outputFile);
@@ -784,8 +788,11 @@ int main(int argc, char *argv[])
 	std::map<State, std::vector<jps_sipp::interval>> allCollisionIntervals;
 	std::map<State, std::vector<jps_sipp::edgeCollision>> allEdgeCollisions;
 
-	std::map<State, std::vector<jpst_old::interval>> allCollisionIntervals_jpstold;
-	std::map<State, std::vector<jpst_old::edgeCollision>> allEdgeCollisions_jpstold;
+	std::map<State, std::vector<jpst_old1::interval>> allCollisionIntervals_jpstold1;
+	std::map<State, std::vector<jpst_old1::edgeCollision>> allEdgeCollisions_jpstold1;
+
+	std::map<State, std::vector<jpst_old2::interval>> allCollisionIntervals_jpstold2;
+	std::map<State, std::vector<jpst_old2::edgeCollision>> allEdgeCollisions_jpstold2;
 
 
 	std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
@@ -823,15 +830,16 @@ int main(int argc, char *argv[])
 		env.setJumpLimit(jumpLimit);
 		env.setFI(isF);
 		jps_sipp jpssipp(env);
-		jpst_old jpstold(env);
+		jpst_old1 jpstold1(env);
+		jpst_old2 jpstold2(env);
 		sipp_t sipp(env);
 
 		jpssipp.setEdgeCollisionSize(dimx, dimy);
-		jpstold.setEdgeCollisionSize(dimx, dimy);
+		jpstold1.setEdgeCollisionSize(dimx, dimy);
+		jpstold2.setEdgeCollisionSize(dimx, dimy);
 		sipp.setEdgeCollisionSize(dimx, dimy);
 		for (const auto &collisionIntervals : allCollisionIntervals)
 		{
-			std::cout << " Interval " << collisionIntervals.first.x << " " << collisionIntervals.first.y << " 2-----\n";
 			jpssipp.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
 		}
 
@@ -840,22 +848,29 @@ int main(int argc, char *argv[])
 			jpssipp.setEdgeCollisions(ec.first, ec.second);
 		}
 
-		for (const auto &collisionIntervals : allCollisionIntervals_jpstold)
+		for (const auto &collisionIntervals : allCollisionIntervals_jpstold1)
 		{
-
-			std::cout << " Interval " << collisionIntervals.first.x << " " << collisionIntervals.first.y << " 3-----\n";
-			jpstold.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
+			jpstold1.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
 		}
 
-		for (const auto &ec : allEdgeCollisions_jpstold)
+		for (const auto &ec : allEdgeCollisions_jpstold1)
 		{
-			jpstold.setEdgeCollisions(ec.first, ec.second);
+			jpstold1.setEdgeCollisions(ec.first, ec.second);
+		}
+
+		for (const auto &collisionIntervals : allCollisionIntervals_jpstold2)
+		{
+			jpstold2.setCollisionIntervals(collisionIntervals.first, collisionIntervals.second);
+		}
+
+		for (const auto &ec : allEdgeCollisions_jpstold2)
+		{
+			jpstold2.setEdgeCollisions(ec.first, ec.second);
 		}
 
 
 		for (const auto &collisionIntervals_sipp : allCollisionIntervals_sipp)
 		{
-			std::cout << " Interval " << collisionIntervals_sipp.first.x << " " << collisionIntervals_sipp.first.y << " 4-----\n";
 			sipp.setCollisionIntervals(collisionIntervals_sipp.first, collisionIntervals_sipp.second);
 		}
 		for (const auto &ec : allEdgeCollisions_sipp)
@@ -907,12 +922,24 @@ int main(int argc, char *argv[])
 		PlanResult<State, Action, int> solutionJpstOld;
 		t.reset();
 		// env.setJumpLimit(32);
-		success = jpstold.search(startStates[i], Action::Wait, solutionJpstOld);
+		success = jpstold1.search(startStates[i], Action::Wait, solutionJpstOld);
 		t.stop();
 		std::cout << t.elapsedSeconds() << std::endl;
 		int num_expansionJpstOld = env.num_expansion;
 		int num_generationJpstOld = env.num_generation;
 		double timeJpstOld = t.elapsedSeconds();
+
+		env.Reset();
+		PlanResult<State, Action, int> solutionJpstOld2;
+		t.reset();
+		// env.setJumpLimit(32);
+		success = jpstold2.search(startStates[i], Action::Wait, solutionJpstOld2);
+		t.stop();
+		std::cout << t.elapsedSeconds() << std::endl;
+		int num_expansionJpstOld2 = env.num_expansion;
+		int num_generationJpstOld2 = env.num_generation;
+		double timeJpstOld2 = t.elapsedSeconds();
+
 
 		if(success){
 			std::cout << "JPST-old path \n";
@@ -982,8 +1009,10 @@ int main(int argc, char *argv[])
 
 						allCollisionIntervals[lastState.first].push_back(
 							jps_sipp::interval(lastState.second, solution2.states[i].second - 1));
-						allCollisionIntervals_jpstold[lastState.first].push_back(
-							jpst_old::interval(lastState.second, solution2.states[i].second - 1));
+						allCollisionIntervals_jpstold1[lastState.first].push_back(
+							jpst_old1::interval(lastState.second, solution2.states[i].second - 1));
+						allCollisionIntervals_jpstold2[lastState.first].push_back(
+							jpst_old2::interval(lastState.second, solution2.states[i].second - 1));
 
 						allCollisionIntervals_sipp[lastState.first].push_back(
 							sipp_t::interval(lastState.second, solution2.states[i].second - 1));
@@ -1014,8 +1043,10 @@ int main(int argc, char *argv[])
 				}
 				allCollisionIntervals[solution2.states.back().first].push_back(
 					jps_sipp::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
-				allCollisionIntervals_jpstold[solution2.states.back().first].push_back(
-					jpst_old::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+				allCollisionIntervals_jpstold1[solution2.states.back().first].push_back(
+					jpst_old1::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
+				allCollisionIntervals_jpstold2[solution2.states.back().first].push_back(
+					jpst_old2::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
 
 				allCollisionIntervals_sipp[solution2.states.back().first].push_back(
 					sipp_t::interval(solution2.states.back().second, std::numeric_limits<int>::max()));
@@ -1057,7 +1088,8 @@ int main(int argc, char *argv[])
 					if (solution2.actions[i].first != Action::Wait)
 					{
 						allEdgeCollisions[solution2.states[i].first].push_back(jps_sipp::edgeCollision(solution2.states[i].second, solution2.actions[i].first));
-						allEdgeCollisions_jpstold[solution2.states[i].first].push_back(jpst_old::edgeCollision(solution2.states[i].second, solution2.actions[i].first));
+						allEdgeCollisions_jpstold1[solution2.states[i].first].push_back(jpst_old1::edgeCollision(solution2.states[i].second, solution2.actions[i].first));
+						allEdgeCollisions_jpstold2[solution2.states[i].first].push_back(jpst_old2::edgeCollision(solution2.states[i].second, solution2.actions[i].first));
 
 						assert(i + 1 <= solution2.states.size());
 						//   			  std::cout << solution2.states[i].second << " " << solution2.states[i].first.x << " " <<  solution2.states[i].first.y <<
@@ -1116,7 +1148,7 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		if (solution.cost != solution2.cost || solutionJpstOld.cost != solution2.cost)
+		if (solution.cost != solution2.cost || solutionJpstOld.cost != solution2.cost || solutionJpstOld2.cost != solution2.cost)
 		{
 			std::cout << inputFile << "Agent " << i << ": Not equal1" << std::endl;
 			res_sta << inputFile << " Agent, " << i << ", Not equal" << std::endl;
@@ -1140,11 +1172,13 @@ int main(int argc, char *argv[])
 
 		double speedup = time2 / time1;
 		double speedupJpstOld = time2 / timeJpstOld;
+		double speedupJpstOld2 = time2 / timeJpstOld2;
 		res_sta << inputFile << " Agent, " << i << ", " << num_temporal_obstacle << ", " << preTime
 				<< ", JPSTOld cost, " << solutionJpstOld.cost << ", " << timeJpstOld << ", " << num_expansionJpstOld << ", " << num_generationJpstOld
+				<< ", JPSTOld cost, " << solutionJpstOld2.cost << ", " << timeJpstOld2 << ", " << num_expansionJpstOld2 << ", " << num_generationJpstOld2
 				<< ", JPSTNew cost, " << solution.cost << ", " << time1 << ", " << num_expansion1 << ", " << num_generation1
 				<< ", SIPP cost, " << solution2.cost << ", " << time2 << ", " << num_expansion2 << ", " << num_generation2 
-				<< ", " << speedup << ", " << speedupJpstOld << " \n";
+				<< ", " << speedup << ", " << speedupJpstOld << ", " << speedupJpstOld2 << " \n";
 
 		// if (time1 < time2)
 		// {
