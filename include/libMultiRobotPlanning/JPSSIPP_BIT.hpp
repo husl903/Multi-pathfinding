@@ -592,18 +592,19 @@ public:
 		uint32_t min_id;
 		if(node_id >= m_env.limit_jump) min_id = node_id - m_env.limit_jump;
 		else min_id = 0;
-		uint32_t xx, yy;
-		m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
-		std::cout << xx << "  " << yy << " -!!!!!!!!!!!!!!!!---\n"; 
-		std::cout << " jumpnode_id " << jumpnode_id << " !!!\n";
-		m_env.jpst_gm_->gm_->print(std::cout);
+		// uint32_t xx, yy;
+		// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
+		// std::cout << xx << "  " << yy << " -Leftleftleftleft!!!!!!!!!!!!!!!!---\n"; 
+		// std::cout << " jumpnode_id " << jumpnode_id << " !!!\n";
+		// m_env.jpst_gm_->gm_->print(std::cout);
 		dir = 0x01;
 		while(jumpnode_id >= min_id)
 		{
 			// cache 32 tiles from three adjacent rows.
 			// current tile is in the high byte of the middle row
 			m_env.jpst_gm_->gm_->get_neighbours_upper_64bit(jumpnode_id, neis);
-			
+						
+			// std::cout << "ttt" << tttttt << "  neis, " << neis[0] << " neis2, " << neis[2] << "  ----\n";
 			// identify forced and dead-end nodes
 			uint64_t 
 			down_forced_bits = (~neis[0] >> 1) & neis[0];
@@ -618,16 +619,25 @@ public:
 			uint64_t stop_bits = (forced_bits | deadend_bits);
 			if(stop_bits)
 			{
-				uint64_t stop_pos = (uint64_t)__builtin_clz(stop_bits);
+				uint32_t stop_pos = (uint32_t)__builtin_clzll(stop_bits);
 				jumpnode_id -= stop_pos;
 
-				// std::cout << "STOP !!!!!! " << jumpnode_id << " \n"; 
+				// uint64_t stop_pos1 = (uint64_t)__builtin_clzll(down_forced_bits);
+				// uint64_t stop_pos2 = (uint64_t)__builtin_clzll(up_forced_bits);
+				// std::cout << "STOP !!!!!! " << jumpnode_id << " pos1, pos2 " << stop_pos1 << " , " << stop_pos2 <<  ", "
+				// << forced_bits << " , " << down_forced_bits << ", " << up_forced_bits << " \n"; 
 				// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
 				// std::cout << xx << "  " << yy << " ----\n"; 
-
-				deadend = deadend_bits & (0x80000000 >> stop_pos);
-				if(down_forced_bits&(0x80000000 >> stop_pos)) dir |= 0x08;
-				if(up_forced_bits & (0x80000000 >> stop_pos)) dir |= 0x04;
+				uint64_t t = 0x8000000000000000;
+				uint64_t tt = t >> stop_pos;
+				
+				deadend = deadend_bits & tt;
+				uint64_t down_bits = (down_forced_bits & tt);
+				uint64_t up_bits = (up_forced_bits & tt);
+				if(down_bits > 0) dir |= 0x08;
+				if(up_bits > 0) dir |= 0x04;
+				// if(down_forced_bits&(0x8000000000000000 >> stop_pos)) dir |= 0x08;
+				// if(up_forced_bits & (0x8000000000000000 >> stop_pos)) dir |= 0x04;
 				break;
 			}
 			// jump to the end of cache. jumping +32 involves checking
@@ -666,6 +676,7 @@ public:
 		// uint32_t xx, yy;
 		// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
 		// std::cout << xx << "  " << yy << " ----\n"; 
+		
 		dir = 0x2;
 		// m_env.jpst_gm_->gm_->print(std::cout);
 		while(jumpnode_id <= max_id)
@@ -689,23 +700,26 @@ public:
 			deadend_bits = ~neis[1];
 
 			// stop if we found any forced or dead-end tiles
-			int64_t stop_bits = (int32_t)(forced_bits | deadend_bits);
+			uint64_t stop_bits = (forced_bits | deadend_bits);
 			if(stop_bits)
 			{
 				
-				int64_t stop_pos = __builtin_ffs(stop_bits)-1; // returns idx+1
+				uint64_t stop_pos = (uint64_t)__builtin_ffsll(stop_bits)-1; // returns idx+1
 				jumpnode_id += (uint32_t)stop_pos; 
 
-				// std::cout << "STOP !!!!!! " << jumpnode_id << " stop_bits" << stop_pos << " \n"; 
+				// std::cout << "STOP !!!!!! " << jumpnode_id << " stop_bits " << stop_pos << " up_forced_bits " << up_forced_bits << " \n"; 
 				// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx, yy);	
 				// std::cout << xx << "  " << yy << " ----\n"; 
 				deadend = deadend_bits & (1 << stop_pos);
 
-				bool up_bits = (up_forced_bits & (1 << stop_pos));
-				if (up_bits)	dir |= 0x04;
-				bool down_bits = down_forced_bits & (1 << stop_pos);
-				if(down_bits) dir |= 0x08;
-
+				uint64_t ttt = 1;
+				uint64_t tt = ((uint64_t)(ttt << stop_pos));
+//				uint64_t tt1 = (up_forced_bits & tt);
+//				std::cout << stop_pos << " , tt, tt1 " << tt1 << " , " <<  tt  << " forcesd " << up_forced_bits << " \n";
+				uint64_t up_bits = (up_forced_bits & (tt));
+				if (up_bits > 0)	dir |= 0x04;
+				uint64_t down_bits = (down_forced_bits & (tt));
+				if(down_bits > 0) dir |= 0x08;
 				break;
 			}
 
@@ -800,12 +814,12 @@ public:
 
 			if(stop_bits)
 			{
-				uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits); // returns idx+1
+				uint64_t stop_pos = (uint64_t)__builtin_clzll(stop_bits); // returns idx+1
 				uint32_t checked_id = jumpnode_id;
 				while(stop_bits){
 					JPSSIPPState temp_s = s;
 					temp_s.state.y = s.state.y;
-					temp_s.state.x = s.state.x - stop_pos + 1 - num * 31;
+					temp_s.state.x = s.state.x - stop_pos + 1 - num * 63;
 					temp_s.dir = 0x00;
 
 					uint32_t current_jumpnode_id = jumpnode_id - stop_pos;					
@@ -826,7 +840,7 @@ public:
 						jumpnode_id = current_jumpnode_id;
 						break;
 					}
-					temp_s.state.x = s.state.x - stop_pos - num * 31;					
+					temp_s.state.x = s.state.x - stop_pos - num * 63;					
 					if(current_jumpnode_id != current_id
 						&& current_jumpnode_id < checked_id
 						&& m_env.stateValid(temp_s.state)){
@@ -840,7 +854,7 @@ public:
 						checked_id = current_jumpnode_id;
 					}		
 
-					temp_s.state.x = s.state.x - stop_pos - 1 - num * 31;
+					temp_s.state.x = s.state.x - stop_pos - 1 - num * 63;
 					if(current_jumpnode_id - 1 < min_id) {
 						jumpnode_id = current_jumpnode_id -1;
 						break;
@@ -856,14 +870,15 @@ public:
 						if(!isSafeNext) return;
 						checked_id = current_jumpnode_id -1;
 					}
-
-					stop_bits =  stop_bits & (~(0x80000000 >> stop_pos));
-
-					stop_pos = (uint32_t)__builtin_clz(stop_bits); 
+					uint64_t t = 0x8000000000000000;
+					uint64_t tt = (t >> stop_pos);
+					uint64_t ttt = ~tt; 
+					stop_bits =  (stop_bits & ttt);
+					stop_pos = (uint64_t)__builtin_clzll(stop_bits); 
 				}
 				if(is_found) break;
 			} 
-			jumpnode_id -= 31;
+			jumpnode_id -= 63;
 			num++;
 		}
 
@@ -1087,7 +1102,7 @@ public:
 		
 		int jumplimit = m_env.limit_jump;
 		uint32_t max_id = current_id + jumplimit;
-		uint32_t neis[3] = {0, 0, 0};
+		uint64_t neis[3] = {0, 0, 0};
 		uint32_t jumpnode_id = current_id;
  		if(jump_id <= max_id){
 			max_id = jump_id;
@@ -1107,7 +1122,7 @@ public:
 
 			// read in tiles from 3 adjacent rows. the curent node 
 			// is in the low byte of the middle row
-			m_env.jpst_gm_->t_gm_->get_neighbours_32bit(jumpnode_id, neis);
+			m_env.jpst_gm_->t_gm_->get_neighbours_64bit(jumpnode_id, neis);
 
 			// uint32_t xx2, yy2;
 			// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx2, yy2);
@@ -1116,10 +1131,10 @@ public:
 			// stop if we try to jump over nodes with temporal events
 			// or which have neighbours with temporal events.
 			// we treat such nodes as jump points
-			uint32_t stop_bits = neis[0] | neis[1] | neis[2];
+			uint64_t stop_bits = neis[0] | neis[1] | neis[2];
 			if(stop_bits)
 			{
-				uint32_t stop_pos = (uint32_t)__builtin_ffs((int)stop_bits) - 1; // returns idx+1				
+				uint64_t stop_pos = (uint64_t)__builtin_ffsll((int)stop_bits) - 1; // returns idx+1				
 				// std::cout << "stop_pos " << stop_pos << " jumpnodeid " << jumpnode_id + stop_pos + 1 << " "  << jump_id << " \n";
 			    // if(m_env.isDebug) std::cout << " xx1, yy1 " << xx1 << " " << yy1 <<  " xx2, yy2 " << xx2 << " " << yy2 << " !!!!!!!!!\n";
 
@@ -1139,7 +1154,7 @@ public:
 
 					JPSSIPPState temp_s = s;
 					temp_s.state.y = s.state.y;
-					temp_s.state.x = s.state.x + stop_pos - 1 + num * 31;
+					temp_s.state.x = s.state.x + stop_pos - 1 + num * 63;
 				    isSafeNext = false;
 					if(current_jumpnode_id -1 != current_id 
 						&& current_jumpnode_id - 1 > checked_id
@@ -1156,7 +1171,7 @@ public:
 					
 					if(m_env.isDebug) std::cout << "Right  -----------------------------22222\n";
 					if(current_jumpnode_id > max_id) break;
-					temp_s.state.x = s.state.x + stop_pos + num * 31;
+					temp_s.state.x = s.state.x + stop_pos + num * 63;
 				    isSafeNext = false;
 				    if(current_jumpnode_id != current_id 
 						&& current_jumpnode_id > checked_id
@@ -1171,7 +1186,7 @@ public:
 					}	
 
 					if(current_jumpnode_id + 1 > max_id) break;
-					temp_s.state.x = s.state.x + stop_pos + 1 + num * 31;
+					temp_s.state.x = s.state.x + stop_pos + 1 + num * 63;
 					isSafeNext = false;					
 					if(m_env.isDebug)  std::cout << "Right  -----------------------------3333\n";
 				    if(current_jumpnode_id + 1 != current_id 
@@ -1187,13 +1202,15 @@ public:
 						checked_id = current_jumpnode_id + 1;
 					}										
 					if(is_found || !isSafeNext) break;
-
-					stop_bits =  stop_bits & (~(0x1 << stop_pos));
-					stop_pos = (uint32_t)__builtin_ffs((int)stop_bits) - 1; 
+					uint64_t tt = 1;
+					uint64_t ttt = (~(tt << stop_pos));
+					stop_bits =(stop_bits & ttt);
+					// stop_bits =  stop_bits & (~(0x1 << stop_pos));
+					stop_pos = (uint64_t)__builtin_ffsll(stop_bits) - 1; 
 				}
 				if(is_found) break;
 			} 
-			jumpnode_id += 31;
+			jumpnode_id += 63;
 			num++;
 		}
 

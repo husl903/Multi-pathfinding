@@ -592,7 +592,7 @@ private:
 
 public:
 	jpst_gridmap *jpst_gm_;
-	bool isDebug = true;
+	bool isDebug = false;
 };
 
 void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, std::vector<std::vector<bool>> map_obstacle, State goal, int dimx, int dimy)
@@ -735,7 +735,7 @@ int main(int argc, char *argv[])
 
 	for (const auto &ob : obstacles)
 	{
-		// if(ob.x >=666 && ob.x <= 671 && ob.y >= 84 && ob.y <= 88) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
+		if(ob.x >=79 && ob.x <= 91 && ob.y >= 350 && ob.y <= 362) std::cout << " Obst " << ob.x << " " << ob.y << " \n";
 		State temp1 = ob, temp2 = ob;
 		temp1.x = ob.x + 1;
 		temp2.y = ob.y + 1;
@@ -816,9 +816,12 @@ int main(int argc, char *argv[])
 	std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
 	// Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[0], &jpst_gm_);
 
+	// unsigned long long a = 0;
+	// uint64_t b = 0;
+	// std::cout << " the size of a " << sizeof(a) << ",  b " << sizeof(b) << " \n";
 	for (int i = 0; i < (int)goals.size(); ++i)
 	{
-		// if(i > 1) break;
+		// if(i == 0) break;
 		getrusage(RUSAGE_SELF, &r_usage);
 		std::cout << "Memory usage: " << r_usage.ru_maxrss << " kilobytes\n";
 

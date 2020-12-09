@@ -166,7 +166,7 @@ class gridmap
 
 
 		// fetches a contiguous set of tiles from three adjacent rows. each row is
-		// 32 tiles long. the middle row begins with tile grid_id_p. the other tiles
+		// 64 tiles long. the middle row begins with tile grid_id_p. the other tiles
 		// are from the row immediately above and immediately below grid_id_p.
 		void
 		get_neighbours_64bit(uint32_t grid_id_p, uint64_t tiles[3])
@@ -182,11 +182,16 @@ class gridmap
 			uint32_t pos2 = dbindex;
 			uint32_t pos3 = dbindex + dbwidth_;
 
-			// read 32bits of memory; grid_id_p is in the 
+			// read 64bits of memory; grid_id_p is in the 
 			// lowest bit position of tiles[1]
-			tiles[0] = (uint64_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset));
-			tiles[1] = (uint64_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset));
-			tiles[2] = (uint64_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset));
+			tiles[0] = (uint64_t)(*((__uint128_t*)(db_+pos1)) >> (bit_offset));
+			tiles[1] = (uint64_t)(*((__uint128_t*)(db_+pos2)) >> (bit_offset));
+			tiles[2] = (uint64_t)(*((__uint128_t*)(db_+pos3)) >> (bit_offset));
+			
+			// std::cout << "Index " << dbindex << " RightRightRight\n";
+			// uint32_t temp = (uint32_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
+			// std::cout << " tiles " << tiles[1] << " " << temp << " " << " tiletemp tile temp\n";
+
 		}
 
 		// similar to get_neighbours_32bit but grid_id_p is placed into the
@@ -200,7 +205,7 @@ class gridmap
 			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
 			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			
-			std::cout << " dbindex " << dbindex << " \n";	
+			// std::cout << " dbindex " << dbindex << " " << bit_offset << " \n";	
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
 			dbindex -= 8;
@@ -213,9 +218,14 @@ class gridmap
 
 			// read 32bits of memory; grid_id_p is in the 
 			// highest bit position of tiles[1]
-			tiles[0] = (uint64_t)(*((uint64_t*)(db_+pos1)) >> (bit_offset+1));
-			tiles[1] = (uint64_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
-			tiles[2] = (uint64_t)(*((uint64_t*)(db_+pos3)) >> (bit_offset+1));
+			tiles[0] = (uint64_t)(*((__uint128_t*)(db_+pos1)) >> (bit_offset+1));
+			tiles[1] = (uint64_t)(*((__uint128_t*)(db_+pos2)) >> (bit_offset+1));
+			tiles[2] = (uint64_t)(*((__uint128_t*)(db_+pos3)) >> (bit_offset+1));
+
+			// uint32_t temp1 = (uint32_t)(*((uint64_t*)(db_+pos2))); 
+			// uint32_t temp = (uint32_t)(*((uint64_t*)(db_+pos2)) >> (bit_offset+1));
+			// std::cout << " pos1 " << pos1 << " pos2, " << pos2 << " pos3, " << pos3 << "\n";
+			// std::cout << " tiles0, " << tiles[0] << " tiles1, " << tiles[1] << " tiles2 " << tiles[2] << " temp, " << temp << " temp1 "<< temp1  << " ---------------------tiletemp tile temp\n";
 		}
 
 
