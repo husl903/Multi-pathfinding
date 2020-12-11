@@ -143,9 +143,6 @@ class gridmap
 			uint32_t bit_offset = (grid_id_p & libMultiRobotPlanning::DBWORD_BITS_MASK);
 			uint32_t dbindex = grid_id_p >> libMultiRobotPlanning::LOG2_DBWORD_BITS;
 			
-
-			std::cout <<libMultiRobotPlanning::DBWORD_BITS << " MASk " << libMultiRobotPlanning::DBWORD_BITS_MASK << " BITS " << libMultiRobotPlanning::LOG2_DBWORD_BITS << " \n";
-
 			// start reading from a prior index. this way everything
 			// up to grid_id_p is cached.
 			dbindex -= 4;
