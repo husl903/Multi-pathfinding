@@ -640,6 +640,7 @@ int main(int argc, char *argv[])
 	//	std::string mapfile;
 	int num_path = 50; //goals.size();
 	int jumpLimit = 8;
+	int jumpLimit2 = 256;
 	bool isF = true;
 	desc.add_options()("help", "produce help message")(
 		"input,i", po::value<std::string>(&inputFile)->required(),
@@ -647,12 +648,16 @@ int main(int argc, char *argv[])
 							 po::value<std::string>(&outputFile)->required(),
 							 "output file (YAML)")
 		//						   ("map,m", po::value<std::string>(&mapfile)->required(), "map file (MAP)")
-		("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")("path num,N", po::value<int>(&num_path)->required(), "num path (int)")("jump limit,J", po::value<int>(&jumpLimit)->required(), "jump limit (int)")("is F inscreasing,F", po::value<bool>(&isF)->required(), "is F inscreasing")
+		("results,r", po::value<std::string>(&res)->required(), "results file (TXT)")
+		("path num,N", po::value<int>(&num_path)->required(), "num path (int)")
+		("jump limit,J", po::value<int>(&jumpLimit)->required(), "jump limit (int)")
+		("jump limit2,L", po::value<int>(&jumpLimit2)->required(), "jump limit (int)")
+		("is F inscreasing,F", po::value<bool>(&isF)->required(), "is F inscreasing")
 		// ("url",
 		// po::value<std::string>(&url)->default_value("http://0.0.0.0:8080"),
 		// "server URL")
 		;
-
+	// jumpLimit2 = jumpLimit;
 	try
 	{
 		po::variables_map vm;
@@ -826,17 +831,16 @@ int main(int argc, char *argv[])
 		out << "  agent" << i << ":" << std::endl;
 		t.reset();
 
-		// std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
-		// std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
-		// getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
-		// eHeuristic[goals[i]] = eHeuristicGoal;
+		std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
+		std::vector<std::vector<int>> eHeuristicGoal(dimx + 1, std::vector<int>(dimy + 1, -1));
+		getExactHeuristic(eHeuristicGoal, map_obstacle, goals[i], dimx, dimy);
+		eHeuristic[goals[i]] = eHeuristicGoal;
 		t.stop();
 		double preTime = t.elapsedSeconds();
 
 		Environment env(dimx, dimy, map_obstacle, map_temporal_obstacle, map_jump_point, last_ob_g, nei_ob_g, eHeuristic, goals[i], &jpst_gm_);
-		env.setExactHeuristFalse();
-		// jumpLimit = 32;
-		env.setJumpLimit(jumpLimit);
+		env.setExactHeuristTrue();
+		env.setJumpLimit(jumpLimit2);
 		env.setFI(isF);
 		jps_sipp jpssipp(env);
 		jpst_old1 jpstold1(env);
@@ -927,6 +931,7 @@ int main(int argc, char *argv[])
 			out << "    []" << std::endl;
 		}
 
+		env.setJumpLimit(jumpLimit);
 		env.Reset();
 		PlanResult<State, Action, int> solutionJpstOld;
 		t.reset();
@@ -971,9 +976,9 @@ int main(int argc, char *argv[])
 		// env.setJumpLimit(jumpLimit);
 		env.Reset();
 		env.setNoJPS();
-		PlanResult<State, Action, int> solution3;
+		PlanResult<State, Action, int> solution2;
 		t.reset();
-		bool success_temp = sipp.search(startStates[i], Action::Wait, solution3);
+		bool success_temp = sipp.search(startStates[i], Action::Wait, solution2);
 		t.stop();
 
 		int num_expansion2 = env.num_expansion;
@@ -982,17 +987,17 @@ int main(int argc, char *argv[])
 		double time2 = t.elapsedSeconds();
 		std::cout << t.elapsedSeconds() << std::endl;
 
-		env.Reset();
+/*		env.Reset();
 		env.setNoJPS();
-		env.setExactHeuristFalse();
+		env.setExactHeuristTrue();
 		PlanResult<State, Action, int> solution2;
 		t.reset();
 		sipp.search(startStates[i], Action::Wait, solution2);
 		t.stop();
-
+*/
 		if (success_temp)
 		{
-			std::cout << "NoJPS Planning successful! Total cost: " << solution3.cost << " Expansion:"
+			std::cout << "NoJPS Planning successful! Total cost: " << solution2.cost << " Expansion:"
 					  << env.num_expansion << " Generation: " << env.num_generation
 					  << std::endl;
 

@@ -1513,8 +1513,8 @@ public:
             	           	break ;
             	        }
 
-            	        // if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-           	            if(step >= m_env.limit_jump){
+            	        if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+           	            // if(step >= m_env.limit_jump){
             	            if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
             	            else current_successor.dir = 0x07;
             	            if(m_env.isFCheck()){
@@ -1656,8 +1656,8 @@ public:
             	        }
 
 
-            	        // if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
-           	            if(step >= m_env.limit_jump){
+            	        if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0){
+           	            // if(step >= m_env.limit_jump){
     	             		if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
     	             		else current_successor.dir = 0x0b;
             	            if(m_env.isFCheck()){
