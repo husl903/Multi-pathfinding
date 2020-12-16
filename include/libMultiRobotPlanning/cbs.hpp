@@ -7,6 +7,7 @@
 #include "a_star.hpp"
 #include "sipp.hpp"
 #include "JPSSIPPCBS.hpp"
+#include "JPSSIPP_BITCBS.hpp"
 #include "planresult.hpp"
 #include "timer.hpp"
 //using libMultiRobotPlanning::SIPP;
@@ -124,26 +125,25 @@ class CBS {
 
     solution.clear();
     int id = 1;
-    clock_t startTime,endTime;
-    clock_t startTotal, endTotal;
-    startTotal = clock();
+    // clock_t startTime, endTime;
+    // clock_t startTotal, endTotal;
+    // startTotal = clock();
 
     Timer timer;
     timer.reset();
     while (!open.empty()) {
-    	endTotal = clock();
-      double duration =(double)(endTotal - startTotal)/CLOCKS_PER_SEC;
+    	// endTotal = clock();
+      // double duration =(double)(endTotal - startTotal)/CLOCKS_PER_SEC;
 
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration > 1000){
+      if(duration1 > 1000){
     	  return false;
       }
-//      std::cout << duration1 << " \n";
+
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);
-      // std::cout << "expand: " << P << std::endl;
 
       open.pop();
 
@@ -176,20 +176,27 @@ class CBS {
         newNode.constraints[i].add(c.second);
 
         newNode.cost -= newNode.solution[i].cost;
-//        std::cout << "Start  ---------------------------------------------------------------------------------------------------------------------------- \n";
+
         m_env.resetTemporalObstacle();
         jps_sipp jps(m_env);
+        jpst_bit jpstbit(m_env);
+
         jps.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+
         PlanResult<Location, Action, int> solutiontemp;
+        PlanResult<Location, Action, int> solutiontemp2;
         bool is_first_constraint_v = true;
         for(auto & constraint : newNode.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
         	m_env.setTemporalObstacle(location, constraint.time);
         	if(is_first_constraint_v){
         		jps.setCollisionVertex(location, constraint.time, constraint.time, true);
+        		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
         		is_first_constraint_v = false;
         	}else{
         		jps.setCollisionVertex(location, constraint.time, constraint.time, false);
+        		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
         	}
         }
 
@@ -200,14 +207,18 @@ class CBS {
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
         			jps.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
+        			jpstbit.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
         		}else if(constraint.y1 == constraint.y2 + 1){
         			jps.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
+        			jpstbit.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
         		}
         	}else{
         		if(constraint.x1 == constraint.x2 - 1){
         			jps.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
+        			jpstbit.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
         		}else if(constraint.x1 == constraint.x2 + 1){
         			jps.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
+        			jpstbit.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
         		}
         	}
         	if(is_first_constraint_e){
@@ -216,6 +227,8 @@ class CBS {
         }
         jps.sortCollisionVertex();
         jps.sortCollisionEdgeConstraint();
+        jpstbit.sortCollisionVertex();
+        jpstbit.sortCollisionEdgeConstraint();
 
         Location goal = m_env.setGoal(i);
         m_env.Reset();
@@ -223,7 +236,7 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
-        m_env.setExactHeuristTrue();
+        m_env.setExactHeuristFalse();
         Timer timerJps;
         timerJps.reset();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
@@ -232,6 +245,13 @@ class CBS {
         int ExpJps = m_env.num_expansion;
         int GenJps = m_env.num_generation;
 
+        Timer timerJpstbit;
+        timerJpstbit.reset();
+        bool isJpstbit = jpstbit.search(startNode, Action::Wait, solutiontemp2, 0);
+        timerJpstbit.stop();
+        double tJpstbit = timerJpstbit.elapsedSeconds();
+        int ExpJps1 = m_env.num_expansion;
+        int GenJps1 = m_env.num_generation;
 /*        m_env.setExactHeuristFalse();
         timerJps.reset();
         bool isJpsSuccM = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
@@ -286,10 +306,9 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
-
         Timer timerSipp;
         timerSipp.reset();
-        m_env.setExactHeuristTrue();
+        m_env.setExactHeuristFalse();
         bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSipp = timerSipp.elapsedSeconds();
@@ -306,7 +325,7 @@ class CBS {
 */
 
 
-        m_env.setExactHeuristTrue();
+        m_env.setExactHeuristFalse();
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 
@@ -335,9 +354,6 @@ class CBS {
 
 
         newNode.cost += newNode.solution[i].cost;
-
-
-
 /*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
 				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
@@ -351,7 +367,7 @@ class CBS {
                 		"), Goal, (" << goal.x << " " << goal.y <<
         				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
         				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
-        				", Time , " << tAstar << " , " << tSipp << " , " << tJps <<
+        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
         				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
         				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
         				" \n";
@@ -370,6 +386,17 @@ class CBS {
         		return false;
         	}
         }
+
+
+        for(auto & constraint : newNode.constraints[i].vertexConstraints){
+        	Location location(constraint.x, constraint.y);
+          jpstbit.clearObstacle(location);
+        }
+        for(auto & constraint : newNode.constraints[i].edgeConstraints){
+        	Location loc(constraint.x2, constraint.y2);
+          jpstbit.clearObstacle(loc);
+        }
+
 
         if(isJpsSucc && success){
         	if(solutiontemp.cost != newNode.solution[i].cost){
@@ -410,12 +437,55 @@ class CBS {
         		    		   solutiontemp.states.back().first << std::endl;
         	}*/
         } else if(!isJpsSucc && success){
-    		std::cout << "Jps is not equal \n";
+    		std::cout << "Jps is not equal 111\n";
+    		return false;
+        }
+
+
+        if(isJpstbit && success){
+        	if(solutiontemp2.cost != newNode.solution[i].cost){
+
+        		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
+        			std::cout << newNode.solution[i].states[ii].second << ": " <<
+        						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
+								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << newNode.solution[i].states.back().second << ": " <<
+        		  		   newNode.solution[i].states.back().first << std::endl;
+
+            for (size_t ii = 0; ii < solutiontemp2.actions.size(); ++ii) {
+                	std::cout << solutiontemp2.states[ii].second << ": " <<
+        		         		 solutiontemp2.states[ii].first << "->" << solutiontemp2.actions[ii].first
+        		       		         << "(cost: " << solutiontemp2.actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solutiontemp2.states.back().second << ": " <<
+        		    		   solutiontemp2.states.back().first << std::endl;
+
+        		std::cout << "Jpstbit is not equal 2222\n";
+        		return false;
+        	}/*else{
+        		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
+        			std::cout << newNode.solution[i].states[ii].second << ": " <<
+        						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
+								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << newNode.solution[i].states.back().second << ": " <<
+        		  		   newNode.solution[i].states.back().first << std::endl;
+
+                for (size_t ii = 0; ii < solutiontemp.actions.size(); ++ii) {
+                	std::cout << solutiontemp.states[ii].second << ": " <<
+        		         		 solutiontemp.states[ii].first << "->" << solutiontemp.actions[ii].first
+        		       		         << "(cost: " << solutiontemp.actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solutiontemp.states.back().second << ": " <<
+        		    		   solutiontemp.states.back().first << std::endl;
+        	}*/
+        } else if(!isJpstbit && success){
+    		std::cout << "Jpstbit is not equal 1111\n";
     		return false;
         }
 
         if (success) {
-//           std::cout << "  success. cost: " << newNode.cost << std::endl;
           auto handle = open.push(newNode);
           (*handle).handle = handle;
         }
@@ -504,6 +574,7 @@ class CBS {
   typedef AStar<State, Action, Cost, LowLevelEnvironment> LowLevelSearch_t;
   typedef JPSSIPP<Location, Location, Action, int, Environment> jps_sipp;
   typedef SIPP<Location, Location, Action, int, Environment> sipp_t;
+  typedef JPSSIPP_BITCBS<Location, Location, Action, int, Environment> jpst_bit;
 //  jps_sipp.setEdgeCollisionSize(10, 10);
 //  std::map<Location, std::vector<jps_sipp::interval>> allCollisionIntervals;
 //  std::map<Location, std::vector<JPSSIPP::edgeCollision>> allEdgeCollisions;

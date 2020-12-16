@@ -133,6 +133,9 @@ target_link_libraries(assignment
 ## cbs
 add_executable(cbs
   example/cbs.cpp
+  example/gridmap.cpp
+  example/gm_parser.cpp
+  example/jpst_gridmap.cpp  
 )
 target_link_libraries(cbs
   ${Boost_LIBRARIES}

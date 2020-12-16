@@ -7,11 +7,16 @@
 #include <yaml-cpp/yaml.h>
 
 #include <libMultiRobotPlanning/cbs.hpp>
+#include <libMultiRobotPlanning/gridmap.hpp>
+#include <libMultiRobotPlanning/jpst_gridmap.hpp>
+
 //#include "timer.hpp"
 
 using libMultiRobotPlanning::CBS;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
+using libMultiRobotPlanning::gridmap;
+using libMultiRobotPlanning::jpst_gridmap;
 
 struct State {
   State(int time, int x, int y) : time(time), x(x), y(y) {}
@@ -257,7 +262,8 @@ class Environment {
 			  std::vector<std::vector<bool>>jump_point_map_m,
 			  std::vector<std::vector<int>>last_ob_g,
   	  	  	  std::vector<std::vector<int>>nei_ob_g,
-			  std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic
+			  std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic,
+        jpst_gridmap *mmap_
 			  )
       : m_dimx(dimx),
         m_dimy(dimy),
@@ -271,12 +277,14 @@ class Environment {
 		m_last_ob_g(std::move(last_ob_g)),
 		m_nei_ob_g(std::move(nei_ob_g)),
 		m_eHeuristic(std::move(eHeuristic)),
+    jpst_gm_(mmap_),
         m_agentIdx(0),
         m_constraints(nullptr),
         m_lastGoalConstraint(-1),
         m_highLevelExpanded(0),
         m_lowLevelExpanded(0),
 		m_lowLevelGeneration(0){
+		  goalID = m_goal.y * m_dimx + m_goal.x;
     // computeHeuristic();
   }
 
@@ -634,7 +642,7 @@ class Environment {
 
   void setTemporalEdgeConstraint(const Location& s, int T){
 //	  std::cout << " SetEdge--- " << s.x <<", " << s.y << ", "<< T <<"\n";
-	  m_temporal_edge_constraint[s.x][s.y] = std::max(T, m_temporal_edge_constraint[s.x][s.y]);
+	    m_temporal_edge_constraint[s.x][s.y] = std::max(T, m_temporal_edge_constraint[s.x][s.y]);
       int xx[5] = {0, 1, -1};
       int yy[5] = {0, 1, -1};
       for(int xx_1 = 0; xx_1 < 3; xx_1++){
@@ -713,6 +721,7 @@ Location  setGoal(int agentId){
 	  m_agentIdx = agentId;
 	  Location goal = m_goal;
 	  isOutput = true;
+    goalID = getNodeId(m_goal);
 	  return goal;
   }
   void setExactHeuristTrue(){
@@ -835,6 +844,32 @@ Location  setGoal(int agentId){
     }
   }
 #endif
+
+	bool isFCheck()
+	{
+		return isFI;
+	}
+
+  	uint32_t getGoalId()
+	{
+		return goalID;
+		return getNodeId(m_goal);
+	}
+
+	int getNodeId(const Location &s)
+	{
+		return (s.y * m_dimx + s.x);
+	}
+
+
+	void setGoal(Location goal){
+		m_goal = goal;
+	}
+
+
+	int getDimX() { return m_dimx; }
+	int getDimY() { return m_dimy; }
+
 public:
   int num_generation = 0;
   int num_expansion = 0;
@@ -845,6 +880,8 @@ public:
   std::unordered_set<Location> m_obstacles;
   std::vector<Location> m_goals;
   Location m_goal;
+  uint32_t goalID;
+
 
   size_t m_agentIdx;
   const Constraints* m_constraints;
@@ -856,6 +893,7 @@ public:
   bool is_jps = true;
   bool isOutput = false;
   bool isExact = true;
+  bool isFI = true;
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
@@ -864,6 +902,10 @@ public:
   std::vector<std::vector<int>> m_last_ob_g;
   std::vector<std::vector<int>> m_nei_ob_g;
   std::unordered_map<Location, std::vector<std::vector<int>>> m_eHeuristic;
+
+ public:
+  jpst_gridmap *jpst_gm_;
+  bool isDebug = false;
 };
 
 
@@ -946,10 +988,27 @@ int main(int argc, char* argv[]) {
   std::vector<std::vector<int>> last_ob_g(dimx+1, std::vector<int>(dimy+1));
   std::vector<std::vector<int>> nei_ob_g(dimx+1, std::vector<int>(dimy+1));
 
+  gridmap gm(dimy, dimx);
   for (const auto& node : config["map"]["obstacles"]) {
     obstacles.insert(Location(node[0].as<int>(), node[1].as<int>()));
     map_obstacle[node[0].as<int>()][node[1].as<int>()] = true;
   }
+
+	for (int i = 0; i < dimx; i++)
+	{
+		for (int j = 0; j < dimy; j++)
+		{
+			if (map_obstacle[i][j])
+			{
+				gm.set_label(gm.to_padded_id(i, j), 0);
+			}
+			else
+			{
+				gm.set_label(gm.to_padded_id(i, j), 1);
+			}
+		}
+	}
+	jpst_gridmap jpst_gm_(&gm);
 
   for (const auto& ob:obstacles){
 	  Location temp1 = ob,temp2 = ob;
@@ -1025,7 +1084,8 @@ int main(int argc, char* argv[]) {
 */
   std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
   Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
-		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, last_ob_g, nei_ob_g, eHeuristic);
+		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, 
+      last_ob_g, nei_ob_g, eHeuristic, &jpst_gm_);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<State, Action, int> > solution;
 

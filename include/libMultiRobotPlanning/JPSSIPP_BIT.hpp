@@ -111,10 +111,32 @@ public:
  public:
   JPSSIPP_BIT(Environment& environment) : m_env(environment), m_astar(m_env) {}
 
+  void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
+	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
+	//   m_env.jpst_gm_->add_obstacle(location.x, location.y)
+  }
+
+  void clearObstacle(const Location& location){
+	  m_env.clearObstacle(location);
+  }
+
+  void sortCollisionVertex(){
+	  m_env.sortCollisionVertex();
+  }
+
+  void sortCollisionEdgeConstraint(){
+	  m_env.sortCollisionEdgeConstraint();
+  }
+
+  void setEdgeConstraint(const Location& location, int time, Action ac, bool is_first){
+	  m_env.setEdgeConstraint(location, time, ac, is_first);
+  }
+
   void setCollisionIntervals(const Location& location,
                              const std::vector<interval>& intervals) {
     m_env.setCollisionIntervals(location, intervals);
   }
+
   void setEdgeCollisionSize(const int& dimx, const int& dimy){
 	m_env.setEdgeCollisionSize(dimx, dimy);
   }
@@ -2326,6 +2348,70 @@ public:
     	m_edgeCollision_t.resize(dimx * dimy);
     	m_safeIntervals_t.resize(dimx * dimy);
     	return ;
+    }
+
+    void setEdgeConstraint(const Location& location, int time, Action ac, bool is_first){
+    	int index = m_env.getIndex(location);
+    	if(is_first){
+    		m_edgeCollision_t[index].clear();
+    	}
+    	m_edgeCollision_t[index].push_back({time, ac});
+ //   	std::cout << location.x << " " << location.y << " time " << time << " Action " << ac << " Edge constraint !!!!!!!!!!!!!-----------------------------------------------------\n";
+    }
+
+    void sortCollisionEdgeConstraint(){
+    	for(int i = 0; i < m_edgeCollision_t.size(); i++){
+    		sort(m_edgeCollision_t[i].begin(), m_edgeCollision_t[i].end());
+    	}
+    }
+
+   void setCollisionVertex(const Location& location, int startTime, int endTime, bool is_first){
+    	int index = m_env.getIndex(location);
+//    	std::cout << "  " << location.x << "  --- " << location.y << "\n";
+    	if(is_first){
+    		m_safeIntervals_t[index].clear();
+    	}
+    	m_safeIntervals_t[index].push_back({startTime, endTime});
+
+		m_env.jpst_gm_->add_obstacle(location.x, location.y);
+    }
+
+	void clearObstacle(const Location& location){
+		m_env.jpst_gm_->clear_obstacles(location.x, location.y);
+	}
+
+    void sortCollisionVertex(){
+
+    	for(int i = 0;i < m_safeIntervals_t.size(); i++){
+    		if(m_safeIntervals_t[i].size() == 0) continue;
+    		std::vector<interval> sortedIntervals(m_safeIntervals_t[i].begin(), m_safeIntervals_t[i].end());
+    		sort(sortedIntervals.begin(), sortedIntervals.end());
+
+    		m_safeIntervals_t[i].clear();
+    		int start = 0;
+    		int lastEnd = 0;
+
+//    		std::cout << "m_safeIntervals_t.size()" << m_safeIntervals_t[i].size() << " " << sortedIntervals.size() << " &&&&&&&&&&&&&&&&\n";
+            for (const auto& interval : sortedIntervals) {
+            	assert(interval.start <= interval.end);
+            	assert(start <= interval.start);
+            	if (start <= interval.start - 1) {
+            		m_safeIntervals_t[i].push_back({start, interval.start - 1});
+            	}
+            	start = interval.end + 1;
+            	lastEnd = interval.end;
+            }
+            if (lastEnd < std::numeric_limits<int>::max()) {
+            	m_safeIntervals_t[i].push_back(
+            		{start, std::numeric_limits<int>::max()});
+            }
+
+/*            for(int j = 0; j < m_safeIntervals_t[i].size(); j++)
+            {
+            	std::cout << j << " Start " << m_safeIntervals_t[i][j].start << " End : " << m_safeIntervals_t[i][j].end << " ---\n";
+            }
+            std::cout << "m_safeIntervals_t.size()" << m_safeIntervals_t.size() << " " << m_safeIntervals_t[i].size() << " \n";*/
+    	}
     }
 
     void setEdgeCollisions(const Location& location,

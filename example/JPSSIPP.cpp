@@ -21,7 +21,7 @@
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
-#include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
+// #include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
 
 using libMultiRobotPlanning::gridmap;
 using libMultiRobotPlanning::JPSSIPP;
@@ -128,7 +128,7 @@ public:
 		  m_goal(goal),
 		  jpst_gm_(mmap_) {
 			  goalID = m_goal.y * m_dimx + m_goal.x;
-		  }
+		}
 
 	~Environment() {}
 
