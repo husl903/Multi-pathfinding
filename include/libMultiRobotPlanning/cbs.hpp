@@ -138,7 +138,7 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration1 > 1000){
+      if(duration1 > 7200){
     	  return false;
       }
 
@@ -236,7 +236,7 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
 
-        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristTrue();
         Timer timerJps;
         timerJps.reset();
         bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontemp, 0, true);
@@ -247,6 +247,7 @@ class CBS {
 
         Timer timerJpstbit;
         timerJpstbit.reset();
+        m_env.setExactHeuristTrue();
         bool isJpstbit = jpstbit.search(startNode, Action::Wait, solutiontemp2, 0);
         timerJpstbit.stop();
         double tJpstbit = timerJpstbit.elapsedSeconds();
@@ -308,7 +309,7 @@ class CBS {
 
         Timer timerSipp;
         timerSipp.reset();
-        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristTrue();
         bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
         timerSipp.stop();
         double tSipp = timerSipp.elapsedSeconds();
@@ -325,7 +326,7 @@ class CBS {
 */
 
 
-        m_env.setExactHeuristFalse();
+        m_env.setExactHeuristTrue();
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
         LowLevelSearch_t lowLevel(llenv);
 
@@ -367,6 +368,7 @@ class CBS {
                 		"), Goal, (" << goal.x << " " << goal.y <<
         				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
         				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+                ", preTime, " << m_env.getPreTime(i) << 
         				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
         				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
         				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<

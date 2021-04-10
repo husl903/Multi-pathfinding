@@ -263,6 +263,7 @@ class Environment {
 			  std::vector<std::vector<int>>last_ob_g,
   	  	  	  std::vector<std::vector<int>>nei_ob_g,
 			  std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic,
+        std::vector<double>preTime1,
         jpst_gridmap *mmap_
 			  )
       : m_dimx(dimx),
@@ -277,6 +278,7 @@ class Environment {
 		m_last_ob_g(std::move(last_ob_g)),
 		m_nei_ob_g(std::move(nei_ob_g)),
 		m_eHeuristic(std::move(eHeuristic)),
+    preTime(std::move(preTime1)),
     jpst_gm_(mmap_),
         m_agentIdx(0),
         m_constraints(nullptr),
@@ -866,6 +868,9 @@ Location  setGoal(int agentId){
 		m_goal = goal;
 	}
 
+  double getPreTime(int i){
+    return preTime[i];
+  }
 
 	int getDimX() { return m_dimx; }
 	int getDimY() { return m_dimy; }
@@ -902,6 +907,7 @@ public:
   std::vector<std::vector<int>> m_last_ob_g;
   std::vector<std::vector<int>> m_nei_ob_g;
   std::unordered_map<Location, std::vector<std::vector<int>>> m_eHeuristic;
+  std::vector<double> preTime;
 
  public:
   jpst_gridmap *jpst_gm_;
@@ -1047,6 +1053,8 @@ int main(int argc, char* argv[]) {
 
   int num_agent = 0;
   std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
+  std::vector<double> preTime;
+  preTime.resize(numAgent+1);
   Timer t;
   for (const auto& node : config["agents"]) {
     const auto& start = node["start"];
@@ -1061,6 +1069,7 @@ int main(int argc, char* argv[]) {
     eHeuristic[goals[num_agent]] = eHeuristicGoal;
     t.stop();
     double preT1 = t.elapsedSeconds();
+    preTime[num_agent] = preT1;
     std::cout <<   "(" << startStates[num_agent].x << " " << startStates[num_agent].y <<
     		")" << " , " <<  "(" << goals[num_agent].x << " " << goals[num_agent].y <<
     		")" << ", " << preT1 << "\n";
@@ -1085,7 +1094,7 @@ int main(int argc, char* argv[]) {
   std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
   Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
 		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, 
-      last_ob_g, nei_ob_g, eHeuristic, &jpst_gm_);
+      last_ob_g, nei_ob_g, eHeuristic, preTime, &jpst_gm_);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<State, Action, int> > solution;
 

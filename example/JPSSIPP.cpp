@@ -595,6 +595,8 @@ public:
 	bool isDebug = false;
 };
 
+
+
 void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, std::vector<std::vector<bool>> map_obstacle, State goal, int dimx, int dimy)
 {
 	int xx[5] = {0, 0, -1, 1};
