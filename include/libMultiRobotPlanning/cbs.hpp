@@ -103,6 +103,8 @@ class CBS {
     startJps.constraints.resize(initialStates.size());
     startJps.cost = 0;
     startJps.id = 0;
+    m_env.Reset();
+    m_env.resetTemporalObstacle();    
     
     for (size_t i = 0; i < initialStates.size(); ++i) {
       // if (   i < solution.size()
@@ -111,8 +113,6 @@ class CBS {
       //   std::cout << "use existing solution for agent: " << i << std::endl;
       // } else {
         
-        m_env.Reset();
-        m_env.resetTemporalObstacle();
         jps_sipp jps1(m_env);
         jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
         PlanResult<Location, Action, int> solutiontempJps;
@@ -137,7 +137,7 @@ class CBS {
     }
     solution = startJps.solution;
     std::cout << "Initialize finished " << std::endl;
-    return true;
+
     // std::priority_queue<HighLevelNode> open;
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
@@ -157,6 +157,7 @@ class CBS {
     // clock_t startTotal, endTotal;
     // startTotal = clock();
 
+    
     Timer timer;
     timer.reset();
     while (!open.empty()) {
@@ -181,6 +182,8 @@ class CBS {
         // solution = P.solution;
         return true;
       }
+
+      return true;
 
       // create additional nodes to resolve conflict
       // std::cout << "Found conflict: " << conflict << std::endl;

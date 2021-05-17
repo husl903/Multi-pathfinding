@@ -454,14 +454,14 @@ class Environment {
   }
 
   bool getFirstConflictFromJPS(
-      const std::vector<PlanResult<State, Action, int> >& solution,
+      const std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result) {
     int max_t = 0;
     for (const auto& sol : solution) {
       max_t = std::max<int>(max_t, sol.states.size() - 1);
     }
 
-    for (int t = 0; t < max_t; ++t) {
+/*    for (int t = 0; t < max_t; ++t) {
       // check drive-drive vertex collisions
       for (size_t i = 0; i < solution.size(); ++i) {
         State state1 = getState(i, solution, t);
@@ -502,7 +502,7 @@ class Environment {
         }
       }
     }
-
+*/
     return false;
   }
 

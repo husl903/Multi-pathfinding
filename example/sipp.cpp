@@ -26,6 +26,7 @@ struct State {
   unsigned int dir = 0xff;
   int x;
   int y;
+  int time;
 };
 
 namespace std {
