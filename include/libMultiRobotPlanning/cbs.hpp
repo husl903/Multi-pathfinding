@@ -10,8 +10,6 @@
 #include "JPSSIPP_BITCBS.hpp"
 #include "planresult.hpp"
 #include "timer.hpp"
-//using libMultiRobotPlanning::SIPP;
-//using libMultiRobotPlanning::JPSSIPP;
 
 namespace libMultiRobotPlanning {
 
@@ -92,36 +90,66 @@ class CBS {
   CBS(Environment& environment) : m_env(environment) {}
 
   bool search(const std::vector<State>& initialStates,
-              std::vector<PlanResult<State, Action, Cost> >& solution) {
+              std::vector<PlanResult<Location, Action, Cost> >& solution) {
     HighLevelNode start;
     start.solution.resize(initialStates.size());
     start.constraints.resize(initialStates.size());
     start.cost = 0;
     start.id = 0;
 
+    
+    HighLevelNodeJps startJps;
+    startJps.solution.resize(initialStates.size());
+    startJps.constraints.resize(initialStates.size());
+    startJps.cost = 0;
+    startJps.id = 0;
+    
     for (size_t i = 0; i < initialStates.size(); ++i) {
       // if (   i < solution.size()
       //     && solution[i].states.size() > 1) {
       //   start.solution[i] = solution[i];
       //   std::cout << "use existing solution for agent: " << i << std::endl;
       // } else {
-      LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
-      LowLevelSearch_t lowLevel(llenv);
-      bool success = lowLevel.search(initialStates[i], start.solution[i]);
-      if (!success) {
-        return false;
-      }
-      // }
-      start.cost += start.solution[i].cost;
-    }
+        
+        m_env.Reset();
+        m_env.resetTemporalObstacle();
+        jps_sipp jps1(m_env);
+        jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        PlanResult<Location, Action, int> solutiontempJps;
 
+        Location goal = m_env.setGoal(i);
+        Location startNode(-1, -1);
+        startNode.x = initialStates[i].x;
+        startNode.y = initialStates[i].y;
+        std::cout << "Agent i " << i << " \n";
+        bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0, true);
+        if(!isJpsSucc){
+          return false;
+        }
+        startJps.cost += startJps.solution[i].cost;
+    //  LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
+    //  LowLevelSearch_t lowLevel(llenv);
+    //  bool success = lowLevel.search(initialStates[i], start.solution[i]);
+    //  if (!success) {
+    //    return false;
+    //  }
+    //   start.cost += start.solution[i].cost;
+    }
+    solution = startJps.solution;
+    std::cout << "Initialize finished " << std::endl;
+    return true;
     // std::priority_queue<HighLevelNode> open;
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         open;
-
     auto handle = open.push(start);
     (*handle).handle = handle;
+
+    typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
+                                     boost::heap::mutable_<true> >
+        openJps;    
+    auto handleJps = openJps.push(startJps);
+    (*handleJps).handle = handleJps;
 
     solution.clear();
     int id = 1;
@@ -150,7 +178,7 @@ class CBS {
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
         std::cout << "done; cost: " << P.cost << std::endl;
-        solution = P.solution;
+        // solution = P.solution;
         return true;
       }
 
@@ -161,7 +189,7 @@ class CBS {
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
-      for (const auto& c : constraints) {
+      for (const auto& c : constraints) { 
 
         // std::cout << "Add HL node for " << c.first << std::endl;
         size_t i = c.first;
@@ -534,6 +562,41 @@ class CBS {
     }
   };
 
+
+  struct HighLevelNodeJps {
+    std::vector<PlanResult<Location, Action, Cost> > solution;
+    std::vector<Constraints> constraints;
+
+    Cost cost;
+
+    int id;
+
+    typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
+                                     boost::heap::mutable_<true> >::handle_type
+        handle;
+
+    bool operator<(const HighLevelNodeJps& n) const {
+      // if (cost != n.cost)
+      return cost > n.cost;
+      // return id > n.id;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const HighLevelNodeJps& c) {
+      os << "id: " << c.id << " cost: " << c.cost << std::endl;
+      for (size_t i = 0; i < c.solution.size(); ++i) {
+        os << "Agent: " << i << std::endl;
+        os << " States:" << std::endl;
+        for (size_t t = 0; t < c.solution[i].states.size(); ++t) {
+          os << "  " << c.solution[i].states[t].first << std::endl;
+        }
+        os << " Constraints:" << std::endl;
+        os << c.constraints[i];
+        os << " cost: " << c.solution[i].cost << std::endl;
+      }
+      return os;
+    }
+  };  
+
   struct LowLevelEnvironment {
     LowLevelEnvironment(Environment& env, size_t agentIdx,
                         const Constraints& constraints)
@@ -577,9 +640,6 @@ class CBS {
   typedef JPSSIPP<Location, Location, Action, int, Environment> jps_sipp;
   typedef SIPP<Location, Location, Action, int, Environment> sipp_t;
   typedef JPSSIPP_BITCBS<Location, Location, Action, int, Environment> jpst_bit;
-//  jps_sipp.setEdgeCollisionSize(10, 10);
-//  std::map<Location, std::vector<jps_sipp::interval>> allCollisionIntervals;
-//  std::map<Location, std::vector<JPSSIPP::edgeCollision>> allEdgeCollisions;
 
 };
 

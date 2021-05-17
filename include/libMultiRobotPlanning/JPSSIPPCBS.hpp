@@ -161,6 +161,8 @@ public:
       return false;
     }
     bool success = m_astar.search(JPSSIPPState(startState, interval, 0xf, 0, false), astarsolution, startTime);
+	std::cout << "JPSSIP : " << startState.x  << " , " << startState.y << " -----------" << std::endl;
+
 
     solution.cost = astarsolution.cost - startTime;
     solution.fmin = astarsolution.fmin;

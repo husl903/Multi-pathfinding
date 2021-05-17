@@ -453,7 +453,7 @@ class Environment {
     }
   }
 
-  bool getFirstConflict(
+  bool getFirstConflictFromJPS(
       const std::vector<PlanResult<State, Action, int> >& solution,
       Conflict& result) {
     int max_t = 0;
@@ -505,6 +505,59 @@ class Environment {
 
     return false;
   }
+
+  bool getFirstConflict(
+      const std::vector<PlanResult<State, Action, int> >& solution,
+      Conflict& result) {
+    int max_t = 0;
+    for (const auto& sol : solution) {
+      max_t = std::max<int>(max_t, sol.states.size() - 1);
+    }
+
+    for (int t = 0; t < max_t; ++t) {
+      // check drive-drive vertex collisions
+      for (size_t i = 0; i < solution.size(); ++i) {
+        State state1 = getState(i, solution, t);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          State state2 = getState(j, solution, t);
+          if (state1.equalExceptTime(state2)) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+            // std::cout << "VC " << t << "," << state1.x << "," << state1.y <<
+            // std::endl;
+            return true;
+          }
+        }
+      }
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution.size(); ++i) {
+        State state1a = getState(i, solution, t);
+        State state1b = getState(i, solution, t + 1);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          State state2a = getState(j, solution, t);
+          State state2b = getState(j, solution, t + 1);
+          if (state1a.equalExceptTime(state2b) &&
+              state1b.equalExceptTime(state2a)) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }  
 
   void createConstraintsFromConflict(
       const Conflict& conflict, std::map<size_t, Constraints>& constraints) {
@@ -1078,30 +1131,19 @@ int main(int argc, char* argv[]) {
   }
   t.stop();
 
-//  return 0;
   double preT = t.elapsedSeconds();
-/*  for(int ii = 0; ii < eHeuristic.size(); ii++){
-//	  std::vector<std::vector<int>> temp = eHeuristic[ii];
-	for(int i = 0; i < dimx; i++){
-		for(int j = 0; j < dimy; j++){
-			std::cout << eHeuristic[goals[ii]][i][j] <<" ";
-		}
-		std::cout << "\n";
-	}
-  }
-	std::cout << " ---------------------\n";
-*/
+
   std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
   Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
 		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, 
       last_ob_g, nei_ob_g, eHeuristic, preTime, &jpst_gm_);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
-  std::vector<PlanResult<State, Action, int> > solution;
+  std::vector<PlanResult<Location, Action, int> > solution;
 
   Timer timer;
   bool success = cbs.search(startStates, solution);
   timer.stop();
-
+  std::cout << " CBS \n";
   if (success) {
     std::cout << "Planning successful! " << std::endl;
     int cost = 0;
@@ -1120,14 +1162,14 @@ int main(int argc, char* argv[]) {
     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     out << "schedule:" << std::endl;
     for (size_t a = 0; a < solution.size(); ++a) {
-//       std::cout << "Solution for: " << a << std::endl;
-//       for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-//         std::cout << solution[a].states[i].second << ": " <<
-//         solution[a].states[i].first << "->" << solution[a].actions[i].first
-//         << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-//       }
-//       std::cout << solution[a].states.back().second << ": " <<
-//       solution[a].states.back().first << std::endl;
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+        std::cout << solution[a].states[i].second << ": " <<
+        solution[a].states[i].first << "->" << solution[a].actions[i].first
+        << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution[a].states.back().second << ": " <<
+      solution[a].states.back().first << std::endl;
 
       out << "  agent" << a << ":" << std::endl;
       for (const auto& state : solution[a].states) {
