@@ -453,7 +453,7 @@ class Environment {
     }
   }
 
-  bool getFirstConflictFromJPS(
+  bool getFirstConflict(
       const std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result) {
     int max_t = 0;
@@ -461,26 +461,87 @@ class Environment {
       max_t = std::max<int>(max_t, sol.states.size() - 1);
     }
 
-/*    for (int t = 0; t < max_t; ++t) {
+    int min_time = -1;
+    for(size_t i = 0; i < solution.size(); i++){
+      for(size_t j = i + 1; j < solution.size(); j++){
+        
+        int ii = 0, jj = 0;
+        Location loc_a1 = solution[i].states[ii].first;
+        int time_a1 = solution[i].states[ii].second;
+        Location loc_a2 = solution[i].states[++ii].first;
+        int time_a2 = solution[i].states[ii].second;
+
+        Location loc_b1 = solution[j].states[jj].first;
+        int time_b1 = solution[j].states[jj].second;        
+        Location loc_b2 = solution[j].states[++jj].first;
+        int time_b2 = solution[j].states[jj].second;               
+        while (ii < solution[i].states.size() && jj < solution[j].states.size()){
+          // if(time_a2 < time_b1){
+          //   time_a1 = time_a2;
+          //   loc_a1 = loc_a2;
+          //   loc_a1 = solution[i].states[++ii].first;
+          //   time_a2 = solution[i].states[ii].second;
+          //   continue;
+          // }
+          // if(time_a1 > time_b2){
+          //   time_b1 = time_b2;
+          //   loc_b1 = loc_b2;
+          //   loc_b1 = solution[j].states[++jj].first;
+          //   time_b2 = solution[j].states[jj].second;
+          //   continue;
+          // }
+
+          std::cout << loc_a1.x << ", " << loc_a1.y << ", " << loc_b1.x << ", " << loc_b1.y << std::endl;
+          if((time_a1 > min_time || time_a2 > min_time) && min_time != -1) break;
+            // int zx = abs(loc_a1.x + loc_a2.x - loc_b1.x - loc_b2.x);
+            // int lx = abs(loc_a1.x - loc_a2.x) + abs(loc_b1.x - loc_b2.x);
+            // int zy = abs(loc_a1.y + loc_a2.y - loc_b1.y - loc_b2.y);
+            // int ly = abs(loc_a1.y - loc_a2.y) + abs(loc_b1.y - loc_b2.y);
+          // if(zx <= lx && zy <= ly){
+            if(loc_a1.x == loc_b1.x || loc_a2.y == loc_b2.y){
+              std::cout << "Intersect ----------------\n";
+              
+            }
+          // }
+          if(time_a2 <= time_b2){
+            time_a1 = time_a2;
+            loc_a1 = loc_a2;
+            loc_a2 = solution[i].states[++ii].first;
+            time_a2 = solution[i].states[ii].second;
+          }
+          if(time_a2 >= time_b2){
+            time_b1 = time_b2;
+            loc_b1 = loc_b2;
+            loc_b2 = solution[j].states[++jj].first;
+            time_b2 = solution[j].states[jj].second;
+          }
+
+        }
+      }
+    }
+
+    for (int t = 0; t < max_t; ++t) {
       // check drive-drive vertex collisions
       for (size_t i = 0; i < solution.size(); ++i) {
-        State state1 = getState(i, solution, t);
+        Location state1 = getState(i, solution, t);
         for (size_t j = i + 1; j < solution.size(); ++j) {
-          State state2 = getState(j, solution, t);
-          if (state1.equalExceptTime(state2)) {
-            result.time = t;
+          Location state2 = getState(j, solution, t);
+          // std::cout << "I, J, " << i <<", " << j << ", state1 " << state1.x  << ", " << state1.y << ", State2 " << state2.x << ", " << state2.y << std::endl;
+          if (state1 == state2) {
+            result.time = solution[i].states[t].second;
             result.agent1 = i;
             result.agent2 = j;
             result.type = Conflict::Vertex;
             result.x1 = state1.x;
             result.y1 = state1.y;
-            // std::cout << "VC " << t << "," << state1.x << "," << state1.y <<
+            std::cout << "VC " << t << "," << state1.x << "," << state1.y << std::endl;
             // std::endl;
             return true;
           }
         }
       }
-      // drive-drive edge (swap)
+    }
+/*      // drive-drive edge (swap)
       for (size_t i = 0; i < solution.size(); ++i) {
         State state1a = getState(i, solution, t);
         State state1b = getState(i, solution, t + 1);
@@ -601,6 +662,16 @@ class Environment {
     assert(!solution[agentIdx].states.empty());
     return solution[agentIdx].states.back().first;
   }
+  Location getState(size_t agentIdx,
+                 const std::vector<PlanResult<Location, Action, int> >& solution,
+                 size_t t) {
+    assert(agentIdx < solution.size());
+    if (t < solution[agentIdx].states.size()) {
+      return solution[agentIdx].states[t].first;
+    }
+    assert(!solution[agentIdx].states.empty());
+    return solution[agentIdx].states.back().first;
+  }  
  public:
   void onExpandNode(const Location& /*s*/, int /*fScore*/, int /*gScore*/) {
 		// std::cout << "expand: " << s << "g: " << gScore << std::endl;
