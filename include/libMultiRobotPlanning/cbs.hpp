@@ -160,6 +160,7 @@ class CBS {
         std::cout << " , done; cost: " << PJps.cost << std::endl;
         return true;
       }
+
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
       for (const auto& c : constraints) {
@@ -167,6 +168,17 @@ class CBS {
         HighLevelNodeJps newNodeJps = PJps;
         newNodeJps.id = id;
         assert(!newNodeJps.constraints[i].overlap(c.second));
+
+        for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
+        			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
+        						newNodeJps.solution[jj].states[ii].first << "->" << newNodeJps.solution[jj].actions[ii].first
+								<< "(cost: " << newNodeJps.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
+        		  		   newNodeJps.solution[jj].states.back().first << std::endl;
+        }
+
         newNodeJps.constraints[i].add(c.second);
         newNodeJps.cost -= newNodeJps.solution[i].cost;
 
