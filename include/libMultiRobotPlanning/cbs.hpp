@@ -167,8 +167,7 @@ class CBS {
         size_t i = c.first;
         HighLevelNodeJps newNodeJps = PJps;
         newNodeJps.id = id;
-        assert(!newNodeJps.constraints[i].overlap(c.second));
-
+        
         for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
         		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
         			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
@@ -178,6 +177,8 @@ class CBS {
         		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
         		  		   newNodeJps.solution[jj].states.back().first << std::endl;
         }
+
+        assert(!newNodeJps.constraints[i].overlap(c.second));
 
         newNodeJps.constraints[i].add(c.second);
         newNodeJps.cost -= newNodeJps.solution[i].cost;
@@ -230,7 +231,7 @@ class CBS {
         jps.sortCollisionEdgeConstraint();
         jpstbit.sortCollisionVertex();
         jpstbit.sortCollisionEdgeConstraint();
-        PlanResult<Location, Action, int> solutiontempBit;
+        PlanResult<Location, Action, int> solutiontempJps;
         Location goal = m_env.setGoal(i);
         m_env.Reset();
         Location startNode(-1, -1);
@@ -239,7 +240,7 @@ class CBS {
         m_env.setExactHeuristTrue();
         Timer timerJps;
         timerJps.reset();
-        bool isJpsSucc = jps.search(startNode, Action::Wait, newNodeJps.solution[i], 0, true);
+        bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontempJps, 0, true);
         timerJps.stop();
         double tJps = timerJps.elapsedSeconds();
         int ExpJps = m_env.num_expansion;
@@ -248,7 +249,8 @@ class CBS {
         Timer timerJpstbit;
         timerJpstbit.reset();
         m_env.setExactHeuristTrue();
-        bool isJpstbit = jpstbit.search(startNode, Action::Wait, solutiontempBit, 0);
+        bool isJpstbit = jpstbit.search(startNode, Action::Wait, newNodeJps.solution[i], 0);
+//        isJpstbit = jpstbit.search(startNode, Action::Wait, solutiontempBit, 0);
         timerJpstbit.stop();
         double tJpstbit = timerJpstbit.elapsedSeconds();
         int ExpJps1 = m_env.num_expansion;
@@ -271,7 +273,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-//        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << " second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
@@ -338,13 +340,15 @@ class CBS {
 
                 std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
                 		"), Goal, (" << goal.x << " " << goal.y <<
-        				"), Cost jps , " << solutiontempBit.cost << " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
+        				"), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
         				", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
                 ", preTime, " << m_env.getPreTime(i) << 
         				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
         				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
         				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
         				" \n";
+
+
 
 
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
@@ -372,7 +376,7 @@ class CBS {
         }
 
         if(isJpsSucc && success){
-        	if(solutionAstar.cost != newNodeJps.solution[i].cost){
+        	if(solutionAstar.cost != solutiontempJps.cost){
  /*       		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
         			std::cout << newNode.solution[i].states[ii].second << ": " <<
         						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
@@ -414,7 +418,7 @@ class CBS {
         }
 
         if(isJpstbit && success){
-        	if(solutiontempBit.cost != solutionAstar.cost){
+        	if(newNodeJps.solution[i].cost != solutionAstar.cost){
 
         		// for (size_t ii = 0; ii < solutionAstar.actions.size(); ++ii) {
         		// 	std::cout << solutionAstar.states[ii].second << ": " <<
