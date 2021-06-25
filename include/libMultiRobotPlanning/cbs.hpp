@@ -144,10 +144,9 @@ class CBS {
     Timer timer;
     timer.reset();
     while(!openJps.empty()){
-      std::cout << "Test \n";
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 200){
+      if(duration1 > 300){
     	  return false;
       }
 
@@ -265,7 +264,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-//         	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " **************--\n";
+//         	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time <<  " **************--\n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -341,15 +340,15 @@ class CBS {
         int GenAstarP = m_env.lowLevelGenerated();
         double tAstarP = timerAstarP.elapsedSeconds();
 
-                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                		"), Goal, (" << goal.x << " " << goal.y <<
-        				"), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
-        				", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
-                ", preTime, " << m_env.getPreTime(i) << 
-        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				" \n";
+                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                // 		"), Goal, (" << goal.x << " " << goal.y <<
+        				// "), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
+        				// ", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
+                // ", preTime, " << m_env.getPreTime(i) << 
+        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				// " \n";
 
 
 
@@ -423,21 +422,21 @@ class CBS {
         if(isJpstbit && success){
         	if(newNodeJps.solution[i].cost != solutionAstar.cost){
 
-        		// for (size_t ii = 0; ii < solutionAstar.actions.size(); ++ii) {
-        		// 	std::cout << solutionAstar.states[ii].second << ": " <<
-        		// 				solutionAstar.states[ii].first << "->" << solutionAstar.actions[ii].first
-						// 		<< "(cost: " << solutionAstar.actions[ii].second << ")" << std::endl;
-        		// }
-        		// std::cout << solutionAstar.states.back().second << ": " <<
-        		//   		   solutionAstar.states.back().first << std::endl;
+        		for (size_t ii = 0; ii < solutionAstar.actions.size(); ++ii) {
+        			std::cout << solutionAstar.states[ii].second << ": " <<
+        						solutionAstar.states[ii].first << "->" << solutionAstar.actions[ii].first
+								<< "(cost: " << solutionAstar.actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solutionAstar.states.back().second << ": " <<
+        		  		   solutionAstar.states.back().first << std::endl;
 
-            // for (size_t ii = 0; ii < solutiontempBit.actions.size(); ++ii) {
-            //     	std::cout << solutiontempBit.states[ii].second << ": " <<
-        		//          		 solutiontempBit.states[ii].first << "->" << solutiontempBit.actions[ii].first
-        		//        		         << "(cost: " << solutiontempBit.actions[ii].second << ")" << std::endl;
-        		// }
-        		// std::cout << solutiontempBit.states.back().second << ": " <<
-        		//     		   solutiontempBit.states.back().first << std::endl;
+            for (size_t ii = 0; ii < newNodeJps.solution[i].actions.size(); ++ii) {
+                	std::cout << newNodeJps.solution[i].states[ii].second << ": " <<
+        		         		 newNodeJps.solution[i].states[ii].first << "->" << newNodeJps.solution[i].actions[ii].first
+        		       		         << "(cost: " << newNodeJps.solution[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << newNodeJps.solution[i].states.back().second << ": " <<
+        		    		   newNodeJps.solution[i].states.back().first << std::endl;
 
         		std::cout << newNodeJps.solution[i].cost << ", " << solutionAstar.cost << " Jpstbit is not equal 2222\n";
         		return false;

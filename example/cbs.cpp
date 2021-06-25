@@ -1318,7 +1318,6 @@ class Environment {
 		return ;
   }
 
-
   void resetTemporalObstacle(){
 	  int len = m_temporal_obstacle[0].size();
 	  for(int i = 0; i < m_temporal_obstacle.size(); i++){

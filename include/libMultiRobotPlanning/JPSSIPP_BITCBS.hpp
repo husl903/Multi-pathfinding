@@ -1047,7 +1047,7 @@ public:
         					}
     					}
     				}
-					// std::cout << "DOWN start \n";
+					// std::cout << "DOWN start " << current_g + current_cost_l << ", "<< temp_s.state.x << ", "<< temp_s.state.y - 1 << " Left down \n";
     				if(m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y - 1))){
     					if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y - 1))
     						|| IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y - 1),
@@ -2595,7 +2595,19 @@ public:
     		if(m_edgeCollision_t[index][high] == ec) return true;
     		mid = low + (high - low)/2;
     		if(m_edgeCollision_t[index][mid] == ec) return true;
-    		else if(m_edgeCollision_t[index][mid].t < ec.t){
+			else if(m_edgeCollision_t[index][mid].t == ec.t){
+				int itt = mid;
+				while (--itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
+				}
+				itt = mid;
+				while(++itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
+				}
+				return false;				
+			}else if(m_edgeCollision_t[index][mid].t < ec.t){
     			low = mid + 1;
     		} else high = mid -1;
     	}
@@ -2608,10 +2620,10 @@ public:
 
     bool IsEdgeCollisions(const Location& location,  edgeCollision& ec, Cost curr_t, Cost& endParent, Cost& endSucc, Cost& startTime){
     	startTime = curr_t;
-    	// std::cout << " Location " << location.x << " " << location.y <<" Edge collllllllllllllllllllllllllll " << startTime << " " << curr_t << " \n";
     	if(!m_env.stateValid(location) ) return false;
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
+       	// std::cout << " Location " << location.x << " " << location.y <<" Edge collllllllllllllllllllllllllll " << startTime << " " << curr_t << " \n";
 
     	startTime = -1;
     	while(curr_t <= endParent && curr_t + 1 <= endSucc){
@@ -2620,10 +2632,10 @@ public:
         	for(auto& cec : (m_edgeCollision_t[index])){
         		if(cec == ec){
 					is_flag_collision = true;
-				}
+ 				}
         	}
         	if(!is_flag_collision){
-        		startTime = curr_t;				
+        		startTime = curr_t;
         		return false;
         	}
         	curr_t++;
