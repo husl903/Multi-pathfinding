@@ -475,7 +475,7 @@ class Environment {
   bool getFirstConflict(
       const std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result) {
-    
+    bool isprint = false;
     std::vector<PathPoint> point_t;
     std::vector<PathPoint> pool_k;
     for(size_t i = 0; i < solution.size(); i++){
@@ -489,23 +489,21 @@ class Environment {
         b = solution[i].states[j + 1].first;
         time_a = solution[i].states[j].second;
         time_b = solution[i].states[j + 1].second;
-
-         std::cout << a.x << ", " << a.y << ", b, " << b.x << ", " << b.y << ", " << time_a << ", " << time_b << " TTTTTTTTTTTTTTTTTTTTTTTTTTTTT****************\n";
+        if(isprint) std::cout << a.x << ", " << a.y << ", b, " << b.x << ", " << b.y << ", " << time_a << ", " << time_b << " TTTTTTTTTTTTTTTTTTTTTTTTTTTTT****************\n";
         delta_t = time_b - time_a;
         bool is_wait = false;
         if(abs(a.x - b.x) + abs(a.y - b.y) == 1 && time_b - time_a > 1){
-          is_wait = true;
+          is_wait = true; //the last time-step
           ac = Action::Wait;
           point_t.emplace_back(a.x, a.y, delta_t - 1, time_a, ac, i);
-          std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 00****************\n";
+          if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 00****************\n";
           if(is_first){
-            pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
+            pool_k.emplace_back(a.x, a.y, delta_t - 1, time_a, ac, i);
             is_first = false;
           }
         }
 
         if(a.x == b.x){
-        //  std::cout << " Test11              " << a.x << ", " << a.y << ", " << time_a << "," << delta_t << " \n";
           int temp_y = b.y;
           if(a.y > b.y){
             ac = Action::Down;
@@ -514,54 +512,56 @@ class Environment {
             ac = Action::Up;
             temp_y = b.y - 1;
           }
-          if(abs(a.y - b.y) < delta_t){
-             point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
-             point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i);
-             point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i);
-            if(is_first){
-              pool_k.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
-              is_first = false;
-            }             
-             std::cout << "Test Here \n";
+          if(is_wait){
+            point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i);
           }else{
-            point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
-            if(is_first){
-              pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
-              is_first = false;
-            }            
+            if(abs(a.y - b.y) < delta_t){
+               point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
+               point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i);
+               point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i);
+              if(is_first){
+                pool_k.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
+                is_first = false;
+              }             
+            }else{
+              point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
+              if(is_first){
+                pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
+                is_first = false;
+              }             
+            }
           }
-          // }else point_t.emplace_back(a.x, a.y, 1, time_b - 1, ac, i);
-          std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< "  11****************\n";
-
+          if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< "  11****************\n";
         }else if(a.y == b.y){
           int temp_x= b.x;
           if(a.x > b.x) {ac = Action::Left; temp_x = b.x + 1;}
           else {ac = Action::Right; temp_x = b.x - 1;}
-          
-          if(abs(a.x - b.x) < delta_t){
-            point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
-            point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i);
+          if(is_wait){
             point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i);
-            if(is_first){
-              pool_k.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
-              is_first = false;
-            }            
           }else{
-            point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
-            if(is_first){
-              pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
-              is_first = false;
-            }            
+            if(abs(a.x - b.x) < delta_t){
+              point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
+              point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i);
+              point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i);
+              if(is_first){
+                pool_k.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
+                is_first = false;
+              }            
+            }else{
+              point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
+              if(is_first){
+                pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i);
+                is_first = false;
+              }            
+            }
           }
-          // else point_t.emplace_back(a.x, a.y, 1, time_b - 1, ac, i);
-          std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 22****************\n";
-
+          if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 22****************\n";
         }else{
           if(a.y > b.y) ac = Action::Down;
           else ac = Action::Up;
           int delta_t_1 = abs(a.y - b.y);
           point_t.emplace_back(a.x, a.y, delta_t_1, time_a, ac, i);
-          std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t_1 << " 33****************\n";
+          if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t_1 << " 33****************\n";
           if(is_first){
             pool_k.emplace_back(a.x, a.y, delta_t_1, time_a, ac, i);
             is_first = false;
@@ -573,34 +573,42 @@ class Environment {
           if(abs(a.x - b.x) + abs(a.y - b.y) < delta_t){
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x) - 1, time_a + abs(a.y - b.y), ac, i);
             point_t.emplace_back(temp_x, b.y, delta_t - abs(a.x - b.x) - abs(a.y - b.y), time_a + abs(a.y - b.y) + abs(a.x - b.x) - 1, Action::Wait, i);
-            point_t.emplace_back(temp_x, b.y, 1, time_b - 1, ac, 1);
+            point_t.emplace_back(temp_x, b.y, 1, time_b - 1, ac, i);
           }else {
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x), time_a + abs(a.y - b.y), ac, i);
           }
-          std::cout << "(" << a.x << ", " << b.y << "),  " << i << ", "<< ac << ", " << delta_t_1 << ", " << delta_t<< " 44****************\n";
 
           if(is_first){
             pool_k.emplace_back(a.x, b.y, delta_t, delta_t_1, ac, i);
             is_first = false;
           }
-        //  std::cout << " Test44              " << a.x << ", " << b.y << ", " << time_a << "," << delta_t_1 << " \n";
         }
       }
       point_t.emplace_back(solution[i].states.back().first.x, solution[i].states.back().first.y, 
                  std::numeric_limits<int>::max(), solution[i].states.back().second, Action::Wait, i);
-
-      std::cout << "(" << solution[i].states.back().first.x << ", " << solution[i].states.back().first.y << "),  " 
+      if(is_first){
+        pool_k.emplace_back(solution[i].states.back().first.x, solution[i].states.back().first.y, 
+                 std::numeric_limits<int>::max(), solution[i].states.back().second, Action::Wait, i);
+        is_first = true;
+      }
+      if(isprint) std::cout << "(" << solution[i].states.back().first.x << ", " << solution[i].states.back().first.y << "),  " 
       << i << ", "<< Action::Wait << ", " << solution[i].states.back().second << ", " << std::numeric_limits<int>::max() << " 55****************\n";
 
     }
     std::sort(point_t.begin(), point_t.end(), comparsion);
 
-    std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
+    if(isprint) std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
+
+    for(size_t ii = 0; ii < pool_k.size(); ii++){
+      if(isprint) std::cout << pool_k[ii].x << ", " << pool_k[ii].y << 
+      ", " << pool_k[ii].init_t << ", " << pool_k[ii].delta_t << ", id " << pool_k[ii].path_id << ", action " << pool_k[ii].ac << "  , pool 000000\n";
+
+    }
 
     result.time = std::numeric_limits<int>::max();
     for(size_t ii = 0; ii < point_t.size(); ii++){
-            std::cout << point_t[ii].x << ", " << point_t[ii].y << 
-      ", " << point_t[ii].init_t << ", " << point_t[ii].delta_t << ", id " << point_t[ii].path_id << "  , 000000\n";
+      if(isprint) std::cout << point_t[ii].x << ", " << point_t[ii].y << 
+      ", " << point_t[ii].init_t << ", " << point_t[ii].delta_t << ", id " << point_t[ii].path_id << ", action " << point_t[ii].ac << "  , 000000\n";
 
     }
     for(size_t ii = 0; ii < point_t.size(); ii++){
@@ -625,29 +633,26 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;         
-              std::cout << " test 11 \n";    
+              if(isprint) std::cout << " test 11 \n";    
             }
-          } else if(current_p.ac == Action::Up && pool_k[jj].x == current_p.x && pool_k[jj].y >= current_p.y){
+          } else if(current_p.ac == Action::Up){
             int dis = abs(pool_k[jj].y - current_p.y);
-            if(2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+            if(pool_k[jj].x == current_p.x && pool_k[jj].y >= current_p.y && 2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+              result.time = current_p.init_t + dis/2;
+              result.agent1 = current_p.path_id;
+              result.agent2 = pool_k[jj].path_id;
               if(dis%2 == 0){
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x;
                 result.y1 = pool_k[jj].y - dis/2;
-                std::cout << " test 22 \n";                        
+                if(isprint) std::cout << " test 22 \n";                        
               }else{
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Edge;
                 result.x1 = current_p.x;
                 result.y1 = current_p.y + dis/2;
                 result.x2 = pool_k[jj].x;
                 result.y2 = pool_k[jj].y - dis/2;    
-                std::cout << current_p.x << ", " << current_p.y << ", " << pool_k[jj].x << ", " << pool_k[jj].y << ", deleta " << current_p.delta_t << ", "<< pool_k[jj].delta_t << " test 33 \n";                
+                if(isprint) std::cout << current_p.x << ", " << current_p.y << ", " << pool_k[jj].x << ", " << pool_k[jj].y << ", deleta " << current_p.delta_t << ", "<< pool_k[jj].delta_t << " test 33 \n";                
               }
             } 
           }else if(current_p.ac == Action::Left){
@@ -661,7 +666,7 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;
-              std::cout << " test 44 -1 \n";                   
+              if(isprint) std::cout << " test 44 -1 \n";                   
             }
           }else if(current_p.ac == Action::Right){
             if(abs(current_p.x - pool_k[jj].x) == abs(current_p.y- pool_k[jj].y) 
@@ -674,11 +679,11 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;
-              std::cout << " test 44 -2\n";                   
+              if(isprint) std::cout << " test 44 -2\n";                   
             }
           }else if(current_p.ac == Action::Wait){
             if(current_p.x == pool_k[jj].x && pool_k[jj].y >= current_p.y 
-               && pool_k[jj].y - min_delta_t <= current_p.y
+               && pool_k[jj].y -  current_p.y <= min_delta_t
                && current_p.init_t + abs(current_p.y - pool_k[jj].y) < result.time){
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
@@ -686,7 +691,7 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;       
-              std::cout << " test 55 \n";                
+              if(isprint) std::cout << " test 55 \n";                
             }
           }
         }
@@ -704,29 +709,26 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;    
-              std::cout << " test 66 \n";              
+              if(isprint) std::cout << " test 66 \n";              
             }
-          } else if(current_p.ac == Action::Down && pool_k[jj].x == current_p.x && pool_k[jj].y <= current_p.y){
+          } else if(current_p.ac == Action::Down){
             int dis = abs(pool_k[jj].y - current_p.y);
-            if(2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+            if(pool_k[jj].x == current_p.x && pool_k[jj].y <= current_p.y && 2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+              result.time = current_p.init_t + dis/2;
+              result.agent1 = current_p.path_id;
+              result.agent2 = pool_k[jj].path_id;
               if(dis%2 == 0){
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x;
                 result.y1 = pool_k[jj].y + dis/2;    
-                std::cout << " test 77 \n";                    
+                if(isprint) std::cout << pool_k[jj].x << "," << pool_k[jj].y + dis/2 << ", " << result.time << " test 77 \n";                    
               }else{
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Edge;
                 result.x1 = current_p.x;
                 result.y1 = current_p.y - dis/2;
                 result.x2 = pool_k[jj].x;
                 result.y2 = pool_k[jj].y + dis/2;   
-                std::cout << " test 88 \n";                 
+                if(isprint) std::cout << current_p.x  << ", " << current_p.y  << ", " << pool_k[jj].x  << ", " << pool_k[jj].y << ", " << current_p.delta_t << ", " << pool_k[jj].delta_t << " test 88 \n";                 
               }
             } 
           }else if(current_p.ac == Action::Left){
@@ -740,7 +742,7 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;         
-              std::cout << current_p.x << ", "<< current_p.y << ", pool " << pool_k[jj].x  << ", " << pool_k[jj].y << ", delta " << current_p.delta_t << ", " << pool_k[jj].delta_t <<  ", "" test 99 -1 \n";          
+              if(isprint) std::cout << current_p.x << ", "<< current_p.y << ", pool " << pool_k[jj].x  << ", " << pool_k[jj].y << ", delta " << current_p.delta_t << ", " << pool_k[jj].delta_t <<  ", "" test 99 -1 \n";          
             }
           }else if(current_p.ac == Action::Right){
             if(abs(current_p.x - pool_k[jj].x) == abs(current_p.y- pool_k[jj].y)
@@ -753,11 +755,11 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;         
-              std::cout << current_p.x << ", "<< current_p.y << ", pool " << pool_k[jj].x  << ", " << pool_k[jj].y << ", delta " << current_p.delta_t << ", " << pool_k[jj].delta_t <<  ", "" test 99 -2\n";          
+              if(isprint) std::cout << current_p.x << ", "<< current_p.y << ", pool " << pool_k[jj].x  << ", " << pool_k[jj].y << ", delta " << current_p.delta_t << ", " << pool_k[jj].delta_t <<  ", "" test 99 -2\n";          
             }
           }else if(current_p.ac == Action::Wait){
             if(current_p.x == pool_k[jj].x && pool_k[jj].y <= current_p.y 
-               && pool_k[jj].y + min_delta_t >= current_p.y
+               && min_delta_t >= abs(current_p.y - pool_k[jj].y)
                && current_p.init_t + abs(current_p.y - pool_k[jj].y) < result.time){
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
@@ -765,16 +767,20 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;       
-              std::cout << " test 1010 \n";                
+              if(isprint) std::cout << " test 1010 \n";                
             }
           }
         }
 
         if(pool_k[jj].ac == Action::Left){
+          if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
+           
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].x = pool_k[jj].x - time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
           int min_delta_t = std::min(current_p.delta_t, pool_k[jj].delta_t);
+          if(isprint) std::cout <<"Time " << time_diff << ", " <<  pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
+
           if(current_p.ac == Action::Left){
             if(pool_k[jj].x == current_p.x && pool_k[jj].y == current_p.y && current_p.init_t < result.time){
               result.time = current_p.init_t;
@@ -783,29 +789,26 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;         
-              std::cout << " test 1111 \n";         
+              if(isprint) std::cout << " test 1111 \n";         
             }
-          } else if(current_p.ac == Action::Right && pool_k[jj].y == current_p.y && pool_k[jj].x >= current_p.x){
+          } else if(current_p.ac == Action::Right){
             int dis = abs(pool_k[jj].x - current_p.x);
-            if(2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+            if( pool_k[jj].y == current_p.y && pool_k[jj].x >= current_p.x && 2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+              result.time = current_p.init_t + dis/2;
+              result.agent1 = current_p.path_id;
+              result.agent2 = pool_k[jj].path_id;
               if(dis%2 == 0){
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x - dis/2;
                 result.y1 = pool_k[jj].y;   
-                std::cout << " test 1212 \n";                     
+                if(isprint) std::cout << " test 1212 \n";                     
               }else{
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Edge;
                 result.x1 = current_p.x + dis/2;
                 result.y1 = current_p.y;
                 result.x2 = pool_k[jj].x - dis/2;
                 result.y2 = pool_k[jj].y;       
-                std::cout << " test 1313 \n";             
+                if(isprint) std::cout << current_p.x  << ", " << current_p.y << ", " << pool_k[jj].x << ", " << pool_k[jj].y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1313 \n";             
               }
             } 
           }else if(current_p.ac == Action::Up){
@@ -817,9 +820,10 @@ class Environment {
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
-              result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;        
-              std::cout << " test 1414 -1\n";           
+              result.x1 = current_p.x;
+              result.y1 = pool_k[jj].y;        
+              if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x << ", " << current_p.y << ", "
+              << " init " << pool_k[jj].init_t << ", " << current_p.init_t << ", delta " << pool_k[jj].delta_t <<", " << current_p.delta_t << " test 1414 -1\n";           
             }
           }else if(current_p.ac == Action::Down){
             if(abs(current_p.x - pool_k[jj].x) == abs(current_p.y- pool_k[jj].y)
@@ -830,13 +834,13 @@ class Environment {
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
-              result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;        
-              std::cout << " test 1414 -2\n";           
+              result.x1 = current_p.x;
+              result.y1 = pool_k[jj].y;        
+              if(isprint) std::cout << " test 1414 -2\n";           
             }
           }else if(current_p.ac == Action::Wait){
-            if(current_p.x == pool_k[jj].x && pool_k[jj].y <= current_p.y 
-               && pool_k[jj].x + min_delta_t >= current_p.x
+            if(current_p.y == pool_k[jj].y && pool_k[jj].x >= current_p.x 
+               && min_delta_t >= abs(current_p.x - pool_k[jj].x)
                && current_p.init_t + abs(current_p.x- pool_k[jj].x) < result.time){
               result.time = current_p.init_t + abs(current_p.x- pool_k[jj].x);
               result.agent1 = current_p.path_id;
@@ -844,7 +848,7 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;      
-              std::cout << " test 1515 \n";                 
+              if(isprint) std::cout << current_p.x  << ", " << current_p.y << ", " << pool_k[jj].x << ", " << pool_k[jj].y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t << " test 1515 \n";                 
             }
           }
         }  
@@ -862,30 +866,27 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y; 
-              std::cout << " test 1616 \n";                 
+              if(isprint) std::cout << " test 1616 \n";                 
             }
-          } else if(current_p.ac == Action::Left && pool_k[jj].y == current_p.y && pool_k[jj].x <= current_p.x){
+          } else if(current_p.ac == Action::Left){
             int dis = abs(pool_k[jj].x - current_p.x);
-            if(2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time 
-               && pool_k[jj].y == current_p.y && pool_k[jj].x <= current_p.x){
+            if(pool_k[jj].y == current_p.y && pool_k[jj].x <= current_p.x
+               && 2*min_delta_t >= dis && current_p.init_t + dis/2 < result.time){
+              result.time = current_p.init_t + dis/2;
+              result.agent1 = current_p.path_id;
+              result.agent2 = pool_k[jj].path_id;
               if(dis%2 == 0){
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x + dis/2;
                 result.y1 = pool_k[jj].y;     
-                std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << pool_k[jj].init_t << ", " << current_p.x << ", " << current_p.y << ", " << current_p.init_t << " test 1717 \n";                   
+                if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << pool_k[jj].init_t << ", " << current_p.x << ", " << current_p.y << ", " << current_p.init_t << " test 1717 \n";                   
               }else{
-                result.time = current_p.init_t + dis/2;
-                result.agent1 = current_p.path_id;
-                result.agent2 = pool_k[jj].path_id;
                 result.type = Conflict::Edge;
                 result.x1 = current_p.x - dis/2;
                 result.y1 = current_p.y;
                 result.x2 = pool_k[jj].x + dis/2;
                 result.y2 = pool_k[jj].y;   
-                std::cout << " test 1818 \n";                 
+                if(isprint) std::cout << " test 1818 \n";                 
               }
             } 
           }else if(current_p.ac == Action::Up){
@@ -897,9 +898,9 @@ class Environment {
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
-              result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;     
-              std::cout << " test 1919 -1\n";              
+              result.x1 = current_p.x;
+              result.y1 = pool_k[jj].y;     
+              if(isprint) std::cout << " test 1919 -1\n";              
             }
           }else if(current_p.ac == Action::Down){
             if(abs(current_p.x - pool_k[jj].x) == abs(current_p.y- pool_k[jj].y) 
@@ -910,13 +911,13 @@ class Environment {
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
-              result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;     
-              std::cout << " test 1919 -2\n";              
+              result.x1 = current_p.x;
+              result.y1 = pool_k[jj].y;     
+              if(isprint) std::cout << result.x1 << ", " << result.y1 << ", " << result.time <<" test 1919 -2\n";              
             }
           }else if(current_p.ac == Action::Wait){
-            if(current_p.x == pool_k[jj].x && pool_k[jj].y <= current_p.y 
-               && pool_k[jj].x + min_delta_t >= current_p.x
+            if(current_p.y == pool_k[jj].y && pool_k[jj].x <= current_p.x 
+               && min_delta_t >= abs(current_p.x - pool_k[jj].x)
                && current_p.init_t + abs(current_p.x- pool_k[jj].x) < result.time){
               result.time = current_p.init_t + abs(current_p.x- pool_k[jj].x);
               result.agent1 = current_p.path_id;
@@ -924,7 +925,7 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;   
-              std::cout << " test 2020 \n";                    
+              if(isprint) std::cout << current_p.x  << ", " << current_p.y  << ", " << pool_k[jj].x  << ", " << pool_k[jj].y << ", delta " << current_p.delta_t << ", " << pool_k[jj].delta_t << " test 2020 \n";                    
             }
           }
         }          
@@ -934,63 +935,63 @@ class Environment {
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
           int min_delta_t = std::min(current_p.delta_t, pool_k[jj].delta_t);
           if(current_p.ac == Action::Right){
-            if(pool_k[jj].x - current_p.x >= 0 && pool_k[jj].x - current_p.x <= min_delta_t 
-               && pool_k[jj].y == current_p.y && current_p.init_t < result.time){
-              result.time = current_p.init_t;
+            if(pool_k[jj].x >= current_p.x && pool_k[jj].x - current_p.x <= min_delta_t 
+               && pool_k[jj].y == current_p.y && current_p.init_t + abs(pool_k[jj].x - current_p.x) < result.time){
+              result.time = current_p.init_t + abs(pool_k[jj].x - current_p.x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;        
-              std::cout << " test 2121 \n";          
+              if(isprint) std::cout << " test 2121 \n";          
             }
           } else if(current_p.ac == Action::Left){
             if(pool_k[jj].x <= current_p.x && pool_k[jj].y == current_p.y 
-               && abs(pool_k[jj].x - current_p.x) <= min_delta_t && current_p.init_t < result.time){
-              result.time = current_p.init_t;
+               && abs(pool_k[jj].x - current_p.x) <= min_delta_t 
+               && current_p.init_t + abs(pool_k[jj].x - current_p.x) < result.time){
+              result.time = current_p.init_t + abs(pool_k[jj].x - current_p.x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
-              result.y1 = pool_k[jj].y;     
-              std::cout << pool_k[jj].x << ", " << pool_k[jj].y << "),  " << current_p.x << ", " << current_p.y << "), " << " \n"; 
-              std::cout << " test 2222 \n";             
+              result.y1 = pool_k[jj].y;
+              if(isprint) std::cout << " test 2222 \n";             
             }
 
           }else if(current_p.ac == Action::Up){
             if(pool_k[jj].y >= current_p.y && pool_k[jj].x == current_p.x
                && min_delta_t>= abs(current_p.y - pool_k[jj].y)
                && current_p.init_t + abs(current_p.y - pool_k[jj].y) < result.time){
-              result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
+              result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;      
-              std::cout << " test 2323 \n";             
+              result.y1 = pool_k[jj].y;      
+              if(isprint) std::cout << current_p.x  << ", " << current_p.y  << ", " << pool_k[jj].x  << ", " << pool_k[jj].y << " delta " << current_p.delta_t << ", " << pool_k[jj].delta_t << " test 2323 -1\n";             
             }
           }else if(current_p.ac == Action::Down){
             if(pool_k[jj].y <= current_p.y && pool_k[jj].x == current_p.x
-               && min_delta_t>= abs(current_p.y - pool_k[jj].y)
+               && min_delta_t >= abs(current_p.y - pool_k[jj].y)
                && current_p.init_t + abs(current_p.y - pool_k[jj].y) < result.time){
-              result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
+              result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
-              result.y1 = current_p.y;      
-              std::cout << " test 2323 \n";             
+              result.y1 = pool_k[jj].y;      
+              if(isprint) std::cout << " test 2323 -2\n";             
             }
           }else if(current_p.ac == Action::Wait){
-            if(current_p.x == pool_k[jj].x && pool_k[jj].y <= current_p.y && pool_k[jj].x + min_delta_t >= current_p.x
-               && current_p.init_t + abs(current_p.x- pool_k[jj].x) < result.time){
-              result.time = current_p.init_t + abs(current_p.x- pool_k[jj].x);
+            if(current_p.x == pool_k[jj].x && pool_k[jj].y == current_p.y
+               && current_p.init_t < result.time){
+              result.time = current_p.init_t;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;      
-              std::cout << " test 2424 \n";                 
+              if(isprint) std::cout << " test 2424 \n";                 
             }
           }
         }          
@@ -999,9 +1000,9 @@ class Environment {
     }
 
     if(result.time != std::numeric_limits<int>::max()) {
-      std::cout << " conflict " << result.x1 << ", " << result.y1  << ", time, " << result.time << ", agent, " << result.agent1  << ", " << result.agent2 << ", " << result.type<< " !!!!!!\n";
+      if(isprint) std::cout << " conflict " << result.x1 << ", " << result.y1  << ", time, " << result.time << ", agent, " << result.agent1  << ", " << result.agent2 << ", " << result.type<< " !!!!!!\n";
       return true;
-    }
+    }else return false;
     
     int max_t = 0;
     for (const auto& sol : solution) {
@@ -1076,50 +1077,8 @@ class Environment {
       }
     }
 
-    for (int t = 0; t < max_t; ++t) {
-      // check drive-drive vertex collisions
-      for (size_t i = 0; i < solution.size(); ++i) {
-        Location state1 = getState(i, solution, t);
-        for (size_t j = i + 1; j < solution.size(); ++j) {
-          Location state2 = getState(j, solution, t);
-          // std::cout << "I, J, " << i <<", " << j << ", state1 " << state1.x  << ", " << state1.y << ", State2 " << state2.x << ", " << state2.y << std::endl;
-          if (state1 == state2) {
-            result.time = solution[i].states[t].second;
-            result.agent1 = i;
-            result.agent2 = j;
-            result.type = Conflict::Vertex;
-            result.x1 = state1.x;
-            result.y1 = state1.y;
-            std::cout << "VC " << t << "," << state1.x << "," << state1.y << std::endl;
-            // std::endl;
-            return true;
-          }
-        }
-      }
-    }
-/*      // drive-drive edge (swap)
-      for (size_t i = 0; i < solution.size(); ++i) {
-        State state1a = getState(i, solution, t);
-        State state1b = getState(i, solution, t + 1);
-        for (size_t j = i + 1; j < solution.size(); ++j) {
-          State state2a = getState(j, solution, t);
-          State state2b = getState(j, solution, t + 1);
-          if (state1a.equalExceptTime(state2b) &&
-              state1b.equalExceptTime(state2a)) {
-            result.time = t;
-            result.agent1 = i;
-            result.agent2 = j;
-            result.type = Conflict::Edge;
-            result.x1 = state1a.x;
-            result.y1 = state1a.y;
-            result.x2 = state1b.x;
-            result.y2 = state1b.y;
-            return true;
-          }
-        }
-      }
-    }
-*/
+
+
     return false;
   }
 
@@ -1376,7 +1335,7 @@ class Environment {
   }
 
   bool isJumpPoint(const Location& s, int time) {
-		return jump_point_map[s.x][s.y] || m_nei_ob_g[s.x][s.y]>=time;
+		return jump_point_map[s.x][s.y] || m_nei_ob_g[s.x][s.y] >= time - 1;
   }
 
   void setJumpPoint(const Location& s){

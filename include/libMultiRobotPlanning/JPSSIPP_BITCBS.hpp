@@ -789,7 +789,7 @@ public:
 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Left, current_cost));
 			return;
 		}		
-
+		JPSSIPPState temp_s = s;
    		const auto& si_s_l = safeIntervals(s.state);
     	Cost si_s_l_end = -1;
         for (size_t i = 0; i < si_s_l.size(); ++i) {
@@ -806,9 +806,19 @@ public:
 		State succ_s = s.state;
 		succ_s.x = s.state.x - 1;
 
+		bool is_edge_collision = false;
         if(!(m_env.stateValid(succ_s) && //not check for the temproal obstacles
             !IsEdgeCollisions(succ_s, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
             return;
+		
+		if(actualStartTimeP != m_lastGScore + current_cost){
+			is_edge_collision = true;
+			temp_s.state.x = s.state.x - 1;
+			bool issafe = false;
+			if(CheckJPSLeft(temp_s, m_lastGScore + current_cost, current_cost, issafe)){
+				return;
+			}
+		}
 		current_cost = actualStartTimeP - m_lastGScore;
 			
 		Cost successor_start = -1, successor_end = -1;
@@ -852,6 +862,18 @@ public:
 			// we treat such nodes as jump points
 			uint32_t stop_bits = neis[0] | neis[1] | neis[2];
 
+			// if(num == 0 && is_edge_collision){
+			// 	uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits); 
+			// 	if(!stop_bits || s.state.x - stop_pos + 1 != succ_s.x){
+			// 		is_found = true;
+			// 		JPSSIPPState temp_successor = s;
+			// 		temp_successor.state = succ_s;
+			// 		temp_successor.dir = 0x01;
+    	    //     	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor, Action::Left, current_cost + 1));
+			// 		return;
+			// 	}				
+			// }
+
 			if(stop_bits)
 			{
 				uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits); // returns idx+1
@@ -861,7 +883,6 @@ public:
 					temp_s.state.y = s.state.y;
 					temp_s.state.x = s.state.x - stop_pos + 1 - num * 31;
 					temp_s.dir = 0x00;
-
 					uint32_t current_jumpnode_id = jumpnode_id - stop_pos;					
 					if(current_jumpnode_id + 1 < min_id) break;
 					if(current_jumpnode_id + 1 != current_id
@@ -1131,6 +1152,8 @@ public:
 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Right, current_cost));
 			return;
 		}
+		JPSSIPPState temp_s = s;
+
 		State succ_s = s.state;
 		succ_s.x = s.state.x + 1;
 
@@ -1150,7 +1173,17 @@ public:
         if(!(m_env.stateValid(succ_s) && //not check for the temproal obstacles
             !IsEdgeCollisions(succ_s, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
             return;
-		// std::cout << "Enter Right rieght current_cost " << m_lastGScore << ", "<< current_cost  << ", " << actualStartTimeP << " \n";
+		bool is_edge_collision = false;
+		if(actualStartTimeP != m_lastGScore + current_cost){
+			is_edge_collision = true;
+			bool isSafeNext = false;
+			temp_s.state.x = s.state.x + 1;
+			bool issafe = false;
+			if(CheckJPSRight(temp_s, m_lastGScore + current_cost, current_cost, issafe)){
+				return;
+			}
+  		    // std::cout << "Enter Right rieght current_cost " << m_lastGScore << ", "<< current_cost  << ", " << actualStartTimeP << " \n";			
+		}
         current_cost = actualStartTimeP - m_lastGScore;
 		
     	Cost successor_start = -1, successor_end = -1;
@@ -1162,6 +1195,7 @@ public:
 
 		if(s.state.x == m_env.getDimX() - 1) return;
 		int current_id = m_env.jpst_gm_->gm_->to_padded_id(s.state.x, s.state.y);
+		int succ_id = m_env.jpst_gm_->gm_->to_padded_id(succ_s.x, succ_s.y);
 		int goal_id = m_env.jpst_gm_->gm_->to_padded_id(m_env.getGoalId());
 		Cost jump_cost;
 		uint32_t jump_id;
@@ -1359,13 +1393,13 @@ public:
     		std::vector<startTime> re_start;
 
 			if(successor_start != -1){
-				// if(m_env.isDebug)  std::cout << "SSSSSSSafe interval success \n";
+				if(m_env.isDebug)  std::cout << current_g + current_cost_l + 1 << " SSSSSSSafe interval success  ------------------\n";
 				isSafe = true;
     			current_successor.interval = successor_interval;
     			current_successor.dir = 0x00;
     			up_start_t = -1; down_start_t = -1; right_start_t = -1;
     			if(m_env.isJumpPoint(current_successor.state, current_g + current_cost_l + 1)){
-//					std::cout << "Maybe a jump point \n";
+					// std::cout << "Maybe a jump point \n";
     				if(m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y + 1))){
     					if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y + 1))
     						|| IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y + 1),
@@ -1445,7 +1479,7 @@ public:
 				Cost re_ac = -1;
     			unsigned int current_dir = 0x00;
     			for(int re_i = 0; re_i < re_start.size(); re_i++){
-					// if(m_env.isDebug)  std::cout << re_start[re_i].rt << " Dir " << re_start[re_i].dir << " \n";
+					if(m_env.isDebug)  std::cout << re_start[re_i].rt << " Dir " << re_start[re_i].dir << " \n";
     				if(re_start[re_i].rt == -1) continue;
     				current_successor.action = Action::Left;
     				current_dir = re_start[re_i].dir;
@@ -2584,7 +2618,9 @@ public:
     		ec.t = curr_t;
     		bool is_flag_collision = false;
         	for(auto& cec : (m_edgeCollision_t[index])){
-        		if(cec == ec) is_flag_collision = true;
+        		if(cec == ec){
+					is_flag_collision = true;
+				}
         	}
         	if(!is_flag_collision){
         		startTime = curr_t;				

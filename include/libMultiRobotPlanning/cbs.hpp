@@ -147,7 +147,7 @@ class CBS {
       std::cout << "Test \n";
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 7200){
+      if(duration1 > 200){
     	  return false;
       }
 
@@ -168,16 +168,19 @@ class CBS {
         HighLevelNodeJps newNodeJps = PJps;
         newNodeJps.id = id;
         
-        for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
-        		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
-        			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
-        						newNodeJps.solution[jj].states[ii].first << "->" << newNodeJps.solution[jj].actions[ii].first
-								<< "(cost: " << newNodeJps.solution[jj].actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
-        		  		   newNodeJps.solution[jj].states.back().first << std::endl;
-        }
+        // for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
+        // 		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
+        // 			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
+        // 						newNodeJps.solution[jj].states[ii].first << "->" << newNodeJps.solution[jj].actions[ii].first
+				// 				<< "(cost: " << newNodeJps.solution[jj].actions[ii].second << ")" << std::endl;
+        // 		}
+        // 		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
+        // 		  		   newNodeJps.solution[jj].states.back().first << std::endl;
+        // }
+        if(newNodeJps.constraints[i].overlap(c.second)){
+          std::cout << c.first << ", " << c.second <<"OVERLAP \n";
 
+        }
         assert(!newNodeJps.constraints[i].overlap(c.second));
 
         newNodeJps.constraints[i].add(c.second);
@@ -262,7 +265,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-         	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " **************--\n";
+//         	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " **************--\n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -273,7 +276,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+//        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
@@ -375,47 +378,47 @@ class CBS {
         	}
         }
 
-        if(isJpsSucc && success){
-        	if(solutionAstar.cost != solutiontempJps.cost){
- /*       		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
-        			std::cout << newNode.solution[i].states[ii].second << ": " <<
-        						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
-								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << newNode.solution[i].states.back().second << ": " <<
-        		  		   newNode.solution[i].states.back().first << std::endl;
+//         if(isJpsSucc && success){
+//         	if(solutionAstar.cost != solutiontempJps.cost){
+//  /*       		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
+//         			std::cout << newNode.solution[i].states[ii].second << ": " <<
+//         						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
+// 								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << newNode.solution[i].states.back().second << ": " <<
+//         		  		   newNode.solution[i].states.back().first << std::endl;
 
-                for (size_t ii = 0; ii < solutiontemp.actions.size(); ++ii) {
-                	std::cout << solutiontemp.states[ii].second << ": " <<
-        		         		 solutiontemp.states[ii].first << "->" << solutiontemp.actions[ii].first
-        		       		         << "(cost: " << solutiontemp.actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << solutiontemp.states.back().second << ": " <<
-        		    		   solutiontemp.states.back().first << std::endl;*/
+//                 for (size_t ii = 0; ii < solutiontemp.actions.size(); ++ii) {
+//                 	std::cout << solutiontemp.states[ii].second << ": " <<
+//         		         		 solutiontemp.states[ii].first << "->" << solutiontemp.actions[ii].first
+//         		       		         << "(cost: " << solutiontemp.actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solutiontemp.states.back().second << ": " <<
+//         		    		   solutiontemp.states.back().first << std::endl;*/
 
-        		std::cout << "Jps is not equal \n";
-        		return false;
-        	}/*else{
-        		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
-        			std::cout << newNode.solution[i].states[ii].second << ": " <<
-        						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
-								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << newNode.solution[i].states.back().second << ": " <<
-        		  		   newNode.solution[i].states.back().first << std::endl;
+//         		std::cout << "Jps is not equal \n";
+//         		return false;
+//         	}/*else{
+//         		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
+//         			std::cout << newNode.solution[i].states[ii].second << ": " <<
+//         						newNode.solution[i].states[ii].first << "->" << newNode.solution[i].actions[ii].first
+// 								<< "(cost: " << newNode.solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << newNode.solution[i].states.back().second << ": " <<
+//         		  		   newNode.solution[i].states.back().first << std::endl;
 
-                for (size_t ii = 0; ii < solutiontemp.actions.size(); ++ii) {
-                	std::cout << solutiontemp.states[ii].second << ": " <<
-        		         		 solutiontemp.states[ii].first << "->" << solutiontemp.actions[ii].first
-        		       		         << "(cost: " << solutiontemp.actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << solutiontemp.states.back().second << ": " <<
-        		    		   solutiontemp.states.back().first << std::endl;
-        	}*/
-        } else if(!isJpsSucc && success){
-      		std::cout << "Jps is not equal 111\n";
-      		return false;
-        }
+//                 for (size_t ii = 0; ii < solutiontemp.actions.size(); ++ii) {
+//                 	std::cout << solutiontemp.states[ii].second << ": " <<
+//         		         		 solutiontemp.states[ii].first << "->" << solutiontemp.actions[ii].first
+//         		       		         << "(cost: " << solutiontemp.actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solutiontemp.states.back().second << ": " <<
+//         		    		   solutiontemp.states.back().first << std::endl;
+//         	}*/
+//         } else if(!isJpsSucc && success){
+//       		std::cout << "Jps is not equal 111\n";
+//       		return false;
+//         }
 
         if(isJpstbit && success){
         	if(newNodeJps.solution[i].cost != solutionAstar.cost){
@@ -436,7 +439,7 @@ class CBS {
         		// std::cout << solutiontempBit.states.back().second << ": " <<
         		//     		   solutiontempBit.states.back().first << std::endl;
 
-        		std::cout << "Jpstbit is not equal 2222\n";
+        		std::cout << newNodeJps.solution[i].cost << ", " << solutionAstar.cost << " Jpstbit is not equal 2222\n";
         		return false;
         	}/*else{
         		for (size_t ii = 0; ii < newNode.solution[i].actions.size(); ++ii) {
