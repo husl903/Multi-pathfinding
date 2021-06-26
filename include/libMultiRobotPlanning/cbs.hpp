@@ -156,7 +156,7 @@ class CBS {
       Conflict conflict;
       if(!m_env.getFirstConflict(PJps.solution, conflict)){
         solution = PJps.solution;
-        std::cout << " , done; cost: " << PJps.cost << std::endl;
+        std::cout << " ,done; cost: " << PJps.cost << " ";
         return true;
       }
 
@@ -264,7 +264,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-//         	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time <<  " **************--\n";
+        	// std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time <<  " **************--\n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -275,7 +275,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-//        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+       	// std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){

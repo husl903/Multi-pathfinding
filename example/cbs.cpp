@@ -516,7 +516,7 @@ class Environment {
             point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i);
           }else{
             if(abs(a.y - b.y) < delta_t){
-               point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
+               if(abs(a.y - b.y) > 1) point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i);
                point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i);
                point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i);
               if(is_first){
@@ -540,7 +540,7 @@ class Environment {
             point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i);
           }else{
             if(abs(a.x - b.x) < delta_t){
-              point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
+              if(abs(a.x - b.x) > 1)point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i);
               point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i);
               point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i);
               if(is_first){
@@ -571,10 +571,11 @@ class Environment {
           }else{ temp_x = b.x - 1; ac=  Action::Right;}
 
           if(abs(a.x - b.x) + abs(a.y - b.y) < delta_t){
-            point_t.emplace_back(a.x, b.y, abs(a.x - b.x) - 1, time_a + abs(a.y - b.y), ac, i);
+            if(abs(a.x -b.x) > 1) point_t.emplace_back(a.x, b.y, abs(a.x - b.x) - 1, time_a + abs(a.y - b.y), ac, i);
             point_t.emplace_back(temp_x, b.y, delta_t - abs(a.x - b.x) - abs(a.y - b.y), time_a + abs(a.y - b.y) + abs(a.x - b.x) - 1, Action::Wait, i);
             point_t.emplace_back(temp_x, b.y, 1, time_b - 1, ac, i);
           }else {
+//            std::cout << " Here 111 " << a.x << ", " <<b.y << ", " << abs(a.x -b.x) << ", " << time_a << ",ac " << ac << ", age " << i << " \n";
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x), time_a + abs(a.y - b.y), ac, i);
           }
 
@@ -589,7 +590,7 @@ class Environment {
       if(is_first){
         pool_k.emplace_back(solution[i].states.back().first.x, solution[i].states.back().first.y, 
                  std::numeric_limits<int>::max(), solution[i].states.back().second, Action::Wait, i);
-        is_first = true;
+        is_first = false;
       }
       if(isprint) std::cout << "(" << solution[i].states.back().first.x << ", " << solution[i].states.back().first.y << "),  " 
       << i << ", "<< Action::Wait << ", " << solution[i].states.back().second << ", " << std::numeric_limits<int>::max() << " 55****************\n";
@@ -773,13 +774,13 @@ class Environment {
         }
 
         if(pool_k[jj].ac == Action::Left){
-          if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
+          if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t << " action " << current_p.ac << ", " << pool_k[jj].ac <<" test 11111-1 \n";             
            
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].x = pool_k[jj].x - time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
           int min_delta_t = std::min(current_p.delta_t, pool_k[jj].delta_t);
-          if(isprint) std::cout <<"Time " << time_diff << ", " <<  pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
+//          if(isprint) std::cout <<"Time " << time_diff << ", " <<  pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
 
           if(current_p.ac == Action::Left){
             if(pool_k[jj].x == current_p.x && pool_k[jj].y == current_p.y && current_p.init_t < result.time){
@@ -788,8 +789,11 @@ class Environment {
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
-              result.y1 = pool_k[jj].y;         
-              if(isprint) std::cout << " test 1111 \n";         
+              result.y1 = pool_k[jj].y;
+              if(isprint) std::cout << current_p.x << ", " << current_p.y << ", pool " 
+               << pool_k[jj].x << ", " << pool_k[jj].y << " delta " << current_p.delta_t << ", "<< pool_k[jj].delta_t << ", " << 
+              " init " << current_p.init_t << ", " << pool_k[jj].init_t << ", res "<<result.x1 << ", " << result.x2 << ", time  " << result.time << ", agent " << result.agent1 << ", " << result.agent2 << " test 11111\n";             
+              // if(isprint) std::cout << " test 1111 \n";         
             }
           } else if(current_p.ac == Action::Right){
             int dis = abs(pool_k[jj].x - current_p.x);
@@ -980,7 +984,9 @@ class Environment {
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;      
-              if(isprint) std::cout << " test 2323 -2\n";             
+              if(isprint) std::cout << current_p.x << ", " << current_p.y << ", pool " 
+               << pool_k[jj].x << ", " << pool_k[jj].y << " delta " << current_p.delta_t << ", "<< pool_k[jj].delta_t << ", " << 
+              " init " << current_p.init_t << ", " << pool_k[jj].init_t << ", res "<<result.x1 << ", " << result.x2 << ", time  " << result.time << ", " << result.agent1 << ", " << result.agent2 << " test 2323 -2\n";             
             }
           }else if(current_p.ac == Action::Wait){
             if(current_p.x == pool_k[jj].x && pool_k[jj].y == current_p.y
@@ -1728,9 +1734,8 @@ int main(int argc, char* argv[]) {
   Timer timer;
   bool success = cbs.search(startStates, solution);
   timer.stop();
-  std::cout << " CBS \n";
   if (success) {
-    std::cout << "Planning successful! " << std::endl;
+    std::cout << inputFile << " Planning successful! " << std::endl;
     int cost = 0;
     int makespan = 0;
     for (const auto& s : solution) {
@@ -1764,7 +1769,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else {
-    std::cout << "Planning NOT successful!" << std::endl;
+    std::cout << inputFile << " Planning NOT successful!" << std::endl;
   }
 
   return 0;
