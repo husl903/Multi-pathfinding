@@ -578,7 +578,6 @@ class Environment {
 //            std::cout << " Here 111 " << a.x << ", " <<b.y << ", " << abs(a.x -b.x) << ", " << time_a << ",ac " << ac << ", age " << i << " \n";
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x), time_a + abs(a.y - b.y), ac, i);
           }
-
           if(is_first){
             pool_k.emplace_back(a.x, b.y, delta_t, delta_t_1, ac, i);
             is_first = false;
@@ -600,28 +599,28 @@ class Environment {
 
     if(isprint) std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
 
-    for(size_t ii = 0; ii < pool_k.size(); ii++){
-      if(isprint) std::cout << pool_k[ii].x << ", " << pool_k[ii].y << 
-      ", " << pool_k[ii].init_t << ", " << pool_k[ii].delta_t << ", id " << pool_k[ii].path_id << ", action " << pool_k[ii].ac << "  , pool 000000\n";
+    // for(size_t ii = 0; ii < pool_k.size(); ii++){
+    //   if(isprint) std::cout << pool_k[ii].x << ", " << pool_k[ii].y << 
+    //   ", " << pool_k[ii].init_t << ", " << pool_k[ii].delta_t << ", id " << pool_k[ii].path_id << ", action " << pool_k[ii].ac << "  , pool 000000\n";
 
-    }
-
+    // }
+    // for(size_t ii = 0; ii < point_t.size(); ii++){
+    //   if(isprint) std::cout << point_t[ii].x << ", " << point_t[ii].y << 
+    //   ", " << point_t[ii].init_t << ", " << point_t[ii].delta_t << ", id " << point_t[ii].path_id << ", action " << point_t[ii].ac << "  , 000000\n";
+    // }
     result.time = std::numeric_limits<int>::max();
     for(size_t ii = 0; ii < point_t.size(); ii++){
-      if(isprint) std::cout << point_t[ii].x << ", " << point_t[ii].y << 
-      ", " << point_t[ii].init_t << ", " << point_t[ii].delta_t << ", id " << point_t[ii].path_id << ", action " << point_t[ii].ac << "  , 000000\n";
-
-    }
-    for(size_t ii = 0; ii < point_t.size(); ii++){
       PathPoint current_p = point_t[ii];
+       if(current_p.init_t > result.time) break;
       for(size_t jj = 0; jj < pool_k.size(); jj++){
         if(current_p.path_id == jj){
           pool_k[jj] = current_p;
           continue;
         }
-        if(!(pool_k[jj].x == current_p.x || pool_k[jj].y == current_p.y)) continue;
+
         int time_diff = current_p.init_t - pool_k[jj].init_t;
         if(pool_k[jj].ac == Action::Down){
+          // if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y <<", curr " << current_p.x << ", " << current_p.y <<  " -----------------------down \n";
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].y = pool_k[jj].y - time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
@@ -698,6 +697,7 @@ class Environment {
         }
 
         if(pool_k[jj].ac == Action::Up){
+          // if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y <<", curr " << current_p.x << ", " << current_p.y <<  " -----------------------up \n";
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].y = pool_k[jj].y + time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
@@ -773,15 +773,11 @@ class Environment {
           }
         }
 
-        if(pool_k[jj].ac == Action::Left){
-          if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t << " action " << current_p.ac << ", " << pool_k[jj].ac <<" test 11111-1 \n";             
-           
+        if(pool_k[jj].ac == Action::Left){           
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].x = pool_k[jj].x - time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
           int min_delta_t = std::min(current_p.delta_t, pool_k[jj].delta_t);
-//          if(isprint) std::cout <<"Time " << time_diff << ", " <<  pool_k[jj].x << ", " << pool_k[jj].y << ", " << current_p.x  << ", " << current_p.y << ", delta " <<  current_p.delta_t << ", " << pool_k[jj].delta_t <<  " test 1414 \n";             
-
           if(current_p.ac == Action::Left){
             if(pool_k[jj].x == current_p.x && pool_k[jj].y == current_p.y && current_p.init_t < result.time){
               result.time = current_p.init_t;
@@ -858,6 +854,7 @@ class Environment {
         }  
 
         if(pool_k[jj].ac == Action::Right){
+          // if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y <<", curr " << current_p.x << ", " << current_p.y <<  " ---------------------------Rigth \n";
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].x = pool_k[jj].x + time_diff;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
@@ -935,6 +932,7 @@ class Environment {
         }          
 
         if(pool_k[jj].ac == Action::Wait){
+          // if(isprint) std::cout << pool_k[jj].x << ", " << pool_k[jj].y <<", curr " << current_p.x << ", " << current_p.y <<  " wait ----------\n";
           pool_k[jj].init_t = current_p.init_t;
           pool_k[jj].delta_t = pool_k[jj].delta_t - time_diff;
           int min_delta_t = std::min(current_p.delta_t, pool_k[jj].delta_t);
@@ -1010,82 +1008,6 @@ class Environment {
       return true;
     }else return false;
     
-    int max_t = 0;
-    for (const auto& sol : solution) {
-      max_t = std::max<int>(max_t, sol.states.size() - 1);
-    }
-
-    int min_time = -1;
-    for(size_t i = 0; i < solution.size(); i++){
-      for(size_t j = i + 1; j < solution.size(); j++){
-        
-        int ii = 0, jj = 0;
-        Location loc_a1 = solution[i].states[ii].first;
-        int time_a1 = solution[i].states[ii].second;
-        Location loc_a2 = solution[i].states[++ii].first;
-        int time_a2 = solution[i].states[ii].second;
-
-        Location loc_b1 = solution[j].states[jj].first;
-        int time_b1 = solution[j].states[jj].second;        
-        Location loc_b2 = solution[j].states[++jj].first;
-        int time_b2 = solution[j].states[jj].second;               
-        while (ii < solution[i].states.size() && jj < solution[j].states.size()){
-          // if(time_a2 < time_b1){
-          //   time_a1 = time_a2;
-          //   loc_a1 = loc_a2;
-          //   loc_a1 = solution[i].states[++ii].first;
-          //   time_a2 = solution[i].states[ii].second;
-          //   continue;
-          // }
-          // if(time_a1 > time_b2){
-          //   time_b1 = time_b2;
-          //   loc_b1 = loc_b2;
-          //   loc_b1 = solution[j].states[++jj].first;
-          //   time_b2 = solution[j].states[jj].second;
-          //   continue;
-          // }
-
-          std::cout << loc_a1.x << ", " << loc_a1.y << ", " << loc_b1.x << ", " << loc_b1.y << std::endl;
-          if((time_a1 > min_time || time_a2 > min_time) && min_time != -1) break;
-            // int zx = abs(loc_a1.x + loc_a2.x - loc_b1.x - loc_b2.x);
-            // int lx = abs(loc_a1.x - loc_a2.x) + abs(loc_b1.x - loc_b2.x);
-            // int zy = abs(loc_a1.y + loc_a2.y - loc_b1.y - loc_b2.y);
-            // int ly = abs(loc_a1.y - loc_a2.y) + abs(loc_b1.y - loc_b2.y);
-          // if(zx <= lx && zy <= ly){
-            if(loc_a1.x == loc_b1.x || loc_a2.y == loc_b2.y){
-              std::cout << "Intersect ----------------\n";
-              if(loc_a1.x == loc_b1.x && !(std::max(loc_a1.y, loc_a2.y)< std::min(loc_b1.y, loc_b2.y) || 
-                 std::min(loc_a1.y, loc_a2.y) > std::max(loc_b1.y, loc_b2.y))) {
-                std::cout << "The first intersect point  " << loc_a1.x << ", " << loc_a1.y  << ", " << loc_a2.x << ", " << loc_a2.y << ","
-                                                           <<  loc_b1.x << ", " << loc_b1.y << ", " << loc_b2.x << ", " << loc_b2.y << i << " , " << j << "\n";
-                
-              }
-
-              if(abs(loc_a1.x - loc_a2.x) + abs(loc_a1.y - loc_a2.y) == 1) {
-              }
-
-            }
-          // }
-          if(time_a2 <= time_b2){
-            time_a1 = time_a2;
-            loc_a1 = loc_a2;
-            loc_a2 = solution[i].states[++ii].first;
-            time_a2 = solution[i].states[ii].second;
-          }
-          if(time_a2 >= time_b2){
-            time_b1 = time_b2;
-            loc_b1 = loc_b2;
-            loc_b2 = solution[j].states[++jj].first;
-            time_b2 = solution[j].states[jj].second;
-          }
-
-        }
-      }
-    }
-
-
-
-    return false;
   }
 
   bool getFirstConflict(
