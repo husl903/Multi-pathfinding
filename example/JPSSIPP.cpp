@@ -513,7 +513,7 @@ public:
 
 	bool isJumpPoint(const State &s, int time)
 	{
-		return jump_point_map[s.x][s.y] || nei_ob_g[s.x][s.y] >= time;
+		return jump_point_map[s.x][s.y] || nei_ob_g[s.x][s.y] >= time - 1;
 	}
 
 	void setJumpPoint(const State &s)

@@ -696,7 +696,7 @@ class Environment {
   }
 
   bool isJumpPoint(const Location& s, int time) {
-		return jump_point_map[s.x][s.y] || m_nei_ob_g[s.x][s.y]>=time;
+		return jump_point_map[s.x][s.y] || m_nei_ob_g[s.x][s.y]>=time - 1;
   }
 
   void setJumpPoint(const Location& s){
@@ -1103,7 +1103,7 @@ int main(int argc, char* argv[]) {
   timer.stop();
 
   if (success) {
-    std::cout << "Planning successful! " << std::endl;
+    std::cout << inputFile <<  " Planning successful! " << std::endl;
     int cost = 0;
     int makespan = 0;
     for (const auto& s : solution) {
@@ -1120,14 +1120,14 @@ int main(int argc, char* argv[]) {
     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     out << "schedule:" << std::endl;
     for (size_t a = 0; a < solution.size(); ++a) {
-//       std::cout << "Solution for: " << a << std::endl;
-//       for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-//         std::cout << solution[a].states[i].second << ": " <<
-//         solution[a].states[i].first << "->" << solution[a].actions[i].first
-//         << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-//       }
-//       std::cout << solution[a].states.back().second << ": " <<
-//       solution[a].states.back().first << std::endl;
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+        std::cout << solution[a].states[i].second << ": " <<
+        solution[a].states[i].first << "->" << solution[a].actions[i].first
+        << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution[a].states.back().second << ": " <<
+      solution[a].states.back().first << std::endl;
 
       out << "  agent" << a << ":" << std::endl;
       for (const auto& state : solution[a].states) {
@@ -1137,7 +1137,7 @@ int main(int argc, char* argv[]) {
       }
     }
   } else {
-    std::cout << "Planning NOT successful!" << std::endl;
+    std::cout << inputFile << " Planning NOT successful!" << std::endl;
   }
 
   return 0;

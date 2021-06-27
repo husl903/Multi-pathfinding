@@ -138,7 +138,7 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration1 > 7200){
+      if(duration1 > 200){
     	  return false;
       }
 
@@ -149,7 +149,7 @@ class CBS {
 
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << std::endl;
+        std::cout << "done; cost: " << P.cost << ", ";
         solution = P.solution;
         return true;
       }
