@@ -117,7 +117,7 @@ class CBS {
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;       
         bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0, true);
-        std::cout << "Agent i " << i << ", " << startJps.solution[i].cost << " \n";
+        // std::cout << "Agent i " << i << ", " << startJps.solution[i].cost << " \n";
         if(!isJpsSucc){
           return false;
         }
@@ -148,7 +148,7 @@ class CBS {
       num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 1000){
+      if(duration1 > 300){
     	  return false;
       }
 
@@ -340,15 +340,15 @@ class CBS {
         int GenAstarP = m_env.lowLevelGenerated();
         double tAstarP = timerAstarP.elapsedSeconds();
 
-                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                		"), Goal, (" << goal.x << " " << goal.y <<
-        				"), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
-        				", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
-                ", preTime, " << m_env.getPreTime(i) << 
-        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				" \n";
+                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                // 		"), Goal, (" << goal.x << " " << goal.y <<
+        				// "), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
+        				// ", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
+                // ", preTime, " << m_env.getPreTime(i) << 
+        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				// " \n";
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
           jpstbit.clearObstacle(location);
