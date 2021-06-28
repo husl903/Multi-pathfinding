@@ -131,14 +131,15 @@ class CBS {
 
     Timer timer;
     timer.reset();
+    int num_node = 0;
     while (!open.empty()) {
     	// endTotal = clock();
       // double duration =(double)(endTotal - startTotal)/CLOCKS_PER_SEC;
-
+      num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration1 > 200){
+      if(duration1 > 300){
     	  return false;
       }
 
@@ -149,7 +150,7 @@ class CBS {
 
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << ", ";
+        std::cout << "done; cost: " << P.cost << " " << " num_node " << num_node << " ";
         solution = P.solution;
         return true;
       }
@@ -364,15 +365,15 @@ class CBS {
 				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
 				" \n";*/
 
-                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                		"), Goal, (" << goal.x << " " << goal.y <<
-        				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
-        				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
-                ", preTime, " << m_env.getPreTime(i) << 
-        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				" \n";
+                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                // 		"), Goal, (" << goal.x << " " << goal.y <<
+        				// "), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+        				// ", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+                // ", preTime, " << m_env.getPreTime(i) << 
+        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				// " \n";
 
         if(isSippSucc && success){
         	if(solutionSipp.cost != newNode.solution[i].cost){
