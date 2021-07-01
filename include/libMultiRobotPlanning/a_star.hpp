@@ -23,7 +23,7 @@ namespace libMultiRobotPlanning {
 
 This class implements the A* algorithm. A* is an informed search algorithm
 that finds the shortest path for a given map. It can use a heuristic that
-needsto be admissible.
+needs to be admissible.
 
 This class can either use a fibonacci heap, or a d-ary heap. The latter is the
 default. Define "USE_FIBONACCI_HEAP" to use the fibonacci heap instead.

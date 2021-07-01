@@ -160,6 +160,16 @@ class CBS {
       // std::cout << "Found conflict at t=" << conflict.time << " type: " <<
       // conflict.type << std::endl;
 
+        for(size_t jj = 0; jj < P.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < P.solution[jj].actions.size(); ++ii) {
+        			std::cout << P.solution[jj].states[ii].second << ": " <<
+        						P.solution[jj].states[ii].first << "->" << P.solution[jj].actions[ii].first
+								<< "(cost: " << P.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << P.solution[jj].states.back().second << ": " <<
+        		  		   P.solution[jj].states.back().first << std::endl;
+        }
+
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
       for (const auto& c : constraints) {
@@ -268,7 +278,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNode.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-//        	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " --\n";
+       	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " --\n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -280,7 +290,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNode.constraints[i].edgeConstraints){
-//        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << " second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+       	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << " second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
@@ -365,15 +375,15 @@ class CBS {
 				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
 				" \n";*/
 
-                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                // 		"), Goal, (" << goal.x << " " << goal.y <<
-        				// "), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
-        				// ", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
-                // ", preTime, " << m_env.getPreTime(i) << 
-        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				// " \n";
+                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                		"), Goal, (" << goal.x << " " << goal.y <<
+        				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+        				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+                ", preTime, " << m_env.getPreTime(i) << 
+        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				" \n";
 
         if(isSippSucc && success){
         	if(solutionSipp.cost != newNode.solution[i].cost){
