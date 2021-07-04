@@ -301,10 +301,15 @@ class Environment {
     m_lastGoalConstraint = -1;
     m_lowLevelGeneration = 0;
     for (const auto& vc : constraints->vertexConstraints) {
+      // std::cout << "vc " << vc << " \n";
       if (vc.x == m_goals[m_agentIdx].x && vc.y == m_goals[m_agentIdx].y) {
         m_lastGoalConstraint = std::max(m_lastGoalConstraint, vc.time);
+        // std::cout << "m " <<  m_lastGoalConstraint << " \n";
       }
     }
+    // for (const auto& ec : constraints->edgeConstraints) {
+    //   std::cout << "EC " << ec << " \n";
+    // }    
   }
 
   int admissibleHeuristic(const State& s) {
@@ -385,21 +390,9 @@ class Environment {
 
   void getNeighbors(const State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
-    // std::cout << "#VC " << constraints.vertexConstraints.size() << std::endl;
-    // for(const auto& vc : constraints.vertexConstraints) {
-    //   std::cout << "  " << vc.time << "," << vc.x << "," << vc.y <<
-    //   std::endl;
-    // }
-//	  if(isOutput) std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  -----------\n";
+	  // if(isOutput) std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  -----------\n";
     neighbors.clear();
-/*   if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
-    		|| isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
-			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1), s.time)
-			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
-			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
-			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
-			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
-			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))*/
+
        if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
         		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
     			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
@@ -409,23 +402,24 @@ class Environment {
     			|| isTemporalObstacle(Location(s.x + 1, s.y - 1)) || isTemporalObstacle(Location(s.x - 1, s.y - 1))
     			|| isTemporalObstacle(Location(s.x + 1, s.y + 1)) || isTemporalObstacle(Location(s.x - 1, s.y + 1)))
     {
+      //wait
       State n(s.time + 1, s.x, s.y);
       m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Wait, 1));
-//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
+      //left
       State n(s.time + 1, s.x - 1, s.y);
       if (stateValid(n) && transitionValid(s, n)) {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Left, 1));
-//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
     {
+      //right
       State n(s.time + 1, s.x + 1, s.y);
       m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
@@ -435,6 +429,7 @@ class Environment {
       }
     }
     {
+      //Up
       State n(s.time + 1, s.x, s.y + 1);
       m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
@@ -443,6 +438,7 @@ class Environment {
       }
     }
     {
+      //Down
       State n(s.time + 1, s.x, s.y - 1);
       m_lowLevelGeneration++;
       if (stateValid(n) && transitionValid(s, n)) {
@@ -599,7 +595,7 @@ class Environment {
     assert(m_constraints);
     const auto& con = m_constraints->vertexConstraints;
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
-           m_obstacles.find(Location(s.x, s.y)) == m_obstacles.end() &&
+           !m_obstacles_m[s.x][s.y] && 
            con.find(VertexConstraint(s.time, s.x, s.y)) == con.end();
   }
 
@@ -609,6 +605,17 @@ class Environment {
     return con.find(EdgeConstraint(s1.time, s1.x, s1.y, s2.x, s2.y)) ==
            con.end();
   }
+
+  bool isEdgeConstraintAtT(const Location s1, Location s2, int T){
+		if(s1.x >= 0 && s1.x < m_dimx && s1.y >= 0 && s1.y < m_dimy &&
+			m_temporal_edge_constraint[s1.x][s1.y]){
+      assert(m_constraints);
+      const auto& con = m_constraints->edgeConstraints;
+      return con.find(EdgeConstraint(T, s1.x, s1.y, s2.x, s2.y)) !=
+           con.end();    
+    }
+    else return false;
+  }  
 
   bool isBorder(const Location& s){
 	return s.x == 0 || s.x == m_dimx - 1 || s.y == 0 || s.y == m_dimy - 1;
@@ -638,6 +645,13 @@ class Environment {
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy
 			  && m_last_ob_g[s.x][s.y] >= T;
   }
+
+  bool isTemporalObstacleAtT(const Location& s, int T){
+    assert(m_constraints);
+    const auto& con = m_constraints->vertexConstraints;    
+		return con.find(VertexConstraint(T, s.x, s.y)) != con.end();
+  }  
+  
   void setTemporalEdgeConstraint(const Location& s){
 	  m_temporal_edge_constraint[s.x][s.y] = true;
   }
