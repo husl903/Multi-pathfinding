@@ -188,11 +188,18 @@ class CAStar {
       // 2. highest gScore
 
       // Our heap is a maximum heap, so we invert the comperator function here
+      // if (fScore != other.fScore) {
+      //   return fScore > other.fScore;
+      // } else {
+    	// return gScore < other.gScore;
+      // }
       if (fScore != other.fScore) {
         return fScore > other.fScore;
+      } else if(gScore != other.gScore){
+        return gScore < other.gScore;
       } else {
-    	return gScore < other.gScore;
-      }
+    	  return state.dir < other.state.dir;
+      }      
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else {

@@ -106,9 +106,13 @@ class CBS {
       //   start.solution[i] = solution[i];
       //   std::cout << "use existing solution for agent: " << i << std::endl;
       // } else {
-      LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
-      LowLevelSearch_t lowLevel(llenv);
-      bool success = lowLevel.search(initialStates[i], start.solution[i]);
+        m_env.setLowLevelContext(i, &start.constraints[i]);
+        canonical_astar can_astar(m_env);
+        bool success = can_astar.search(initialStates[i], start.solution[i]);
+        
+      // LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
+      // LowLevelSearch_t lowLevel(llenv);
+      // bool success = lowLevel.search(initialStates[i], start.solution[i]);
       if (!success) {
         return false;
       }
@@ -161,15 +165,15 @@ class CBS {
       // std::cout << "Found conflict at t=" << conflict.time << " type: " <<
       // conflict.type << std::endl;
 
-        // for(size_t jj = 0; jj < P.solution.size(); jj++){        
-        // 		for (size_t ii = 0; ii < P.solution[jj].actions.size(); ++ii) {
-        // 			std::cout << P.solution[jj].states[ii].second << ": " <<
-        // 						P.solution[jj].states[ii].first << "->" << P.solution[jj].actions[ii].first
-				// 				<< "(cost: " << P.solution[jj].actions[ii].second << ")" << std::endl;
-        // 		}
-        // 		std::cout << P.solution[jj].states.back().second << ": " <<
-        // 		  		   P.solution[jj].states.back().first << std::endl;
-        // }
+        for(size_t jj = 0; jj < P.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < P.solution[jj].actions.size(); ++ii) {
+        			std::cout << P.solution[jj].states[ii].second << ": " <<
+        						P.solution[jj].states[ii].first << "->" << P.solution[jj].actions[ii].first
+								<< "(cost: " << P.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << P.solution[jj].states.back().second << ": " <<
+        		  		   P.solution[jj].states.back().first << std::endl;
+        }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
@@ -279,7 +283,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNode.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-        	// std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " --\n";
+        	std::cout << " Vertex Constraint " << constraint.x <<  " " <<constraint.y << " " << constraint.time << " --\n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -291,7 +295,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNode.constraints[i].edgeConstraints){
-        	// std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << " second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+        	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << " second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
@@ -337,10 +341,6 @@ class CBS {
         int GenSippM = m_env.num_generation;
 */
         // std::cout << "===================================================================\n";
-        m_env.setLowLevelContext(i, &newNode.constraints[i]);
-         PlanResult<State, Action, int> solutiontemp4;
-        canonical_astar can_astar(m_env);
-        bool sucessCA = can_astar.search(initialStates[i], solutiontemp4);
 
         m_env.setExactHeuristTrue();
         LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
@@ -368,8 +368,12 @@ class CBS {
         int GenAstarP = m_env.lowLevelGenerated();
         double tAstarP = timerAstarP.elapsedSeconds();
         
-
-
+        m_env.setLowLevelContext(i, &newNode.constraints[i]);
+         PlanResult<State, Action, int> solutiontemp4;
+        canonical_astar can_astar(m_env);
+        bool sucessCA = can_astar.search(initialStates[i], solutiontemp4);
+//        newNode.solution[i] = solutiontemp4;
+        
 
         newNode.cost += newNode.solution[i].cost;
 /*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
@@ -381,15 +385,15 @@ class CBS {
 				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
 				" \n";*/
 
-                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                // 		"), Goal, (" << goal.x << " " << goal.y <<
-        				// "), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
-        				// ", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
-                // ", preTime, " << m_env.getPreTime(i) << 
-        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				// " \n";
+                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                		"), Goal, (" << goal.x << " " << goal.y <<
+        				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+        				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+                ", preTime, " << m_env.getPreTime(i) << 
+        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				" \n";
 
         if(sucessCA && success){
           if(solutiontemp4.cost != newNode.solution[i].cost){
