@@ -607,8 +607,7 @@ class Environment {
   }
 
   bool isEdgeConstraintAtT(const Location s1, Location s2, int T){
-		if(s1.x >= 0 && s1.x < m_dimx && s1.y >= 0 && s1.y < m_dimy &&
-			m_temporal_edge_constraint[s1.x][s1.y]){
+		if(s1.x >= 0 && s1.x < m_dimx && s1.y >= 0 && s1.y < m_dimy){
       assert(m_constraints);
       const auto& con = m_constraints->edgeConstraints;
       return con.find(EdgeConstraint(T, s1.x, s1.y, s2.x, s2.y)) !=

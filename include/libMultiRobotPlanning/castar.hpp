@@ -114,9 +114,13 @@ class CAStar {
       // traverse neighbors
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors);
-      for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
+      for (Neighbor<State, Action, Cost>& neighbor : neighbors) {
         // std::cout << "Current Neighbor " << neighbor.state << ", " << current.gScore + neighbor.cost << " Astar ----\n";
-        if (closedSet.find(neighbor.state) == closedSet.end()) {
+        auto iterC = closedSet.find(neighbor.state);
+        if (iterC == closedSet.end() || (iterC != closedSet.end() && (*iterC).dir != neighbor.state.dir)) {
+          if(iterC != closedSet.end()){
+              neighbor.state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
+          }
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
           if (iter == stateToHeap.end()) {  // Discover a new node
@@ -124,6 +128,7 @@ class CAStar {
                 tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
             auto handle =
                 openSet.push(Node(neighbor.state, fScore, tentative_gScore));
+            
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
@@ -140,12 +145,15 @@ class CAStar {
 
             if (tentative_gScore == (*handle).gScore) {
             	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+                if(iterC != closedSet.end()){
+                  (*handle).state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
+                }
                continue;
             }
 
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;
-            (*handle).state.dir =  neighbor.state.dir;
+            (*handle).state.dir =  neighbor.state.dir;      
             (*handle).gScore = tentative_gScore;
             (*handle).fScore -= delta;
             openSet.increase(handle);
@@ -162,6 +170,7 @@ class CAStar {
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
         }
+
       }
     }
 

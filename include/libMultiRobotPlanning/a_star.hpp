@@ -115,6 +115,7 @@ class AStar {
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
+        // std::cout << "Current Neighbor " << neighbor.state << ", " << current.gScore + neighbor.cost << " Astar ----\n";
         if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);

@@ -135,9 +135,9 @@ public:
     solution.states.clear();
 
     bool success = m_astar.search(startState, astarsolution, startTime);
-    if(!success){
-      std::cout << "Not successful \n";
-    }
+    // if(!success){
+    //   std::cout << "cannoical Not successful \n";
+    // }
     solution = astarsolution;
     solution.cost = astarsolution.cost - startTime;
     solution.fmin = astarsolution.fmin;
@@ -174,8 +174,7 @@ public:
             const State& s,
              std::vector<Neighbor<State, Action, Cost> >& neighbors) {
       bool is_debug_f = false;
-      if(is_debug_f) std::cout << "EXPANDED current state " << s.x << ", " << s.y  << " time "  << s.time  << " dir " << s.dir << " ----\n";
- //     if(s.time > 100)  return;
+      if(is_debug_f) std::cout << "EXPANDED current state: " << s.x << ", " << s.y  << " time "  << s.time  << " dir " << s.dir << " ----\n";
       neighbors.clear();
       if(m_env.stateValid(State(s.time + 1, s.x, s.y))){
         if(m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y))
@@ -185,7 +184,8 @@ public:
     			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y))
     			|| m_env.isTemporalObstacle(Location(s.x, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x, s.y + 1))
     			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y - 1))
-    			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y + 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y + 1)))
+    			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y + 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y + 1))
+          || m_env.isTemporalObstacle(Location(s.x, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x, s.y)))
         {
           State n(s.time + 1, s.x, s.y);
           n.dir = 0x00;
@@ -193,12 +193,15 @@ public:
 
           if(m_env.isTemporalObstacleAtT(n_left, s.time + 1) 
              || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x - 1, s.y), s.time)){
-            if (m_env.stateValid(State(s.time + 2, s.x - 1, s.y)))  n.dir |= 0x01;
+             if (m_env.stateValid(State(s.time + 2, s.x - 1, s.y))) 
+             n.dir |= 0x01;
           }
+
           Location n_right(s.x + 1, s.y);
           if(m_env.isTemporalObstacleAtT(n_right, s.time + 1)
              || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x + 1, s.y), s.time)){
-            if(m_env.stateValid(State(s.time + 2, s.x + 1, s.y))) n.dir |= 0x02;
+            if(m_env.stateValid(State(s.time + 2, s.x + 1, s.y))) 
+            n.dir |= 0x02;
           }
           Location n_up(s.x, s.y + 1);
           if(m_env.stateValid(State(s.time + 2, s.x , s.y + 1)) &&
@@ -206,8 +209,10 @@ public:
              || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y + 1), s.time)
              || (m_env.isTemporalObstacleAtT(Location(s.x + 1, s.y + 1), s.time + 1) && (s.dir & 0x01))
              || (m_env.isEdgeConstraintAtT(Location(s.x + 1, s.y + 1), Location(s.x + 1, s.y), s.time + 1) && (s.dir & 0x01))
+             || (m_env.isEdgeConstraintAtT(Location(s.x + 1, s.y + 1), Location(s.x, s.y + 1), s.time + 1) && (s.dir & 0x01))
              || (m_env.isTemporalObstacleAtT(Location(s.x - 1, s.y + 1), s.time + 1) && (s.dir & 0x02))
              || (m_env.isEdgeConstraintAtT(Location(s.x - 1, s.y + 1), Location(s.x - 1, s.y), s.time + 1) && (s.dir & 0x02))
+             || (m_env.isEdgeConstraintAtT(Location(s.x - 1, s.y + 1), Location(s.x, s.y + 1), s.time + 1) && (s.dir & 0x02))             
               )){
             n.dir |= 0x04;
           }
@@ -217,8 +222,10 @@ public:
              || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y - 1), s.time)
              || (m_env.isTemporalObstacleAtT(Location(s.x + 1, s.y - 1), s.time + 1) && (s.dir & 0x01))
              || (m_env.isEdgeConstraintAtT(Location(s.x + 1, s.y - 1), Location(s.x + 1, s.y), s.time + 1) && (s.dir & 0x01))
+             || (m_env.isEdgeConstraintAtT(Location(s.x + 1, s.y - 1), Location(s.x, s.y - 1), s.time + 1) && (s.dir & 0x01))
              || (m_env.isTemporalObstacleAtT(Location(s.x - 1, s.y - 1), s.time + 1) && (s.dir & 0x02))
              || (m_env.isEdgeConstraintAtT(Location(s.x - 1, s.y - 1), Location(s.x - 1, s.y), s.time + 1) && (s.dir & 0x02))
+             || (m_env.isEdgeConstraintAtT(Location(s.x - 1, s.y - 1), Location(s.x, s.y - 1), s.time + 1) && (s.dir & 0x02))
               )){
             n.dir |= 0x08;
           }        
@@ -228,7 +235,7 @@ public:
         }
       }
       if((s.dir & 0x01) && m_env.stateValid(State(s.time + 1, s.x - 1, s.y)) ){
-        State n(s.time + 1, s.x -1, s.y);
+        State n(s.time + 1, s.x - 1, s.y);
         if(m_env.transitionValid(s, n)){
           n.dir = 0x01;
           if(m_env.isTemporalObstacleAtT(Location(s.x, s.y), s.time + 1) 
@@ -238,14 +245,18 @@ public:
           if(m_env.stateValid(State(s.time + 2, s.x - 1, s.y + 1))){
             if(m_env.isObstacle(Location(s.x, s.y + 1))
                || m_env.isTemporalObstacleAtT(Location(s.x, s.y + 1), s.time + 1)
-               || m_env.isEdgeConstraintAtT(Location(s.x, s.y + 1), Location(s.x, s.y), s.time + 1)){
+               || m_env.isTemporalObstacleAtT(Location(s.x - 1, s.y + 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y + 1), Location(s.x - 1, s.y + 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y + 1), s.time)){
               n.dir |= 0x04;
             }
           }
           if(m_env.stateValid(State(s.time + 2, s.x - 1, s.y - 1))){
             if(m_env.isObstacle(Location(s.x, s.y - 1))
                || m_env.isTemporalObstacleAtT(Location(s.x, s.y - 1), s.time + 1)
-               || m_env.isEdgeConstraintAtT(Location(s.x, s.y - 1), Location(s.x, s.y), s.time + 1)){
+               || m_env.isTemporalObstacleAtT(Location(s.x - 1, s.y - 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y - 1), Location(s.x - 1, s.y - 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y - 1), s.time)){
               n.dir |= 0x08;
             }
           }
@@ -266,14 +277,18 @@ public:
           if(m_env.stateValid(State(s.time + 2, s.x + 1, s.y + 1))){
             if(m_env.isObstacle(Location(s.x, s.y + 1))
                || m_env.isTemporalObstacleAtT(Location(s.x, s.y + 1), s.time + 1)
-               || m_env.isEdgeConstraintAtT(Location(s.x, s.y + 1), Location(s.x, s.y), s.time + 1)){
+               || m_env.isTemporalObstacleAtT(Location(s.x + 1, s.y + 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y + 1), Location(s.x + 1, s.y + 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y + 1), s.time)){
               n.dir |= 0x04;
             }
           }
           if(m_env.stateValid(State(s.time + 2, s.x + 1, s.y - 1))){
             if(m_env.isObstacle(Location(s.x, s.y - 1))
                || m_env.isTemporalObstacleAtT(Location(s.x, s.y - 1), s.time + 1)
-               || m_env.isEdgeConstraintAtT(Location(s.x, s.y - 1), Location(s.x, s.y), s.time + 1)){
+               || m_env.isTemporalObstacleAtT(Location(s.x + 1, s.y - 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y - 1), Location(s.x + 1, s.y - 1), s.time + 1)
+               || m_env.isEdgeConstraintAtT(Location(s.x, s.y), Location(s.x, s.y - 1), s.time)){
               n.dir |= 0x08;
             }
           }
