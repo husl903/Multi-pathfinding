@@ -119,7 +119,8 @@ class CAStar {
       for (Neighbor<State, Action, Cost>& neighbor : neighbors) {
         // std::cout << "Current Neighbor " << neighbor.state << ", " << current.gScore + neighbor.cost << " Astar ----\n";
         auto iterC = closedSet.find(neighbor.state);
-        if (iterC == closedSet.end() || (iterC != closedSet.end() && (*iterC).dir != neighbor.state.dir)) {
+        // || (iterC != closedSet.end() && (*iterC).dir != neighbor.state.dir)
+        if (iterC == closedSet.end()) {
           if(iterC != closedSet.end()){
               neighbor.state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
               std::cout << "in the closed set \n";
