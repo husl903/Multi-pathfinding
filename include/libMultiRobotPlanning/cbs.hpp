@@ -108,7 +108,7 @@ class CBS {
     
     for (size_t i = 0; i < initialStates.size(); ++i) {
         
-        jps_sipp jps1(m_env);
+        jpst_bit jps1(m_env);
         jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
         PlanResult<Location, Action, int> solutiontempJps;
 
@@ -116,7 +116,7 @@ class CBS {
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;       
-        bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0, true);
+        bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0);
         // std::cout << "Agent i " << i << ", " << startJps.solution[i].cost << " \n";
         if(!isJpsSucc){
           return false;
