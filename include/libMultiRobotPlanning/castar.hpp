@@ -91,7 +91,9 @@ class CAStar {
         solution.states.clear();
         solution.actions.clear();
         auto iter = cameFrom.find(current.state);
+        std::cout << current.state.x << ", " << current.state.y << ", " << " suCCCCCCCCCCCCCCCCCCCCC\n";
         while (iter != cameFrom.end()) {
+          std::cout << (iter->first) << " sssssssssssssssss\n";
           solution.states.push_back(
               std::make_pair<>(iter->first, std::get<3>(iter->second)));
           solution.actions.push_back(std::make_pair<>(
@@ -120,6 +122,7 @@ class CAStar {
         if (iterC == closedSet.end() || (iterC != closedSet.end() && (*iterC).dir != neighbor.state.dir)) {
           if(iterC != closedSet.end()){
               neighbor.state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
+              std::cout << "in the closed set \n";
           }
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
@@ -169,6 +172,7 @@ class CAStar {
               neighbor.state,
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
+          std::cout << current.state.x << ", " << current.state.y <<", nei " << neighbor.state.x << ", " << neighbor.state.y << " ------------------------\n";
         }
 
       }

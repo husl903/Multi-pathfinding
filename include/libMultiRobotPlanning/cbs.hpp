@@ -372,7 +372,7 @@ class CBS {
          PlanResult<State, Action, int> solutiontemp4;
         canonical_astar can_astar(m_env);
         bool sucessCA = can_astar.search(initialStates[i], solutiontemp4);
-//        newNode.solution[i] = solutiontemp4;
+        newNode.solution[i] = solutiontemp4;
         
 
         newNode.cost += newNode.solution[i].cost;
