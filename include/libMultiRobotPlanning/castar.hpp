@@ -91,9 +91,7 @@ class CAStar {
         solution.states.clear();
         solution.actions.clear();
         auto iter = cameFrom.find(current.state);
-        std::cout << current.state.x << ", " << current.state.y << ", " << " suCCCCCCCCCCCCCCCCCCCCC\n";
         while (iter != cameFrom.end()) {
-          std::cout << (iter->first) << " sssssssssssssssss\n";
           solution.states.push_back(
               std::make_pair<>(iter->first, std::get<3>(iter->second)));
           solution.actions.push_back(std::make_pair<>(
@@ -136,8 +134,7 @@ class CAStar {
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
-//            std::cout << "  this is a new node " << fScore << ","  << neighbor.state.state.x << ", " << neighbor.state.state.y << ", " <<
-//             tentative_gScore << std::endl;
+            // std::cout << "  this is a new node fscore "  << fScore  << ", gscore " << tentative_gScore << ","  << neighbor.state.x << ", " << neighbor.state.y << std::endl;
           } else {
             auto handle = iter->second;
 //             std::cout << "  this is an old node: " << tentative_gScore << "," << neighbor.state.State.x << ", " << neighbor.state.State.y << ", "
@@ -147,13 +144,13 @@ class CAStar {
               continue;
             }
 
-            if (tentative_gScore == (*handle).gScore) {
-            	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
-                if(iterC != closedSet.end()){
-                  (*handle).state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
-                }
-               continue;
-            }
+            // if (tentative_gScore == (*handle).gScore) {
+            // 	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+            //     if(iterC != closedSet.end()){
+            //       (*handle).state.dir = ((*iterC).dir^neighbor.state.dir) & neighbor.state.dir;
+            //     }
+            //    continue;
+            // }
 
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;
@@ -163,6 +160,7 @@ class CAStar {
             openSet.increase(handle);
             m_env.onDiscover(neighbor.state, (*handle).fScore,
                              (*handle).gScore);
+            // std::cout << "  this is a old node fscore, " << (*handle).fScore << ", gscore " << tentative_gScore<< ","  << neighbor.state.x << ", " << neighbor.state.y << std::endl;                             
           }
 
           // Best path for this node so far
@@ -173,7 +171,7 @@ class CAStar {
               neighbor.state,
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
-          std::cout << current.state.x << ", " << current.state.y <<", nei " << neighbor.state.x << ", " << neighbor.state.y << " ------------------------\n";
+          // std::cout << current.state.x << ", " << current.state.y <<", nei " << neighbor.state.x << ", " << neighbor.state.y << "------------------------\n";
         }
 
       }
@@ -202,9 +200,10 @@ class CAStar {
         return fScore > other.fScore;
       } else if(gScore != other.gScore){
         return gScore < other.gScore;
-      } else {
-    	  return state.dir < other.state.dir;
-      }      
+      } else if(state.dir_p != other.state.dir_p){
+        return state.dir_p > other.state.dir_p;
+      }else return state.dir < other.state.dir;
+     
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else {

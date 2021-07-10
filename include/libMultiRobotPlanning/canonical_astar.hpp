@@ -133,7 +133,6 @@ public:
     solution.fmin = 0;
     solution.actions.clear();
     solution.states.clear();
-
     bool success = m_astar.search(startState, astarsolution, startTime);
     // if(!success){
     //   std::cout << "cannoical Not successful \n";
@@ -173,7 +172,7 @@ public:
     void getNeighbors(
             const State& s,
              std::vector<Neighbor<State, Action, Cost> >& neighbors) {
-      bool is_debug_f = true;
+      bool is_debug_f = false;
       if(is_debug_f) std::cout << "EXPANDED current state: " << s.x << ", " << s.y  << " time "  << s.time  << " dir " << s.dir << " ----\n";
       neighbors.clear();
       if((s.dir & 0x01) && m_env.stateValid(State(s.time + 1, s.x - 1, s.y)) ){
@@ -202,6 +201,8 @@ public:
               n.dir |= 0x08;
             }
           }
+          if(s.dir & 0xff) n.dir_p = s.dir;
+          else n.dir_p = s.dir_p;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Left, 1));
           if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
@@ -234,6 +235,8 @@ public:
               n.dir |= 0x08;
             }
           }
+          if(s.dir & 0xff) n.dir_p = s.dir;
+          else n.dir_p = s.dir_p;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Right, 1));
             if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
@@ -241,6 +244,7 @@ public:
       }
 
       if((s.dir & 0x04) && m_env.stateValid(State(s.time + 1, s.x, s.y + 1)) ){
+        
         State n(s.time + 1, s.x, s.y + 1);
         if(m_env.transitionValid(s, n)){
           n.dir = 0x07;
@@ -248,6 +252,8 @@ public:
              && m_env.stateValid(State(s.time + 2, s.x, s.y))){
             n.dir |= 0x08;
           }
+          if(s.dir & 0xff) n.dir_p = s.dir;
+          else n.dir_p = s.dir_p;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Up, 1));
           if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
@@ -262,6 +268,8 @@ public:
              && m_env.stateValid(State(s.time + 2, s.x, s.y))){
             n.dir |= 0x04;
           }
+          if(s.dir & 0xff) n.dir_p = s.dir;
+          else n.dir_p = s.dir_p;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Down, 1));
           if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
@@ -320,7 +328,9 @@ public:
              || (m_env.isEdgeConstraintAtT(Location(s.x - 1, s.y - 1), Location(s.x, s.y - 1), s.time + 1) && (s.dir & 0x02))
               )){
             n.dir |= 0x08;
-          }        
+          }
+          if(s.dir & 0xff) n.dir_p = s.dir;
+          else n.dir_p = s.dir_p;      
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Wait, 1));
           if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";

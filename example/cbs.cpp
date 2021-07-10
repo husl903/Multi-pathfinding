@@ -33,6 +33,7 @@ struct State {
   }
 
   unsigned int dir = 0xff;
+  unsigned int dir_p = 0xff;
   int time;
   int x;
   int y;
