@@ -15,12 +15,14 @@
 
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
 #include <libMultiRobotPlanning/JPSSIPP_BIT.hpp>
+#include <libMultiRobotPlanning/JPSSIPP_BITCBS.hpp>
 #include <libMultiRobotPlanning/JPSSIPPNEWGEN.hpp>
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
+
 // #include <libMultiRobotPlanning/online_jump_point_locator2.hpp>
 
 using libMultiRobotPlanning::gridmap;
