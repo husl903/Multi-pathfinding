@@ -172,7 +172,7 @@ public:
     void getNeighbors(
             const State& s,
              std::vector<Neighbor<State, Action, Cost> >& neighbors) {
-      bool is_debug_f = true;
+      bool is_debug_f = false;
       if(is_debug_f) std::cout << "EXPANDED current state: " << s.x << ", " << s.y  << " time "  << s.time  << " dir " << s.dir << " ----\n";
       neighbors.clear();
       if((s.dir & 0x01) && m_env.stateValid(State(s.time + 1, s.x - 1, s.y)) ){
