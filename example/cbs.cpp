@@ -1477,7 +1477,7 @@ public:
 
  public:
   jpst_gridmap *jpst_gm_;
-  bool isDebug = true;
+  bool isDebug = false;
 };
 
 

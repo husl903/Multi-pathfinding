@@ -161,15 +161,15 @@ class CBS {
         return true;
       }
 
-        for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
-        		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
-        			std::cout << PJps.solution[jj].states[ii].second << ": " <<
-        						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
-								<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
-        		}
-        		std::cout << PJps.solution[jj].states.back().second << ": " <<
-        		  		   PJps.solution[jj].states.back().first << std::endl;
-        }
+        // for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
+        // 		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
+        // 			std::cout << PJps.solution[jj].states[ii].second << ": " <<
+        // 						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
+				// 				<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
+        // 		}
+        // 		std::cout << PJps.solution[jj].states.back().second << ": " <<
+        // 		  		   PJps.solution[jj].states.back().first << std::endl;
+        // }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
@@ -178,18 +178,21 @@ class CBS {
         HighLevelNodeJps newNodeJps = PJps;
         newNodeJps.id = id;
         
-        // for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
-        // 		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
-        // 			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
-        // 						newNodeJps.solution[jj].states[ii].first << "->" << newNodeJps.solution[jj].actions[ii].first
-				// 				<< "(cost: " << newNodeJps.solution[jj].actions[ii].second << ")" << std::endl;
-        // 		}
-        // 		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
-        // 		  		   newNodeJps.solution[jj].states.back().first << std::endl;
-        // }
+        bool is_debug_print = false;
+        if(is_debug_print){
+        for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
+        			std::cout << newNodeJps.solution[jj].states[ii].second << ": " <<
+        						newNodeJps.solution[jj].states[ii].first << "->" << newNodeJps.solution[jj].actions[ii].first
+								<< "(cost: " << newNodeJps.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << newNodeJps.solution[jj].states.back().second << ": " <<
+        		  		   newNodeJps.solution[jj].states.back().first << std::endl;
+        }
         if(newNodeJps.constraints[i].overlap(c.second)){
           std::cout << c.first << ", " << c.second <<"OVERLAP \n";
 
+        }
         }
         assert(!newNodeJps.constraints[i].overlap(c.second));
 
@@ -274,7 +277,7 @@ class CBS {
         is_first_constraint_v = true;
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
-          std::cout << " Vertex " << constraint << " \n";
+          if(is_debug_print) std::cout << " Vertex " << constraint << " \n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -285,7 +288,7 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-         	std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+         	if(is_debug_print) std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
         	if(constraint.x1 == constraint.x2){
         		if(constraint.y1 == constraint.y2 - 1){
@@ -350,15 +353,15 @@ class CBS {
         int GenAstarP = m_env.lowLevelGenerated();
         double tAstarP = timerAstarP.elapsedSeconds();
 
-                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                		"), Goal, (" << goal.x << " " << goal.y <<
-        				"), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
-        				", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
-                ", preTime, " << m_env.getPreTime(i) << 
-        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				" \n";
+                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                // 		"), Goal, (" << goal.x << " " << goal.y <<
+        				// "), Cost jps , " << newNodeJps.solution[i].cost<< " , VertexConstraint ," << newNodeJps.constraints[i].vertexConstraints.size() <<
+        				// ", EdgeConstraint , " << newNodeJps.constraints[i].edgeConstraints.size() <<
+                // ", preTime, " << m_env.getPreTime(i) << 
+        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
+        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				// " \n";
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
           jpstbit.clearObstacle(location);

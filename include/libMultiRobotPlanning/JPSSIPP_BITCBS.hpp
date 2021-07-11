@@ -8,7 +8,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include "a_star_jpssipp.hpp"
+#include "a_star_jpssipp_t.hpp"
 #include "constants.hpp"
 
 
@@ -206,8 +206,11 @@ public:
     JPSSIPPState(const State& state, size_t interval, unsigned int dir)
         : state(state), interval(interval), dir(dir), g_cost(0), flag_wait(false){}
 
-    JPSSIPPState(const State& state, size_t interval, unsigned int dir,Cost g_cost, bool flag_wait)
+    JPSSIPPState(const State& state, size_t interval, unsigned int dir, unsigned int dir_p, Cost g_cost, bool flag_wait)
+        : state(state), interval(interval), dir(dir), dir_p(dir_p), g_cost(g_cost), flag_wait(flag_wait){}
+    JPSSIPPState(const State& state, size_t interval, unsigned int dir, Cost g_cost, bool flag_wait)
         : state(state), interval(interval), dir(dir), g_cost(g_cost), flag_wait(flag_wait){}
+
 
     bool operator==(const JPSSIPPState& other) const {
       return std::tie(state, interval) == std::tie(other.state, other.interval);
@@ -222,6 +225,7 @@ public:
     Cost g_cost;
     State state;
     unsigned int dir = 0xf;
+	unsigned int dir_p = 0xf;
     bool flag_wait = false;
     Action action;
     size_t interval = -1;
@@ -325,8 +329,8 @@ public:
 			  
       		  jps_successors.clear();
 			  int costg = 0;
-			  if(s.dir & 0x01) getJPSLeft(s_temp, 0x01, 0, costg);
-			  if(s.dir & 0x02) getJPSRight(s_temp, 0x02, 0, costg);
+			  if(s.dir & 0x01) getJPSLeft(s_temp, 0x01, 0x01, 0, costg);
+			  if(s.dir & 0x02) getJPSRight(s_temp, 0x02, 0x02, 0, costg);
 			  getJPSVertical(s_temp, s.dir, costg);
 
          	  //Generate the waiting successor
@@ -417,6 +421,7 @@ public:
  					}
  						m_env.num_generation++;
 							// std::cout << "Waiting left " << actualStartTimeP << "  ---------------\n";
+						temp_state.dir_p = s.dir;
         				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
         						actualStartTimeP + 1 - m_lastGScore));
         		   }
@@ -507,6 +512,7 @@ public:
            				   }*/
            			   }
            			   m_env.num_generation++;
+          			   temp_state.dir_p = s.dir;
            			   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
            					actualStartTimeP + 1 - m_lastGScore));
            		   }
@@ -545,6 +551,7 @@ public:
              			   }
          				   temp_state.dir |= 0x07;
          				   m_env.num_generation++;
+						   temp_state.dir_p = s.dir;
             			   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Up,
             					   actualStartTimeP + 1 - m_lastGScore));
          			   }
@@ -587,6 +594,7 @@ public:
              			   }
         				   temp_state.dir |= 0x0b;
         				   m_env.num_generation++;
+						   temp_state.dir_p = s.dir;
         				   jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_state, Action::Down,
         						   actualStartTimeP + 1 - m_lastGScore));
         			   }
@@ -622,13 +630,13 @@ public:
 
           	  for ( auto& m : jps_successors) {
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
-  						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
+  						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir, m.state.dir_p, m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
            		  	Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
 					if(m_env.isDebug)
  				  	std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " gvalue " 
 					   << m.cost + m_lastGScore << " m.cost last-gvalue " << m.cost << " " << m_lastGScore << " hvalue " << hvalue << " f " << hvalue + m.cost + m_lastGScore  
-					   << " dir " << m.state.dir <<  " interval " << m.state.interval << "\n";
+					   << " dir " << m.state.dir << " dir_p " << m.state.dir_p <<" interval " << m.state.interval << "\n";
           	  }
           }
        }
@@ -783,9 +791,10 @@ public:
 		jumpcost = num_steps;
 	}
 
-	void getJPSLeft(JPSSIPPState s, unsigned int dir, Cost current_cost, Cost& jumpcost){
+	void getJPSLeft(JPSSIPPState s, unsigned int dir, unsigned int dir_p, Cost current_cost, Cost& jumpcost){
 		if(isSolution(s)){
 			flag_is_solution = true;
+			s.dir_p = dir_p;
 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Left, current_cost));
 			return;
 		}		
@@ -815,7 +824,7 @@ public:
 			is_edge_collision = true;
 			temp_s.state.x = s.state.x - 1;
 			bool issafe = false;
-			if(CheckJPSLeft(temp_s, m_lastGScore + current_cost, current_cost, issafe)){
+			if(CheckJPSLeft(temp_s, m_lastGScore + current_cost, current_cost, issafe, dir_p)){
 				return;
 			}
 		}
@@ -889,7 +898,7 @@ public:
 						&& current_jumpnode_id + 1 < checked_id
 						&& m_env.stateValid(temp_s.state) && temp_s.state.x < s.state.x){
 						if(m_env.isDebug)std::cout << "Cost " << m_lastGScore + current_cost - 2 + stop_pos << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext)) {
+				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -906,7 +915,7 @@ public:
 						&& current_jumpnode_id < checked_id
 						&& m_env.stateValid(temp_s.state)){
 						if(m_env.isDebug) std::cout << m_lastGScore + current_cost + stop_pos -1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos -1 + num * 31, current_cost, isSafeNext)) {
+				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos -1 + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -923,7 +932,7 @@ public:
 						&& current_jumpnode_id -1 < checked_id
 						&& m_env.stateValid(temp_s.state)){
 						if(m_env.isDebug) std::cout << m_lastGScore + current_cost + 1 + stop_pos - 1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + 1 + stop_pos -1 + num * 31, current_cost, isSafeNext)) {
+				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + 1 + stop_pos -1 + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -956,6 +965,7 @@ public:
 					size_t intervalId;
 					bool isSafe = findSafeInterval(temp_successor.state, m_lastGScore + current_cost + steps, intervalId);
 					temp_successor.interval = intervalId;
+					temp_successor.dir_p = dir_p;
 					if(m_env.stateValid(temp_successor.state) && isSafe){
 						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor,
 										Action::Left, current_cost + steps));	
@@ -967,6 +977,7 @@ public:
 				size_t intervalId;
 				bool isSafe = findSafeInterval(temp_successor.state, m_lastGScore + current_cost + steps, intervalId);
 				temp_successor.interval = intervalId;
+				temp_successor.dir_p = dir_p;
 		    	if(m_env.stateValid(temp_successor.state) && isSafe){
 					jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor,
 		          					Action::Left, current_cost + steps));				
@@ -976,7 +987,7 @@ public:
 
 	}
 
-	bool CheckJPSLeft(JPSSIPPState current_successor, Cost current_g, Cost& current_cost, bool &isSafe){
+	bool CheckJPSLeft(JPSSIPPState current_successor, Cost current_g, Cost& current_cost, bool &isSafe, unsigned int dir_p){
 		
         current_successor.dir = 0x0;
 		size_t successor_interval;
@@ -1002,8 +1013,6 @@ public:
         Cost actualStartTimeP = -1;
         Cost succEnd = INT_MAX;
         edgeCollision ecParent(current_g, Action::Right);
-
-		// std::cout << "!!!!!!!!!!!Current state successor " <<current_successor.state.x << " " << current_successor.state.y << " g " << current_g << " \n";
 
 		isSafe = false;
         if(m_env.stateValid(current_successor.state) && //not check for the temproal obstacles
@@ -1126,6 +1135,7 @@ public:
     			if(re_ac != -1){
     				if(re_ac == current_g + current_cost_l + 1) current_successor.dir = current_dir;
 					else current_successor.dir = 0x01;
+					current_successor.dir_p = dir_p;
 		        	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor,
 		        	 	Action::Left, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
@@ -1133,11 +1143,13 @@ public:
 				if (isSolution(current_successor)) {
     	            current_successor.dir = 0x01;
     	            flag_is_solution = true;
+					current_successor.dir_p = dir_p;
     	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
     	        }
 				if(actualStartTimeP != current_g){
 					current_successor.dir = 0x01;
+					current_successor.dir_p = dir_p;
     	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Left, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
 				}
@@ -1146,9 +1158,10 @@ public:
 		return false;
 	}
 
-	void getJPSRight(JPSSIPPState s, unsigned int dir, Cost current_cost, Cost& jumpcost){
+	void getJPSRight(JPSSIPPState s, unsigned int dir, unsigned int dir_p, Cost current_cost, Cost& jumpcost){
 		if(isSolution(s)){
 			flag_is_solution = true;
+			s.dir_p = dir_p;
 			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Right, current_cost));
 			return;
 		}
@@ -1179,7 +1192,7 @@ public:
 			bool isSafeNext = false;
 			temp_s.state.x = s.state.x + 1;
 			bool issafe = false;
-			if(CheckJPSRight(temp_s, m_lastGScore + current_cost, current_cost, issafe)){
+			if(CheckJPSRight(temp_s, m_lastGScore + current_cost, current_cost, issafe, dir_p)){
 				return;
 			}
   		    // std::cout << "Enter Right rieght current_cost " << m_lastGScore << ", "<< current_cost  << ", " << actualStartTimeP << " \n";			
@@ -1266,7 +1279,7 @@ public:
 						&& current_jumpnode_id - 1 > checked_id
 						&& m_env.stateValid(temp_s.state) && temp_s.state.x > s.state.x){
 	   					// if(m_env.isDebug) std::cout << checked_id << " " <<jumpnode_id + stop_pos - 1 <<  " " << temp_s.state.x << " " << temp_s.state.y << " G " << " Temp_s state 11111\n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext)) {
+						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -1283,7 +1296,7 @@ public:
 						&& current_jumpnode_id > checked_id
 						&& m_env.stateValid(temp_s.state)){
 					    if(m_env.isDebug) std::cout << checked_id << " " <<jumpnode_id + stop_pos <<  " " << temp_s.state.x << " " << temp_s.state.y << " Temp_s state 22222\n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 1 + num * 31, current_cost, isSafeNext)) {
+						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 1 + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -1300,7 +1313,7 @@ public:
 						&& m_env.stateValid(temp_s.state)){
 						if(m_env.isDebug) std::cout << temp_s.state.x << " " << temp_s.state.y << " Temp_s state 33333 \n";
 						if(m_env.isDebug)  std::cout <<"Gcost " << m_lastGScore << " " << " current " << current_cost <<  " Right node \n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos + num * 31, current_cost, isSafeNext)) {
+						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos + num * 31, current_cost, isSafeNext, dir_p)) {
 							is_found = true;
 							return;
 						}
@@ -1330,10 +1343,11 @@ public:
 			steps = max_id - current_id;
 			if(deadend){
 				if(max_id != jump_id && max_id != current_id){
-					temp_successor.dir = 0x02;
+					temp_successor.dir = dir;
 					size_t intervalId;
 					bool isSafe = findSafeInterval(temp_successor.state, m_lastGScore + current_cost + steps, intervalId);
 					temp_successor.interval = intervalId;
+					temp_successor.dir_p = dir_p;
 					if(m_env.stateValid(temp_successor.state) && isSafe)
 						jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor,
 							Action::Right, current_cost + steps));	
@@ -1343,6 +1357,7 @@ public:
 				size_t intervalId;
 				bool isSafe = findSafeInterval(temp_successor.state, m_lastGScore + current_cost + steps, intervalId);
 				temp_successor.interval = intervalId;
+				temp_successor.dir_p = dir_p;
 				if(m_env.stateValid(temp_successor.state) && isSafe)
 				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor,
 		        		Action::Right, current_cost + steps));	
@@ -1350,7 +1365,7 @@ public:
 		}
 	}
 
-	bool CheckJPSRight(JPSSIPPState current_successor, Cost current_g, Cost& current_cost, bool& isSafe){
+	bool CheckJPSRight(JPSSIPPState current_successor, Cost current_g, Cost& current_cost, bool& isSafe, unsigned int dir_p){
 
         current_successor.dir = 0x0;
 		size_t successor_interval;
@@ -1498,18 +1513,21 @@ public:
     			if(re_ac != -1){		
     				if(re_ac == current_g + current_cost_l + 1) current_successor.dir = current_dir;
 					else current_successor.dir = 0x02;
+					current_successor.dir_p = dir_p;
 		        	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, 
 					 Action::Right, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
     			}
 				if (isSolution(current_successor)) {
     	            current_successor.dir = 0x02;
+					current_successor.dir_p = dir_p;
     	            flag_is_solution = true;
     	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
     	        }
 				if(actualStartTimeP != current_g){
 	   	            current_successor.dir = 0x02;
+					current_successor.dir_p = dir_p;
     	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Right, current_g + current_cost_l + 1 - m_lastGScore));
 					return true;
 				}
@@ -1522,6 +1540,7 @@ public:
 
         if (isSolution(s)) {
        		flag_is_solution = true;
+			s.dir_p = dir;
       		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(s, Action::Left, current_cost));
            	return ;
         }
@@ -1551,8 +1570,8 @@ public:
      				temp_s.dir = 0x03;
      				m_env.num_generation++;
 					Cost jump_cost;
-					getJPSLeft(temp_s, 0x01, current_cost_l, jump_cost);
-					getJPSRight(temp_s, 0x02, current_cost_l, jump_cost);
+					getJPSLeft(temp_s, 0x01, 0x04, current_cost_l, jump_cost);
+					getJPSRight(temp_s, 0x02, 0x04, current_cost_l, jump_cost);
      			}
     	        const auto& si_s_l = safeIntervals(temp_s.state);
      	        Cost si_s_l_end = si_s_l.at(temp_s.interval).end;
@@ -1612,6 +1631,7 @@ public:
 								}
 								
 								if(current_successor.dir != 0x00){
+									current_successor.dir_p = 0x04;
            							jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
            							break;
 								}
@@ -1619,6 +1639,7 @@ public:
                 			if(flag_re_down){
                 				if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
                 				else current_successor.dir = 0x07;
+								current_successor.dir_p = 0x04;
                     			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
                     			break;
                 			}
@@ -1662,6 +1683,7 @@ public:
 
             	        if (isSolution(current_successor)) {
             	         	current_successor.dir = 0x07;
+    					    current_successor.dir_p = 0x04;
             	            flag_is_solution = true;
             	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	           	break ;
@@ -1674,10 +1696,12 @@ public:
             	            if(m_env.isFCheck()){
             	            	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	            	if(succ_f > par_f){
+									current_successor.dir_p = 0x04;
             	             		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             		break ;
             	             	}
             	            }else {
+								current_successor.dir_p = 0x04;
             	            	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             	break ;
             	            }
@@ -1685,7 +1709,8 @@ public:
             			current_cost_l++;
 						if(current_cost_l - current_cost_l_pre > 1){
             	          if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
-            	          else current_successor.dir = 0x07;						  
+            	          else current_successor.dir = 0x07;
+						  current_successor.dir_p = 0x04;					  
 						  jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l));
 						  break;
 						}
@@ -1710,8 +1735,8 @@ public:
      				temp_s.dir = 0x03;
 					Cost jump_cost;
 					// std::cout << temp_s.state.x << " " << temp_s.state.y << " !!!!!\n";
-					getJPSLeft(temp_s, 0x01, current_cost_l, jump_cost);
-					getJPSRight(temp_s, 0x02, current_cost_l, jump_cost);
+					getJPSLeft(temp_s, 0x01, 0x08, current_cost_l, jump_cost);
+					getJPSRight(temp_s, 0x02, 0x08, current_cost_l, jump_cost);
      				m_env.num_generation++;
      			}
 
@@ -1813,6 +1838,7 @@ public:
                 			if(flag_re_up){
                 				if(down_start_t == m_lastGScore + current_cost_l + 1) current_successor.dir = 0x0f;
                 				else current_successor.dir = 0x0b;
+								current_successor.dir_p = 0x08;
                     			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
                     			break;
                 			}
@@ -1821,6 +1847,7 @@ public:
             	        if (isSolution(current_successor)) {
             	        	flag_is_solution = true;
             	            current_successor.dir = 0x0b;
+							current_successor.dir_p =0x08;
             	           	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
             	           	break ;
             	        }
@@ -1830,6 +1857,7 @@ public:
            	            // if(step >= m_env.limit_jump){
     	             		if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
     	             		else current_successor.dir = 0x0b;
+							current_successor.dir_p = 0x08;
             	            if(m_env.isFCheck()){
             	             	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             	if(succ_f > par_f){
@@ -1844,7 +1872,8 @@ public:
             			current_cost_l++;
 						if(current_cost_l - current_cost_l_pre > 1){
             	          if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
-            	          else current_successor.dir = 0x0b;						  
+            	          else current_successor.dir = 0x0b;	
+						  current_successor.dir_p = 0x08;					  
 						  jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l));
 						  break;
 						}						
@@ -2811,7 +2840,7 @@ public:
 
  private:
   JPSSIPPEnvironment m_env;
-  JPSAStar<JPSSIPPState, JPSSIPPAction, Cost, JPSSIPPEnvironment, JPSSIPPStateHasher, JPSSIPPStateHasher> m_astar;
+  JPSTAStar<JPSSIPPState, JPSSIPPAction, Cost, JPSSIPPEnvironment, JPSSIPPStateHasher, JPSSIPPStateHasher> m_astar;
 };
 
 }  // namespace libMultiRobotPlanning
