@@ -172,7 +172,7 @@ public:
     void getNeighbors(
             const State& s,
              std::vector<Neighbor<State, Action, Cost> >& neighbors) {
-      bool is_debug_f = false;
+      bool is_debug_f = true;
       if(is_debug_f) std::cout << "EXPANDED current state: " << s.x << ", " << s.y  << " time "  << s.time  << " dir " << s.dir << " ----\n";
       neighbors.clear();
       if((s.dir & 0x01) && m_env.stateValid(State(s.time + 1, s.x - 1, s.y)) ){
@@ -201,11 +201,10 @@ public:
               n.dir |= 0x08;
             }
           }
-          if(s.dir & 0xff) n.dir_p = s.dir;
-          else n.dir_p = s.dir_p;
+          n.dir_p = 0x01;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Left, 1));
-          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
+          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }
       }
         
@@ -235,11 +234,11 @@ public:
               n.dir |= 0x08;
             }
           }
-          if(s.dir & 0xff) n.dir_p = s.dir;
-          else n.dir_p = s.dir_p;
+
+          n.dir_p = 0x02;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Right, 1));
-            if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
+            if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }        
       }
 
@@ -252,11 +251,11 @@ public:
              && m_env.stateValid(State(s.time + 2, s.x, s.y))){
             n.dir |= 0x08;
           }
-          if(s.dir & 0xff) n.dir_p = s.dir;
-          else n.dir_p = s.dir_p;
+
+          n.dir_p = 0x04;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Up, 1));
-          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
+          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }        
       }
 
@@ -268,11 +267,11 @@ public:
              && m_env.stateValid(State(s.time + 2, s.x, s.y))){
             n.dir |= 0x04;
           }
-          if(s.dir & 0xff) n.dir_p = s.dir;
-          else n.dir_p = s.dir_p;
+
+          n.dir_p = 0x08;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Down, 1));
-          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
+          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }        
       }
 
@@ -329,11 +328,10 @@ public:
               )){
             n.dir |= 0x08;
           }
-          if(s.dir & 0xff) n.dir_p = s.dir;
-          else n.dir_p = s.dir_p;      
+          n.dir_p = s.dir;
           neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Wait, 1));
-          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir << " \n";
+          if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }
       }
 
