@@ -320,7 +320,6 @@ public:
                 }
             } else {
 
-
               const auto& sis_s = safeIntervals(s.state);
           	  Cost start_t = m_lastGScore;
       		  Cost end_t = sis_s.at(s.interval).end;

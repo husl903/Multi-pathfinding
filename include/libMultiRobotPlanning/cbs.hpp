@@ -147,7 +147,7 @@ class CBS {
       num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 300){
+      if(duration1 > 3600){
     	  return false;
       }
 
