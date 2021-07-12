@@ -201,7 +201,7 @@ class CAStar {
       } else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else if(state.dir_p != other.state.dir_p){
-        return state.dir_p < other.state.dir_p;
+        return state.dir_p > other.state.dir_p;
       }else return state.dir < other.state.dir;
      
 /*      else if(gScore != other.gScore){

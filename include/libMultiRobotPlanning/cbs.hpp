@@ -144,7 +144,8 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration1 > 300){
+      if(duration1 > 1800){
+        std::cout << "Num_node " << num_node << " ";
     	  return false;
       }
 
@@ -349,32 +350,34 @@ class CBS {
         Timer timerAstar;
         timerAstar.reset();
         int ExpA =  m_env.lowLevelExpanded();
-        bool success = lowLevel.search(initialStates[i], newNode.solution[i]);
+        PlanResult<State, Action, int> solutiontemp4;        
+        bool success = lowLevel.search(initialStates[i], solutiontemp4);
         timerAstar.stop();
         int ExpAstar = m_env.lowLevelExpanded() - ExpA;
         int GenAstar = m_env.lowLevelGenerated();
         double tAstar = timerAstar.elapsedSeconds();
 
-        m_env.setExactHeuristTrue();
-        LowLevelEnvironment llenvP(m_env, i, newNode.constraints[i]);
-        LowLevelSearch_t lowLevelP(llenvP);
+        // m_env.setExactHeuristTrue();
+        // LowLevelEnvironment llenvP(m_env, i, newNode.constraints[i]);
+        // LowLevelSearch_t lowLevelP(llenvP);
 
-        Timer timerAstarP;
-        timerAstarP.reset();
-        int ExpAP =  m_env.lowLevelExpanded();
-        bool successP = lowLevelP.search(initialStates[i], newNode.solution[i]);
-        timerAstarP.stop();
-        int ExpAstarP = m_env.lowLevelExpanded() - ExpAP;
-        int GenAstarP = m_env.lowLevelGenerated();
-        double tAstarP = timerAstarP.elapsedSeconds();
+        // Timer timerAstarP;
+        // timerAstarP.reset();
+        // int ExpAP =  m_env.lowLevelExpanded();
+        // bool successP = lowLevelP.search(initialStates[i], newNode.solution[i]);
+        // timerAstarP.stop();
+        // int ExpAstarP = m_env.lowLevelExpanded() - ExpAP;
+        // int GenAstarP = m_env.lowLevelGenerated();
+        // double tAstarP = timerAstarP.elapsedSeconds();
         
         m_env.setLowLevelContext(i, &newNode.constraints[i]);
-         PlanResult<State, Action, int> solutiontemp4;
-        canonical_astar can_astar(m_env);
-        bool sucessCA = can_astar.search(initialStates[i], solutiontemp4);
-        newNode.solution[i] = solutiontemp4;
         
-
+        canonical_astar can_astar(m_env);
+        Timer timerCAstar;
+        timerCAstar.reset();
+        bool sucessCA = can_astar.search(initialStates[i], newNode.solution[i]);
+        timerCAstar.stop();
+        double tCAstar = timerCAstar.elapsedSeconds();
         newNode.cost += newNode.solution[i].cost;
 /*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
@@ -385,15 +388,15 @@ class CBS {
 				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<  " , " << GenSippM << " , " << GenJpsM <<
 				" \n";*/
 
-                // std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
-                // 		"), Goal, (" << goal.x << " " << goal.y <<
-        				// "), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
-        				// ", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
-                // ", preTime, " << m_env.getPreTime(i) << 
-        				// ", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit <<
-        				// ", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
-        				// ", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
-        				// " \n";
+                std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+                		"), Goal, (" << goal.x << " " << goal.y <<
+        				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
+        				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
+                ", preTime, " << m_env.getPreTime(i) << 
+        				", Time , " << tAstar << " , " << tSipp << " , " << tJps << ", " << tJpstbit << ", " << tCAstar <<
+        				", Exp , " << ExpAstar << " , " << ExpSipp << " , " << ExpJps <<
+        				", Gen , " << GenAstar << " , " << GenSipp << " , " << GenJps <<
+        				" \n";
 
         if(sucessCA && success){
           if(solutiontemp4.cost != newNode.solution[i].cost){
