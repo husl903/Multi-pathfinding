@@ -1117,7 +1117,7 @@ int main(int argc, char* argv[]) {
   timer.stop();
 
   if (success) {
-    std::cout << inputFile <<  " Planning successful! " << std::endl;
+    std::cout << inputFile <<  " Planning successful! time " << timer.elapsedSeconds()<< std::endl;
     int cost = 0;
     int makespan = 0;
     for (const auto& s : solution) {
