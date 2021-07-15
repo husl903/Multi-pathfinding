@@ -157,10 +157,17 @@ class SIPP {
                              astarsolution.actions[i].second));
       } else {
         // additional wait action before
-        solution.states.push_back(
-            std::make_pair<>(astarsolution.states[i].first.state,
-                             astarsolution.states[i].second));
-        solution.actions.push_back(std::make_pair<>(waitAction, waitTime));
+        // std::cout << "Wait Action " << astarsolution.states[i].first.state << ", " 
+        // << astarsolution.states[i].second << ", action " << waitAction << ", " << waitTime << ", " 
+        // << astarsolution.actions[i].first.action << ", "<< astarsolution.actions[i].first.time << " \n";
+
+        for(Cost ii = 0; ii < waitTime; ii++){
+          solution.states.push_back(
+              std::make_pair<>(astarsolution.states[i].first.state,
+                             astarsolution.states[i].second + ii));
+          solution.actions.push_back(std::make_pair<>(waitAction, 1));
+        }
+
         solution.states.push_back(
             std::make_pair<>(astarsolution.states[i].first.state,
                              astarsolution.states[i].second + waitTime));

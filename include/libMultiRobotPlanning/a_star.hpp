@@ -137,10 +137,10 @@ class AStar {
               continue;
             }
 
-            if (tentative_gScore == (*handle).gScore) {
-            	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
-               continue;
-            }
+            // if (tentative_gScore == (*handle).gScore) {
+            // 	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+            //    continue;
+            // }
 
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;

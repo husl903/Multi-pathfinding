@@ -599,15 +599,6 @@ class Environment {
 
     if(isprint) std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
 
-    // for(size_t ii = 0; ii < pool_k.size(); ii++){
-    //   if(isprint) std::cout << pool_k[ii].x << ", " << pool_k[ii].y << 
-    //   ", " << pool_k[ii].init_t << ", " << pool_k[ii].delta_t << ", id " << pool_k[ii].path_id << ", action " << pool_k[ii].ac << "  , pool 000000\n";
-
-    // }
-    // for(size_t ii = 0; ii < point_t.size(); ii++){
-    //   if(isprint) std::cout << point_t[ii].x << ", " << point_t[ii].y << 
-    //   ", " << point_t[ii].init_t << ", " << point_t[ii].delta_t << ", id " << point_t[ii].path_id << ", action " << point_t[ii].ac << "  , 000000\n";
-    // }
     result.time = std::numeric_limits<int>::max();
     for(size_t ii = 0; ii < point_t.size(); ii++){
       PathPoint current_p = point_t[ii];
@@ -1046,6 +1037,60 @@ class Environment {
           State state2b = getState(j, solution, t + 1);
           if (state1a.equalExceptTime(state2b) &&
               state1b.equalExceptTime(state2a)) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }  
+
+
+bool getFirstConflict(
+      const std::vector<PlanResult<Location, Action, int> >& solution,
+      Conflict& result, bool isFlag) {
+    int max_t = 0;
+    for (const auto& sol : solution) {
+      max_t = std::max<int>(max_t, sol.states.size() - 1);
+    }
+
+    for (int t = 0; t < max_t; ++t) {
+      // check drive-drive vertex collisions
+      for (size_t i = 0; i < solution.size(); ++i) {
+        Location state1 = getState(i, solution, t);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          Location state2 = getState(j, solution, t);
+          if (state1 == state2) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+            // std::cout << "VC " << t << "," << state1.x << "," << state1.y <<
+            // std::endl;
+            return true;
+          }
+        }
+      }
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution.size(); ++i) {
+        Location state1a = getState(i, solution, t);
+        Location state1b = getState(i, solution, t + 1);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          Location state2a = getState(j, solution, t);
+          Location state2b = getState(j, solution, t + 1);
+          if (state1a == state2b &&
+              state1b == state2a) {
             result.time = t;
             result.agent1 = i;
             result.agent2 = j;

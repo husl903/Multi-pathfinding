@@ -165,12 +165,6 @@ class JPSTAStar {
 
         	  if(tentative_gScore >= (*handle).gScore) continue;
             
-//         	  if((tentative_gScore == (*handle).gScore)){
-// //        		  if((*handle).state.dir > neighbor.state.dir)
-//         		 (*handle).state.dir |= neighbor.state.dir;
-//         		  continue;
-//         	  }
-
             // update f and gScore
 //            Cost delta = (*handle).gScore - tentative_gScore;
             (*handle).state.dir =  neighbor.state.dir;
@@ -213,7 +207,7 @@ class JPSTAStar {
       } else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else if(state.dir_p != other.state.dir_p){
-    	  return state.dir_p < other.state.dir_p;
+    	  return state.dir_p > other.state.dir_p;
       }else{
         return state.dir < other.state.dir;
       }
