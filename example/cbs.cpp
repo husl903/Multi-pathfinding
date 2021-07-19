@@ -128,7 +128,9 @@ struct VertexConstraint {
   }
 
   friend std::ostream& operator<<(std::ostream& os, const VertexConstraint& c) {
-    return os << "VC(" << c.time << "," << c.x << "," << c.y << ")";
+    // return os << "VC(" << c.time << "," << c.x << "," << c.y << ")";
+    return os << c.time << " " << c.x << " " << c.y << "  VC";
+
   }
 };
 
@@ -165,8 +167,10 @@ struct EdgeConstraint {
   }
 
   friend std::ostream& operator<<(std::ostream& os, const EdgeConstraint& c) {
-    return os << "EC(" << c.time << "," << c.x1 << "," << c.y1 << "," << c.x2
-              << "," << c.y2 << ")";
+    // return os << "EC(" << c.time << "," << c.x1 << "," << c.y1 << "," << c.x2
+    //           << "," << c.y2 << ")";
+    return os <<  c.time << " " << c.x1 << " " << c.y1 << " " << c.x2
+              << " " << c.y2 << " EC";              
   }
 };
 
@@ -211,9 +215,11 @@ struct Constraints {
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Constraints& c) {
+    os << "Vertex " << c.vertexConstraints.size() << std::endl;
     for (const auto& vc : c.vertexConstraints) {
       os << vc << std::endl;
     }
+    os << "Edge " << c.edgeConstraints.size() << std::endl;
     for (const auto& ec : c.edgeConstraints) {
       os << ec << std::endl;
     }
@@ -1108,6 +1114,7 @@ bool getFirstConflict(
     return false;
   }  
 
+
   void createConstraintsFromConflict(
       const Conflict& conflict, std::map<size_t, Constraints>& constraints) {
     if (conflict.type == Conflict::Vertex) {
@@ -1127,6 +1134,19 @@ bool getFirstConflict(
       constraints[conflict.agent2] = c2;
     }
   }
+
+  void createConstraintsFromV(
+      int time_h, int xx, int yy, Constraints& constraints) {
+
+      constraints.vertexConstraints.emplace(
+          VertexConstraint(time_h, xx, yy));
+  }  
+  void createConstraintsFromE(
+      int time_h, int xx1, int yy1, int xx2, int yy2, Constraints& constraints) {
+      
+      constraints.edgeConstraints.emplace(
+          EdgeConstraint(time_h, xx1, yy1, xx2, yy2));
+  }    
 
   void onExpandHighLevelNode(int /*cost*/) { m_highLevelExpanded++; }
 
