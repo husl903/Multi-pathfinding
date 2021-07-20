@@ -113,12 +113,106 @@ class CBS {
       LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
       LowLevelSearch_t lowLevel(llenv);
       bool success = lowLevel.search(initialStates[i], start.solution[i]);
-      if (!success) {
-        return false;
-      }
+      // if (!success) {
+      //   return false;
+      // }
       // }
       start.cost += start.solution[i].cost;
     }
+
+
+/*    std::vector<HighLevelNode> high_levle_node;
+    std::ifstream file_res("lak303d-highnode-1.txt");
+    high_levle_node.resize(1000);
+    int high_node_num = 548;
+    for(int h_node = 0; h_node < high_node_num; h_node++){
+      int id_i, agent_id_i, cost_i;
+      high_levle_node[h_node].solution.resize(initialStates.size());
+      high_levle_node[h_node].constraints.resize(initialStates.size());
+      std::string str1;
+      file_res >> str1  >>id_i  >> str1 >> agent_id_i >> str1 >> cost_i;
+      // std::cout << id_i << agent_id_i << cost_i;
+      high_levle_node[h_node].id = id_i;
+      high_levle_node[h_node].agent_id = agent_id_i;
+      high_levle_node[h_node].cost = cost_i;
+      for(int num_agent = 0; num_agent < initialStates.size(); num_agent++){
+        std::string str;
+        file_res >> str;
+        int v_constraint_num = 0;
+        int e_constraint_num = 0;
+        file_res >> str >> v_constraint_num;
+        // std::cout << str << v_constraint_num<< std::endl;
+        for(int vv = 0; vv < v_constraint_num; vv++){
+          Constraints c1;
+          int vc_time, vc_x1, vc_y1;
+          file_res >> vc_time >> vc_x1 >> vc_y1 >> str;
+          m_env.createConstraintsFromV(vc_time, vc_x1, vc_y1, c1);
+          // std::cout << vc_time << ", (" << vc_x1 << ", " << vc_y1 << ")"<< c1 << " Here \n";
+          
+          high_levle_node[h_node].constraints[num_agent].add(c1);
+        }
+        file_res >> str >> e_constraint_num;
+        // std::cout << str << e_constraint_num<< std::endl;
+        for(int ee = 0; ee < e_constraint_num; ee++){
+          Constraints c1;
+          int ec_time, ec_x1, ec_y1, ec_x2, ec_y2;
+          file_res >> ec_time >> ec_x1 >> ec_y1 >> ec_x2 >> ec_y2 >> str;
+          // std::cout << ec_time << ", (" << ec_x1 << ", " << ec_y1 << ")" << " (" << ec_x2 << ", " << ec_y2 << ")" << c1 << " Here \n";
+          m_env.createConstraintsFromE(ec_time, ec_x1, ec_y1, ec_x2, ec_y2, c1);
+          high_levle_node[h_node].constraints[num_agent].add(c1);          
+        }
+      }
+    }
+
+    Timer timerJpstbit;
+    timerJpstbit.reset();
+    for(int h_node = 0; h_node < high_node_num; h_node++){
+        size_t i = high_levle_node[h_node].agent_id;
+
+        if(i == -1) continue;
+        bool is_first_constraint_v = true;
+        bool is_first_constraint_e = true;
+        m_env.resetTemporalObstacle();
+        
+        for(auto & constraint : high_levle_node[h_node].constraints[i].vertexConstraints){
+        	Location location(constraint.x, constraint.y);
+        	m_env.setTemporalObstacle(location, constraint.time);
+        }
+        for(auto & constraint : high_levle_node[h_node].constraints[i].edgeConstraints){
+        	Location location(constraint.x2, constraint.y2);
+        	m_env.setTemporalEdgeConstraint(location, constraint.time);
+
+        }
+
+        Location goal = m_env.setGoal(i);
+        m_env.Reset();
+        Location startNode(-1, -1);
+        startNode.x = initialStates[i].x;
+        startNode.y = initialStates[i].y;
+         m_env.setExactHeuristTrue();
+
+
+        // LowLevelEnvironment llenv(m_env, i, high_levle_node[h_node].constraints[i]);
+        // LowLevelSearch_t lowLevel(llenv);
+        // PlanResult<State, Action, int> solutiontemp4;        
+        // bool successTA = lowLevel.search(initialStates[i], solutiontemp4);
+     
+
+        m_env.setLowLevelContext(i, &high_levle_node[h_node].constraints[i]);
+        PlanResult<State, Action, int> solutiontempCa;  
+        canonical_astar can_astar(m_env);
+        bool successCA = can_astar.search(initialStates[i], solutiontempCa);
+
+        // if(solutiontemp4.cost != solutiontempCa.cost){
+        //   std::cout << "Error " << " \n";
+        //   return false;
+        // }
+// ?        std::cout << solutionSipp.cost << ", " << solutiontempJps.cost << " \n";
+        
+    }
+    timerJpstbit.stop();
+    double tSipp = timerJpstbit.elapsedSeconds();
+    std::cout << "time " << tSipp << " \n";*/
 
     // std::priority_queue<HighLevelNode> open;
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
@@ -238,9 +332,9 @@ class CBS {
         	// 		jpstbit.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
         	// 	}
         	// }
-        	if(is_first_constraint_e){
-        		is_first_constraint_e = false;
-        	}
+        	// if(is_first_constraint_e){
+        	// 	is_first_constraint_e = false;
+        	// }
         }
         // jps.sortCollisionVertex();
         // jps.sortCollisionEdgeConstraint();
@@ -379,7 +473,7 @@ class CBS {
         // timerCAstar.stop();
         // double tCAstar = timerCAstar.elapsedSeconds();
         newNode.cost += newNode.solution[i].cost;
-/*        std::cout << i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
+/*        std::cout successCA<< i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
 				"), Cost jps , " << solutiontemp.cost << " , VertexConstraint ," << newNode.constraints[i].vertexConstraints.size() <<
 				", EdgeConstraint , " << newNode.constraints[i].edgeConstraints.size() <<
@@ -548,6 +642,8 @@ class CBS {
     Cost cost;
 
     int id;
+
+    int agent_id = -1;
 
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >::handle_type

@@ -443,19 +443,31 @@ class SIPP {
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
 
-    	bool flag_1 = false;
-
     	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
     	while (low <= high){
     		if(m_edgeCollision_t[index][low] == ec) return true;
     		if(m_edgeCollision_t[index][high] == ec) return true;
     		mid = low + (high - low)/2;
     		if(m_edgeCollision_t[index][mid] == ec) return true;
-    		else if(m_edgeCollision_t[index][mid].t < ec.t){
+    		else if(m_edgeCollision_t[index][mid].t == ec.t){
+				int temp_it = mid;
+				while(--temp_it){
+					if(m_edgeCollision_t[index][temp_it].t != ec.t) break;
+					if(m_edgeCollision_t[index][temp_it] == ec) return true;
+				}
+				temp_it = mid;
+				while(++temp_it){
+					if(m_edgeCollision_t[index][temp_it].t != ec.t) break;
+					if(m_edgeCollision_t[index][temp_it] == ec) return true;
+					if(temp_it > m_edgeCollision_t[index].size() - 1) break;
+				}
+				return false;
+			}else if(m_edgeCollision_t[index][mid].t < ec.t){
     			low = mid + 1;
     		} else high = mid -1;
     	}
     	return false;
+
 /*    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;

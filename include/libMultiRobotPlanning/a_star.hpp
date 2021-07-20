@@ -139,7 +139,7 @@ class AStar {
             }
 
             if (tentative_gScore == (*handle).gScore) {
-            	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+            	// if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
                continue;
             }
 

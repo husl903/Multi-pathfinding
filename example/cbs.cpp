@@ -523,6 +523,22 @@ class Environment {
     }
   }
 
+  void createConstraintsFromV(
+      int time_h, int xx, int yy, Constraints& constraints) {
+    
+      constraints.vertexConstraints.emplace(
+          VertexConstraint(time_h, xx, yy));
+
+  }  
+
+  void createConstraintsFromE(
+      int time_h, int xx1, int yy1, int xx2, int yy2, Constraints& constraints) {
+    
+      constraints.edgeConstraints.emplace(EdgeConstraint(
+          time_h, xx1, yy1, xx2, yy2));
+
+  }    
+
   void onExpandHighLevelNode(int /*cost*/) { m_highLevelExpanded++; }
 
   void onExpandLowLevelNode(const State& /*s*/, int /*fScore*/,
