@@ -450,15 +450,25 @@ class SIPP {
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
 
-    	bool flag_1 = false;
-
     	int low =0, high = m_edgeCollision_t[index].size() - 1, mid = -1;
     	while (low <= high){
     		if(m_edgeCollision_t[index][low] == ec) return true;
     		if(m_edgeCollision_t[index][high] == ec) return true;
     		mid = low + (high - low)/2;
     		if(m_edgeCollision_t[index][mid] == ec) return true;
-    		else if(m_edgeCollision_t[index][mid].t < ec.t){
+			else if(m_edgeCollision_t[index][mid].t == ec.t){
+				int itt = mid;
+				while (--itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
+				}
+				itt = mid;
+				while(++itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
+				}
+				return false;				
+			}else if(m_edgeCollision_t[index][mid].t < ec.t){
     			low = mid + 1;
     		} else high = mid -1;
     	}
