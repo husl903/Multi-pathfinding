@@ -231,6 +231,7 @@ class CBS {
     Timer timer;
     timer.reset();
     int num_node = 0;
+    int gen_node = 0;
     while (!open.empty()) {
     	// endTotal = clock();
       // double duration =(double)(endTotal - startTotal)/CLOCKS_PER_SEC;
@@ -238,7 +239,7 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
 
-      if(duration1 > 1800){
+      if(duration1 > 100){
         std::cout << "Num_node " << num_node << " ";
     	  return false;
       }
@@ -250,7 +251,7 @@ class CBS {
 
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << " " << " num_node " << num_node << " ";
+        std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
         solution = P.solution;
         return true;
       }
@@ -260,20 +261,19 @@ class CBS {
       // std::cout << "Found conflict at t=" << conflict.time << " type: " <<
       // conflict.type << std::endl;
 
-        // for(size_t jj = 0; jj < P.solution.size(); jj++){        
-        // 		for (size_t ii = 0; ii < P.solution[jj].actions.size(); ++ii) {
-        // 			std::cout << P.solution[jj].states[ii].second << ": " <<
-        // 						P.solution[jj].states[ii].first << "->" << P.solution[jj].actions[ii].first
-				// 				<< "(cost: " << P.solution[jj].actions[ii].second << ")" << std::endl;
-        // 		}
-        // 		std::cout << P.solution[jj].states.back().second << ": " <<
-        // 		  		   P.solution[jj].states.back().first << std::endl;
-        // }
+        for(size_t jj = 0; jj < P.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < P.solution[jj].actions.size(); ++ii) {
+        			std::cout << P.solution[jj].states[ii].second << ": " <<
+        						P.solution[jj].states[ii].first << "->" << P.solution[jj].actions[ii].first
+								<< "(cost: " << P.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << P.solution[jj].states.back().second << ": " <<
+        		  		   P.solution[jj].states.back().first << std::endl;
+        }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
       for (const auto& c : constraints) {
-
         // std::cout << "Add HL node for " << c.first << std::endl;
         size_t i = c.first;
         // std::cout << "create child with id " << id << std::endl;
@@ -301,6 +301,7 @@ class CBS {
         for(auto & constraint : newNode.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
         	m_env.setTemporalObstacle(location, constraint.time);
+          std::cout << constraint << " \n";
         	// if(is_first_constraint_v){
         	// 	jps.setCollisionVertex(location, constraint.time, constraint.time, true);
         	// 	jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
@@ -315,6 +316,7 @@ class CBS {
         for(auto & constraint : newNode.constraints[i].edgeConstraints){
         	Location loc(constraint.x2, constraint.y2);
         	m_env.setTemporalEdgeConstraint(loc, constraint.time);
+          std::cout << constraint << " \n";
         	// if(constraint.x1 == constraint.x2){
         	// 	if(constraint.y1 == constraint.y2 - 1){
         	// 		jps.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
@@ -625,6 +627,7 @@ class CBS {
         if (successCA) {
           auto handle = open.push(newNode);
           (*handle).handle = handle;
+          gen_node++;
         }
 
         ++id;
