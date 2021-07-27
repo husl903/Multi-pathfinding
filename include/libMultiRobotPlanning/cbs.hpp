@@ -332,15 +332,15 @@ class CBS {
         return true;
       }
 //      std::cout << PJps;
-        // for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
-        // 		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
-        // 			std::cout << PJps.solution[jj].states[ii].second << ": " <<
-        // 						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
-				// 				<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
-        // 		}
-        // 		std::cout << PJps.solution[jj].states.back().second << ": " <<
-        // 		  		   PJps.solution[jj].states.back().first << std::endl;
-        // }
+        for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
+        		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
+        			std::cout << PJps.solution[jj].states[ii].second << ": " <<
+        						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
+								<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << PJps.solution[jj].states.back().second << ": " <<
+        		  		   PJps.solution[jj].states.back().first << std::endl;
+        }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
@@ -350,7 +350,7 @@ class CBS {
         newNodeJps.id = id;
         newNodeJps.agent_id = i;
         
-        bool is_debug_print = false;
+        bool is_debug_print = true;
         // if(is_debug_print){
         // for(size_t jj = 0; jj < newNodeJps.solution.size(); jj++){        
         // 		for (size_t ii = 0; ii < newNodeJps.solution[jj].actions.size(); ++ii) {
@@ -455,8 +455,8 @@ class CBS {
         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
         	Location location(constraint.x, constraint.y);
           m_env.setTemporalObstacle(location, constraint.time);
-          // if(is_debug_print) 
-          // std::cout << " Vertex " << constraint << " \n";
+          if(is_debug_print) 
+          std::cout << " Vertex " << constraint << " \n";
         	if(is_first_constraint_v){
         		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
         		is_first_constraint_v = false;
@@ -467,8 +467,8 @@ class CBS {
 
         is_first_constraint_e = true;
         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-         	// if(is_debug_print) 
-          //  std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+         	if(is_debug_print) 
+           std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
         	Location loc(constraint.x2, constraint.y2);
           m_env.setTemporalEdgeConstraint(loc, constraint.time);
           //m_env.setTemporalObstacle(loc, constraint.time);          

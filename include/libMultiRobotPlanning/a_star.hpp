@@ -133,7 +133,7 @@ class AStar {
 //             std::cout << "  this is an old node: " << tentative_gScore << "," << neighbor.state.State.x << ", " << neighbor.state.State.y << ", "
 //             << (*handle).gScore << std::endl;
             // We found this node before with a better path
-            if (tentative_gScore > (*handle).gScore) {
+            if (tentative_gScore >= (*handle).gScore) {
               continue;
             }
 
