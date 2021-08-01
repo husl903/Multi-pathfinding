@@ -394,23 +394,6 @@ class Environment {
 //	  std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  here here-----------\n";
     neighbors.clear();
 
-       if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
-        		|| isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
-    			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
-    			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
-    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
-    			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
-    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
-    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))
-    {
-      //wait
-      State n(s.time + 1, s.x, s.y);
-      m_lowLevelGeneration++;
-      if (stateValid(n) && transitionValid(s, n)) {
-        neighbors.emplace_back(
-            Neighbor<State, Action, int>(n, Action::Wait, 1));
-      }
-    }
     {
       //left
       State n(s.time + 1, s.x - 1, s.y);
@@ -448,6 +431,23 @@ class Environment {
 //        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
+    if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
+        || isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
+    		|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
+    		|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
+    		|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
+    		|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
+    		|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
+    		|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))
+    {
+      //wait
+      State n(s.time + 1, s.x, s.y);
+      m_lowLevelGeneration++;
+      if (stateValid(n) && transitionValid(s, n)) {
+        neighbors.emplace_back(
+            Neighbor<State, Action, int>(n, Action::Wait, 1));
+      }
+    }    
   }
 
   bool getFirstConflict(
