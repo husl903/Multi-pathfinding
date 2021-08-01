@@ -276,15 +276,24 @@ public:
       }
 
       if(m_env.stateValid(State(s.time + 1, s.x, s.y))){
-        if(m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y))
-        	|| m_env.isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || m_env.isTemporalEdgeConstraint(Location(s.x, s.y + 1))
-    			|| m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
-    			|| m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
-    			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y))
-    			|| m_env.isTemporalObstacle(Location(s.x, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x, s.y + 1))
-    			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y - 1))
-    			|| m_env.isTemporalObstacle(Location(s.x + 1, s.y + 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y + 1))
-          || m_env.isTemporalObstacle(Location(s.x, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x, s.y)))
+      if(m_env.isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || m_env.isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
+        		|| m_env.isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || m_env.isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
+    			|| m_env.isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || m_env.isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
+    			|| m_env.isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || m_env.isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
+    			|| m_env.isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || m_env.isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
+    			|| m_env.isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || m_env.isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
+    			|| m_env.isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || m_env.isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
+    			|| m_env.isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || m_env.isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))
+         
+        // if(m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y))
+        // 	|| m_env.isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || m_env.isTemporalEdgeConstraint(Location(s.x, s.y + 1))
+    		// 	|| m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
+    		// 	|| m_env.isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || m_env.isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
+    		// 	|| m_env.isTemporalObstacle(Location(s.x + 1, s.y)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y))
+    		// 	|| m_env.isTemporalObstacle(Location(s.x, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x, s.y + 1))
+    		// 	|| m_env.isTemporalObstacle(Location(s.x + 1, s.y - 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y - 1))
+    		// 	|| m_env.isTemporalObstacle(Location(s.x + 1, s.y + 1)) || m_env.isTemporalObstacle(Location(s.x - 1, s.y + 1))
+        //   || m_env.isTemporalObstacle(Location(s.x, s.y)) || m_env.isTemporalEdgeConstraint(Location(s.x, s.y)))
         {
           State n(s.time + 1, s.x, s.y);
           n.dir = 0x00;
@@ -329,8 +338,7 @@ public:
             n.dir |= 0x08;
           }
           n.dir_p = s.dir;
-          neighbors.emplace_back(
-            Neighbor<State, Action, int>(n, Action::Wait, 1));
+          neighbors.emplace_back(Neighbor<State, Action, int>(n, Action::Wait, 1));
           if(is_debug_f) std::cout << "Successor " << n.x << ", " << n.y << ", time " << n.time << ", dir " << n.dir  << ", dir_p " << n.dir_p << " \n";
         }
       }

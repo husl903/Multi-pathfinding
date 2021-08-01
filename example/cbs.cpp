@@ -391,17 +391,17 @@ class Environment {
 
   void getNeighbors(const State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
-	  // if(isOutput) std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  -----------\n";
+//	  std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  here here-----------\n";
     neighbors.clear();
 
-       if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
-        		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
-    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
-    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y)) || isTemporalObstacle(Location(s.x - 1, s.y))
-    			|| isTemporalObstacle(Location(s.x, s.y - 1)) || isTemporalObstacle(Location(s.x, s.y + 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y - 1)) || isTemporalObstacle(Location(s.x - 1, s.y - 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y + 1)) || isTemporalObstacle(Location(s.x - 1, s.y + 1)))
+       if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
+        		|| isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
+    			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
+    			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
+    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
+    			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
+    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
+    			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))
     {
       //wait
       State n(s.time + 1, s.x, s.y);
