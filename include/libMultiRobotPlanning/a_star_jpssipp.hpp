@@ -169,7 +169,7 @@ class JPSAStar {
 // //        		  if((*handle).state.dir > neighbor.state.dir)
 //         		 (*handle).state.dir |= neighbor.state.dir;
 //         		  continue;
-//         	  }
+//         	  } 
 
             // update f and gScore
 //            Cost delta = (*handle).gScore - tentative_gScore;
