@@ -393,25 +393,6 @@ class Environment {
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
 //	  std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  here here-----------\n";
     neighbors.clear();
-
-    {
-      //left
-      State n(s.time + 1, s.x - 1, s.y);
-      if (stateValid(n) && transitionValid(s, n)) {
-        neighbors.emplace_back(
-            Neighbor<State, Action, int>(n, Action::Left, 1));
-      }
-    }
-    {
-      //right
-      State n(s.time + 1, s.x + 1, s.y);
-      m_lowLevelGeneration++;
-      if (stateValid(n) && transitionValid(s, n)) {
-        neighbors.emplace_back(
-            Neighbor<State, Action, int>(n, Action::Right, 1));
-//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
-      }
-    }
     {
       //Up
       State n(s.time + 1, s.x, s.y + 1);
@@ -431,6 +412,25 @@ class Environment {
 //        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
       }
     }
+    {
+      //left
+      State n(s.time + 1, s.x - 1, s.y);
+      if (stateValid(n) && transitionValid(s, n)) {
+        neighbors.emplace_back(
+            Neighbor<State, Action, int>(n, Action::Left, 1));
+      }
+    }
+    {
+      //right
+      State n(s.time + 1, s.x + 1, s.y);
+      m_lowLevelGeneration++;
+      if (stateValid(n) && transitionValid(s, n)) {
+        neighbors.emplace_back(
+            Neighbor<State, Action, int>(n, Action::Right, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
+      }
+    }
+
     if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
         || isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
     		|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
