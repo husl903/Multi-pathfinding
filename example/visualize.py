@@ -78,7 +78,7 @@ class Animation:
                                init_func=self.init_func,
                                frames=int(self.T+1) * 10,
                                interval=100,
-                               blit=True)
+                               blit=False)
 
   def save(self, file_name, speed):
     self.anim.save(
