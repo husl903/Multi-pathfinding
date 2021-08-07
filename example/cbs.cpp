@@ -500,18 +500,6 @@ class Environment {
         time_a = solution[i].states[j].second;
         time_b = solution[i].states[j + 1].second;
         delta_t = time_b - time_a;
-        bool is_wait = false;
-        if(abs(a.x - b.x) + abs(a.y - b.y) == 1 && time_b - time_a > 1){
-          is_wait = true; //the last time-step
-          ac = Action::Wait;
-          point_t.emplace_back(a.x, a.y, delta_t - 1, time_a, ac, i, j);
-          if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 00****************\n";
-          if(is_first){
-            pool_k.emplace_back(a.x, a.y, delta_t - 1, time_a, ac, i, j);
-            is_first = false;
-          }
-        }
-
         if(a.x == b.x){
           int temp_y = b.y;
           if(a.y > b.y){
@@ -521,23 +509,19 @@ class Environment {
             ac = Action::Up;
             temp_y = b.y - 1;
           }
-          if(is_wait){
+          if(abs(a.y - b.y) < delta_t){
+            if(abs(a.y - b.y) > 1) point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i, j);
+            point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i, j);
             point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i, j);
+            if(is_first){
+              pool_k.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i, j);
+              is_first = false;
+            }             
           }else{
-            if(abs(a.y - b.y) < delta_t){
-               if(abs(a.y - b.y) > 1) point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i, j);
-               point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i, j);
-               point_t.emplace_back(a.x, temp_y, 1, time_b - 1, ac, i, j);
-              if(is_first){
-                pool_k.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i, j);
-                is_first = false;
-              }             
-            }else{
-              point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
-              if(is_first){
-                pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
-                is_first = false;
-              }             
+            point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
+            if(is_first){
+              pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
+              is_first = false;
             }
           }
           if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< "  11****************\n";
@@ -545,24 +529,21 @@ class Environment {
           int temp_x= b.x;
           if(a.x > b.x) {ac = Action::Left; temp_x = b.x + 1;}
           else {ac = Action::Right; temp_x = b.x - 1;}
-          if(is_wait){
+
+          if(abs(a.x - b.x) < delta_t){
+            if(abs(a.x - b.x) > 1)point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
+            point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i, j);
             point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i, j);
+            if(is_first){
+              pool_k.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
+              is_first = false;
+            }            
           }else{
-            if(abs(a.x - b.x) < delta_t){
-              if(abs(a.x - b.x) > 1)point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
-              point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i, j);
-              point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i, j);
-              if(is_first){
-                pool_k.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
-                is_first = false;
-              }            
-            }else{
-              point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
-              if(is_first){
-                pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
-                is_first = false;
-              }            
-            }
+            point_t.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
+            if(is_first){
+              pool_k.emplace_back(a.x, a.y, delta_t, time_a, ac, i, j);
+              is_first = false;
+            }            
           }
           if(isprint) std::cout << "(" << a.x << ", " << a.y << "),  " << i << ", "<< ac << ", " << time_a << ", " << delta_t<< " 22****************\n";
         }else{
