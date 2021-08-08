@@ -481,7 +481,7 @@ class Environment {
   }
 
   bool getFirstConflict(
-      const std::vector<PlanResult<Location, Action, int> >& solution,
+      std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result) {
     bool isprint = false;
     std::vector<PathPoint> point_t; //store the line points of all paths 
@@ -502,13 +502,8 @@ class Environment {
         delta_t = time_b - time_a;
         if(a.x == b.x){
           int temp_y = b.y;
-          if(a.y > b.y){
-            ac = Action::Down;
-            temp_y = b.y + 1;
-          }else {
-            ac = Action::Up;
-            temp_y = b.y - 1;
-          }
+          if(a.y > b.y){ ac = Action::Down; temp_y = b.y + 1;}
+          else{ ac = Action::Up; temp_y = b.y - 1;}
           if(abs(a.y - b.y) < delta_t){
             if(abs(a.y - b.y) > 1) point_t.emplace_back(a.x, a.y, abs(a.y - b.y) - 1, time_a, ac, i, j);
             point_t.emplace_back(a.x, temp_y, delta_t - abs(a.y - b.y), time_a + abs(a.y-b.y) - 1, Action::Wait, i, j);
@@ -531,7 +526,7 @@ class Environment {
           else {ac = Action::Right; temp_x = b.x - 1;}
 
           if(abs(a.x - b.x) < delta_t){
-            if(abs(a.x - b.x) > 1)point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
+            if(abs(a.x - b.x) > 1) point_t.emplace_back(a.x, a.y, abs(a.x-b.x) - 1, time_a, ac, i, j);
             point_t.emplace_back(temp_x, a.y, delta_t - abs(a.x - b.x), time_a + abs(a.x - b.x) - 1, Action::Wait, i, j);
             point_t.emplace_back(temp_x, a.y, 1, time_b - 1, ac, i, j);
             if(is_first){
@@ -565,7 +560,6 @@ class Environment {
             point_t.emplace_back(temp_x, b.y, delta_t - abs(a.x - b.x) - abs(a.y - b.y), time_a + abs(a.y - b.y) + abs(a.x - b.x) - 1, Action::Wait, i, j);
             point_t.emplace_back(temp_x, b.y, 1, time_b - 1, ac, i, j);
           }else {
-//            std::cout << " Here 111 " << a.x << ", " <<b.y << ", " << abs(a.x -b.x) << ", " << time_a << ",ac " << ac << ", age " << i << " \n";
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x), time_a + abs(a.y - b.y), ac, i, j);
           }
           if(is_first){
@@ -583,21 +577,24 @@ class Environment {
       }
       if(isprint) std::cout << "(" << solution[i].states.back().first.x << ", " << solution[i].states.back().first.y << "),  " 
       << i << ", "<< Action::Wait << ", " << solution[i].states.back().second << ", " << std::numeric_limits<int>::max() << " 55****************\n";
-
     }
+    const Location temp_t(0,1);
+    int cost_t = 10;
     std::sort(point_t.begin(), point_t.end(), comparsion);
 
     if(isprint) std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
 
+    std::cout << "Find the conflict *****************************************************************************************************\n";
     result.time = std::numeric_limits<int>::max();
     for(size_t ii = 0; ii < point_t.size(); ii++){
       PathPoint current_p = point_t[ii];
-       if(current_p.init_t > result.time) break;
+      if(current_p.init_t >= result.time) break;
       for(size_t jj = 0; jj < pool_k.size(); jj++){
         if(current_p.path_id == jj){
           pool_k[jj] = current_p;
           continue;
         }
+        if(pool_k[jj].init_t > result.time) continue;
 
         int time_diff = current_p.init_t - pool_k[jj].init_t;
         if(pool_k[jj].ac == Action::Down){
@@ -980,8 +977,12 @@ class Environment {
             }
           }
         }          
-
+        if(result.time != std::numeric_limits<int>::max()){
+          std::cout << current_p.point_id << ", " << pool_k[jj].point_id << ", path id " << current_p.path_id << ", " << pool_k[jj].path_id << " \n";
+        }
       }
+
+
     }
 
     if(result.time != std::numeric_limits<int>::max()) {
