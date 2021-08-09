@@ -326,7 +326,7 @@ class CBS {
       openJps.pop();
       
       Conflict conflict;
-      if(!m_env.getFirstConflict(PJps.solution, conflict)){
+      if(getFirstConflict(PJps.solution, conflict)){
         solution = PJps.solution;
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
@@ -671,6 +671,47 @@ class CBS {
     }
 
     return false;
+  }
+  bool getFirstConflict(
+      std::vector<PlanResult<Location, Action, int> >& solution,
+      Conflict& result){
+    std::vector<PlanResult<Location, Action, int>> solution_path;
+    solution_path.reserve(solution.size());
+    for(size_t i = 0; i < solution.size(); i++){
+      int tt = 0;
+      Location a(-1, -1), b(-1, -1); 
+      int time_a, time_b;
+      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size() - 1; jump_point_id++){
+        a = solution[i].states[jump_point_id].first;
+        b = solution[i].states[jump_point_id + 1].first;
+        time_a = solution[i].states[jump_point_id].second;
+        time_b = solution[i].states[jump_point_id + 1].second;
+        int delta_t = time_b - time_a;
+        int flag = 1;
+        Action ac_c;
+        if(a.y < b.y) { flag = -1; ac_c = Action::Down;}
+        else ac_c = Action::Up;
+        
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
+          Location temp_loc(a.x, a.y+flag*temp_y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+        }
+        if(a.x < b.x){flag = 1; ac_c = Action::Right;}
+        else{flag = -1; ac_c = Action::Left;}
+        for(int temp_x = 0; temp_x < abs(a.x - b.x); temp_x++){
+          Location temp_loc(a.x + flag*temp_x, b.y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+        } 
+        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
+          for(int temp_w = 0; temp_w  < delta_t - abs(a.x - b.x) - abs(a.y - b.y); temp_w++){
+            if(a.x == b.x) Location(temp_loc)
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
+          }
+        }
+      }
+    }
   }
 
  private:
