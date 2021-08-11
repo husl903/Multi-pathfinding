@@ -317,7 +317,7 @@ class CBS {
       num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 300){
+      if(duration1 > 600){
     	  return false;
       }
 
@@ -326,22 +326,23 @@ class CBS {
       openJps.pop();
       
       Conflict conflict;
-      if(getFirstConflict(PJps.solution, conflict)){
+      if(!m_env.getFirstConflict(PJps.solution, conflict)){
         solution = PJps.solution;
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
-//      std::cout << PJps;
-        // for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
-        // 		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
-        // 			std::cout << PJps.solution[jj].states[ii].second << ": " <<
-        // 						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
-				// 				<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
-        // 		}
-        // 		std::cout << PJps.solution[jj].states.back().second << ": " <<
-        // 		  		   PJps.solution[jj].states.back().first << std::endl;
-        // }
-
+    // std::cout << "-------------------------------------------------------------------------\n";
+    //   std::cout << PJps;
+    //     for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
+    //     		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
+    //     			std::cout << PJps.solution[jj].states[ii].second << ": " <<
+    //     						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
+		// 						<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
+    //     		}
+    //     		std::cout << PJps.solution[jj].states.back().second << ": " <<
+    //     		  		   PJps.solution[jj].states.back().first << std::endl;
+    //     }
+    //   std::cout << "-------------------------------------------------------------------------\n";
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
       for (const auto& c : constraints) {
@@ -446,63 +447,62 @@ class CBS {
         int ExpJps1 = m_env.num_expansion;
         int GenJps1 = m_env.num_generation;
 
+        // PlanResult<Location, Action, int> solutionSipp;
+        // sipp_t sipp(m_env);
+        // sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        // is_first_constraint_v = true;
+        // for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
+        // 	Location location(constraint.x, constraint.y);
+        //   m_env.setTemporalObstacle(location, constraint.time);
+        //   if(is_debug_print) 
+        //   std::cout << " Vertex " << constraint << " \n";
+        // 	if(is_first_constraint_v){
+        // 		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
+        // 		is_first_constraint_v = false;
+        // 	}else{
+        // 		sipp.setCollisionVertex(location, constraint.time, constraint.time, false);
+        // 	}
+        // }
+        // is_first_constraint_e = true;
+        // for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
+        //  	if(is_debug_print) 
+        //    std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
+        // 	Location loc(constraint.x2, constraint.y2);
+        //   m_env.setTemporalEdgeConstraint(loc, constraint.time);
+        //   //m_env.setTemporalObstacle(loc, constraint.time);          
+        // 	if(constraint.x1 == constraint.x2){
+        // 		if(constraint.y1 == constraint.y2 - 1){
+        // 			sipp.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
+        // 		}else if(constraint.y1 == constraint.y2 + 1){
+        // 			sipp.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
+        // 		}
+        // 	}else{
+        // 		if(constraint.x1 == constraint.x2 - 1){
+        // 			sipp.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
+        // 		}else if(constraint.x1 == constraint.x2 + 1){
+        // 			sipp.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
+        // 		}
+        // 	}
 
-        PlanResult<Location, Action, int> solutionSipp;
-        sipp_t sipp(m_env);
-        sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-        is_first_constraint_v = true;
-        for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
-        	Location location(constraint.x, constraint.y);
-          m_env.setTemporalObstacle(location, constraint.time);
-          if(is_debug_print) 
-          std::cout << " Vertex " << constraint << " \n";
-        	if(is_first_constraint_v){
-        		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
-        		is_first_constraint_v = false;
-        	}else{
-        		sipp.setCollisionVertex(location, constraint.time, constraint.time, false);
-        	}
-        }
-        is_first_constraint_e = true;
-        for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-         	if(is_debug_print) 
-           std::cout << " Edge Constraint " << constraint.x1 << " " << constraint.y1 << ", second " << constraint.x2 << " " <<constraint.y2 << " " << constraint.time << " --\n";
-        	Location loc(constraint.x2, constraint.y2);
-          m_env.setTemporalEdgeConstraint(loc, constraint.time);
-          //m_env.setTemporalObstacle(loc, constraint.time);          
-        	if(constraint.x1 == constraint.x2){
-        		if(constraint.y1 == constraint.y2 - 1){
-        			sipp.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
-        		}else if(constraint.y1 == constraint.y2 + 1){
-        			sipp.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
-        		}
-        	}else{
-        		if(constraint.x1 == constraint.x2 - 1){
-        			sipp.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
-        		}else if(constraint.x1 == constraint.x2 + 1){
-        			sipp.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
-        		}
-        	}
+        // 	if(is_first_constraint_e){
+        // 		is_first_constraint_e = false;
+        // 	}
+        // }
+        // sipp.sortCollisionVertex();
+        // sipp.sortCollisionEdgeConstraint();
+        // goal = m_env.setGoal(i);
+        // m_env.Reset();
+        // startNode.x = initialStates[i].x;
+        // startNode.y = initialStates[i].y;
 
-        	if(is_first_constraint_e){
-        		is_first_constraint_e = false;
-        	}
-        }
-        sipp.sortCollisionVertex();
-        sipp.sortCollisionEdgeConstraint();
-        goal = m_env.setGoal(i);
-        m_env.Reset();
-        startNode.x = initialStates[i].x;
-        startNode.y = initialStates[i].y;
-
-        Timer timerSipp;
-        timerSipp.reset();
-        m_env.setExactHeuristTrue();
-        bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
-        timerSipp.stop();
-        double tSipp = timerSipp.elapsedSeconds();
-        int ExpSipp = m_env.num_expansion;
-        int GenSipp = m_env.num_generation;        
+        // Timer timerSipp;
+        // timerSipp.reset();
+        // m_env.setExactHeuristTrue();
+        // bool isSippSucc = sipp.search(startNode, Action::Wait, solutionSipp, 0);
+        // timerSipp.stop();
+        // double tSipp = timerSipp.elapsedSeconds();
+        // int ExpSipp = m_env.num_expansion;
+        // int GenSipp = m_env.num_generation;        
 
         // m_env.setExactHeuristTrue();
         // LowLevelEnvironment llenv(m_env, i, newNodeJps.constraints[i]);
@@ -658,10 +658,10 @@ class CBS {
           auto handle = openJps.push(newNodeJps);
           (*handle).handle = handle;
           newNodeJps.agent_id = i;
-          if(newNodeJps.solution[i].cost != solutionSipp.cost) {
-            std::cout << "Sipp is not equal to jpst\n";
-            return false;
-          }
+          // if(newNodeJps.solution[i].cost != solutionSipp.cost) {
+          //   std::cout << "Sipp is not equal to jpst\n";
+          //   return false;
+          // }
           // std::cout << newNodeJps;
           // std::cout << newNodeJps.solution[i].cost  << ", jpst " << solutiontempJps.cost << " i " << newNodeJps.agent_id << std::endl;
           gen_node++;
@@ -675,43 +675,87 @@ class CBS {
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result){
-    std::vector<PlanResult<Location, Action, int>> solution_path;
-    solution_path.reserve(solution.size());
+    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
+    std::vector<std::vector<int>> point_id(solution.size());
+    std::vector<std::vector<int>> point_st(solution.size());
+    std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
+    int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
       int tt = 0;
       Location a(-1, -1), b(-1, -1); 
       int time_a, time_b;
-      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size() - 1; jump_point_id++){
+      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+        if(jump_point_id == solution[i].states.size() - 1){
+          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
+          solution_path[i].actions.push_back(solution[i].actions[jump_point_id]);
+          point_id[i].push_back(jump_point_id);          
+          if(tt > max_t) max_t = tt;
+          tt++;
+          continue;
+        }
         a = solution[i].states[jump_point_id].first;
         b = solution[i].states[jump_point_id + 1].first;
         time_a = solution[i].states[jump_point_id].second;
         time_b = solution[i].states[jump_point_id + 1].second;
         int delta_t = time_b - time_a;
-        int flag = 1;
+        int flag_y = 1;
         Action ac_c;
-        if(a.y < b.y) { flag = -1; ac_c = Action::Down;}
-        else ac_c = Action::Up;
-        
+        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
+        else { flag_y = 1; ac_c = Action::Up;}
+
+        point_st[i].push_back(tt);
         for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
-          Location temp_loc(a.x, a.y+flag*temp_y);
+          Location temp_loc(a.x, a.y+flag_y*temp_y);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
         }
-        if(a.x < b.x){flag = 1; ac_c = Action::Right;}
-        else{flag = -1; ac_c = Action::Left;}
-        for(int temp_x = 0; temp_x < abs(a.x - b.x); temp_x++){
-          Location temp_loc(a.x + flag*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
+        if(a.x != b.x){
+          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id); 
+          tt++;        
+        }
+        int flag_x = 1;
+        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
+        else{flag_x = -1; ac_c = Action::Left;}
+        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
+          Location temp_loc(a.x + flag_x*temp_x, b.y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
         } 
         if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
-          for(int temp_w = 0; temp_w  < delta_t - abs(a.x - b.x) - abs(a.y - b.y); temp_w++){
-            if(a.x == b.x) Location(temp_loc)
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
+          Location temp_loc(-1, -1);
+          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
+          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          int timed = abs(a.x - b.x) + abs(a.y - b.y);
+          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
+            point_id[i].push_back(jump_point_id);
+            tt++;
           }
         }
       }
+      if(tt - 1 != solution[i].cost){
+        std::cout << "recover path is not correct\n";
+        return false;
+      }
     }
+
+    for(size_t i = 0; i < solution.size(); i++){
+      std::cout << "Agent " << i << " ----------------------------------------------------\n";
+      for(size_t jj = 0; jj < solution_path[i].states.size(); jj++){
+        std::cout << "time: " << jj << ", location (" << solution_path[i].states[jj].first.x << ", " 
+        << solution_path[i].states[jj].first.y << " ) id " << point_id[i][jj] << " \n";
+      }
+    }
+    
+    return false;
   }
 
  private:

@@ -477,7 +477,11 @@ class Environment {
   }PathPoint;
 
   static bool comparsion(PathPoint p_a, PathPoint p_b){
-   return p_a.init_t < p_b.init_t;
+    return p_a.init_t < p_b.init_t;
+  //  if(p_a.init_t != p_b.init_t) return p_a.init_t < p_b.init_t;
+  //  else{
+  //    return p_a.path_id < p_b.path_id;
+  //  }
   }
 
   bool getFirstConflict(
@@ -561,7 +565,7 @@ class Environment {
             point_t.emplace_back(temp_x, b.y, 1, time_b - 1, ac, i, j);
           }else {
             point_t.emplace_back(a.x, b.y, abs(a.x - b.x), time_a + abs(a.y - b.y), ac, i, j);
-          }
+          } 
           if(is_first){
             pool_k.emplace_back(a.x, b.y, delta_t, delta_t_1, ac, i, j);
             is_first = false;
@@ -584,7 +588,7 @@ class Environment {
 
     if(isprint) std::cout << point_t.size() << ", pool " << pool_k.size() << ", After Ssort ------------------------------\n";
 
-    std::cout << "Find the conflict *****************************************************************************************************\n";
+    // std::cout << "Find the conflict *****************************************************************************************************\n";
     result.time = std::numeric_limits<int>::max();
     for(size_t ii = 0; ii < point_t.size(); ii++){
       PathPoint current_p = point_t[ii];
@@ -977,9 +981,9 @@ class Environment {
             }
           }
         }          
-        if(result.time != std::numeric_limits<int>::max()){
-          std::cout << current_p.point_id << ", " << pool_k[jj].point_id << ", path id " << current_p.path_id << ", " << pool_k[jj].path_id << " \n";
-        }
+        // if(result.time != std::numeric_limits<int>::max()){
+        //   std::cout << current_p.point_id << ", " << pool_k[jj].point_id << ", path id " << current_p.path_id << ", " << pool_k[jj].path_id << " \n";
+        // }
       }
 
 
@@ -1045,8 +1049,98 @@ class Environment {
     return false;
   }  
 
+  bool getFirstConflict(
+      const std::vector<PlanResult<Location, Action, int> >& solution,
+      Conflict& result, bool isFlag, bool isFlag1) {
+    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
+    std::vector<std::vector<int>> point_id(solution.size());
+    std::vector<std::vector<int>> point_st(solution.size());
+    // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
+    int max_t = 0;
+    // return false;
+    for(size_t i = 0; i < solution.size(); i++){
+      // std::cout << "Agent i " << i << " \n";
+      int tt = 0;
+      Location a(-1, -1), b(-1, -1); 
+      int time_a, time_b;
+      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+        // std::cout << " step 000 \n";
+        if(jump_point_id == solution[i].states.size() - 1){
+          // std::cout << " Heres \n";
+          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
+          // solution_path[i].actions.push_back(solution[i].actions[jump_point_id]);
+          point_id[i].push_back(jump_point_id);          
+          if(tt > max_t) max_t = tt;
+          tt++;
+          // std::cout << "Not Not\n";
+          break;
+        }
+        // std::cout << " step 111 \n";
+        a = solution[i].states[jump_point_id].first;
+        b = solution[i].states[jump_point_id + 1].first;
+        time_a = solution[i].states[jump_point_id].second;
+        time_b = solution[i].states[jump_point_id + 1].second;
+        int delta_t = time_b - time_a;
+        int flag_y = 1;
+        Action ac_c;
+        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
+        else { flag_y = 1; ac_c = Action::Up;}
+        point_st[i].push_back(tt);
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
+          Location temp_loc(a.x, a.y+flag_y*temp_y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
+        }
+        // std::cout << " step 222 \n";
 
-bool getFirstConflict(
+        if(a.x != b.x){
+          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id); 
+          tt++;        
+        }
+                // std::cout << " step 3333 \n";
+        int flag_x = 1;
+        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
+        else{flag_x = -1; ac_c = Action::Left;}
+        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
+          Location temp_loc(a.x + flag_x*temp_x, b.y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
+        } 
+                // std::cout << " step 444 \n";
+
+        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
+          Location temp_loc(-1, -1);
+          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
+          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          int timed = abs(a.x - b.x) + abs(a.y - b.y);
+          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
+            point_id[i].push_back(jump_point_id);
+            tt++;
+          }
+                  // std::cout << " step 555 \n";
+
+        }
+        // std::cout << " step 666 \n";
+      }
+      if(tt - 1 != solution[i].cost){
+        std::cout << "recover path is not correct\n";
+        return false;
+      }
+    }
+    bool is_conflict = getFirstConflict(solution_path, result, true);
+    return is_conflict;
+  }
+
+  bool getFirstConflict(
       const std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result, bool isFlag) {
     int max_t = 0;
