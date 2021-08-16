@@ -318,6 +318,7 @@ class CBS {
     int gen_node = 0;
     while(!openJps.empty()){
       num_node++;
+      // if(num_node > 5) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
@@ -343,8 +344,10 @@ class CBS {
     // std::cout << "***************************************************************************\n";
 
       Conflict conflict;
-      if(!m_env.getFirstConflict(PJps.solution, conflict)){
+      if(!getFirstConflict(PJps.solution, conflict, PJps)){
         solution = PJps.solution;
+        // if(m_env.getFirstConflict(PJps.solution, conflict)) 
+        // std::cout << "not equal ";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -891,10 +894,42 @@ private:
               for(size_t iii = time_a; iii < time_b; ++iii){
                 solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
                 solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                solution_path[i].states[iii].second = iii;
+                solution_path[i].actions[iii] = segmentPath.actions[jjj];
+                // std::cout << "segpath xy " << segmentPath.states[jjj].first.x << ", " 
+                // << segmentPath.states[jjj].first.y << std::endl; 
                 jjj++;
               }
+
+            //   std::cout << "Herererererererereere        begin \n";
+        		// for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        		// 	std::cout << solution[i].states[ii].second << ": " <<
+        		// 				solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+						// 		<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        		// }
+        		// std::cout << solution[i].states.back().second << ": " <<
+        		//   		   solution[i].states.back().first << std::endl;
+              
+
+              auto it = solution[i].states.begin();
+              auto it_ac = solution[i].actions.begin();
+              solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+              solution_path[i].states.begin() + time_b);
+
+              solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+              solution_path[i].actions.begin() + time_b); 
+
+// std::cout << "Herererererererereere        After \n";     
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;                
+
               is_restart = true;
-              t = time_a;
+              t = time_a - 1;
               break;
             }
             // return true;
@@ -919,7 +954,7 @@ private:
             result.y1 = state1a.y;
             result.x2 = state1b.x;
             result.y2 = state1b.y;
-           
+
             int JumpPointId = point_id[i][t];
             if(JumpPointId + 1 > solution[i].states.size()-1) return true;            
 
@@ -955,11 +990,47 @@ private:
               // return false;
             }else{
               size_t jjj = 0;
+              PlanResult<Location, Action, int> solution_temp_1;
               for(size_t iii = time_a; iii < time_b; ++iii){
                 solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
                 solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                solution_path[i].states[iii].second = iii;
+                solution_path[i].actions[iii] = segmentPath.actions[jjj];                
+                // std::cout << " Edge x, y " << segmentPath.states[jjj].first.x << ", " 
+                // << segmentPath.states[jjj].first.y << std::endl;
                 jjj++;
               }
+
+
+// std::cout << "Herererererererereere        Begin \n";     
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;  
+//               std::cout << time_a << ", " << time_b -1 << " \n";
+//               auto it_path = solution_path[i].states.begin() + time_b -1;
+//               std::cout << (*it_path).first.x << ", " << (*it_path).first.y << " test\n";
+
+              auto it = solution[i].states.begin();
+              auto it_ac = solution[i].actions.begin();
+              solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+              solution_path[i].states.begin() + time_b);
+              solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+              solution_path[i].actions.begin() + time_b);              
+
+// std::cout << "Herererererererereere        After \n";     
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;  
+//               std::cout << time_a << ", " << time_b -1 << " \n";
+
               is_restart = true;
               t = time_a - 1;
               break;
