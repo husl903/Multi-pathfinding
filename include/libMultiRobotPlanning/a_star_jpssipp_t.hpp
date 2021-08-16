@@ -209,7 +209,7 @@ class JPSTAStar {
       } else if(state.dir_p != other.state.dir_p){
     	  return state.dir_p > other.state.dir_p;
       }else{
-        return state.dir < other.state.dir;
+        return state.dir > other.state.dir;
       }
     }
 

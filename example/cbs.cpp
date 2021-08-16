@@ -352,10 +352,14 @@ class Environment {
            std::abs(s.y - m_goals[m_agentIdx].y);
   }
 
+  // bool isSolution(const State& s) {
+  //   return s.x == m_goals[m_agentIdx].x && s.y == m_goals[m_agentIdx].y &&
+  //          s.time > m_lastGoalConstraint;
+  // }
   bool isSolution(const State& s) {
-    return s.x == m_goals[m_agentIdx].x && s.y == m_goals[m_agentIdx].y &&
-           s.time > m_lastGoalConstraint;
-  }
+    return s.x == m_goal.x && s.y == m_goal.y;
+    // &&s.time > m_lastGoalConstraint;
+  }  
   bool isSolution(const Location& s) {
 //	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
 	  return s == m_goal;
@@ -408,14 +412,14 @@ class Environment {
 			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
 			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
 			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))*/
-       if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
-        		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
-    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
-    			|| isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y)) || isTemporalObstacle(Location(s.x - 1, s.y))
-    			|| isTemporalObstacle(Location(s.x, s.y - 1)) || isTemporalObstacle(Location(s.x, s.y + 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y - 1)) || isTemporalObstacle(Location(s.x - 1, s.y - 1))
-    			|| isTemporalObstacle(Location(s.x + 1, s.y + 1)) || isTemporalObstacle(Location(s.x - 1, s.y + 1)))
+      //  if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
+      //   		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
+    	// 		|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
+    	// 		|| isTemporalEdgeConstraint(Location(s.x + 1, s.y + 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y + 1))
+    	// 		|| isTemporalObstacle(Location(s.x + 1, s.y)) || isTemporalObstacle(Location(s.x - 1, s.y))
+    	// 		|| isTemporalObstacle(Location(s.x, s.y - 1)) || isTemporalObstacle(Location(s.x, s.y + 1))
+    	// 		|| isTemporalObstacle(Location(s.x + 1, s.y - 1)) || isTemporalObstacle(Location(s.x - 1, s.y - 1))
+    	// 		|| isTemporalObstacle(Location(s.x + 1, s.y + 1)) || isTemporalObstacle(Location(s.x - 1, s.y + 1)))
     {
       State n(s.time + 1, s.x, s.y);
       m_lowLevelGeneration++;

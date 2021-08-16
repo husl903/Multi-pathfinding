@@ -86,7 +86,10 @@ statistical purposes.
 */
 template <typename State, typename Location, typename Action, typename Cost, typename Conflict,
           typename Constraints, typename Environment>
+          
 class CBS {
+  public:
+ 
  public:
   CBS(Environment& environment) : m_env(environment) {}
 
@@ -317,23 +320,18 @@ class CBS {
       num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 600){
+      if(duration1 > 300){
     	  return false;
       }
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
       openJps.pop();
-      
-      Conflict conflict;
-      if(!m_env.getFirstConflict(PJps.solution, conflict)){
-        solution = PJps.solution;
-        std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
-        return true;
-      }
-    // std::cout << "-------------------------------------------------------------------------\n";
-    //   std::cout << PJps;
-    //     for(size_t jj = 0; jj < PJps.solution.size(); jj++){        
+
+    // std::cout << "***************************************************************************\n";
+    //   // std::cout << PJps;
+    //     for(size_t jj = 0; jj < PJps.solution.size(); jj++){ 
+    //         std::cout << " solution for " << jj << std::endl;       
     //     		for (size_t ii = 0; ii < PJps.solution[jj].actions.size(); ++ii) {
     //     			std::cout << PJps.solution[jj].states[ii].second << ": " <<
     //     						PJps.solution[jj].states[ii].first << "->" << PJps.solution[jj].actions[ii].first
@@ -342,7 +340,15 @@ class CBS {
     //     		std::cout << PJps.solution[jj].states.back().second << ": " <<
     //     		  		   PJps.solution[jj].states.back().first << std::endl;
     //     }
-    //   std::cout << "-------------------------------------------------------------------------\n";
+    // std::cout << "***************************************************************************\n";
+
+      Conflict conflict;
+      if(!m_env.getFirstConflict(PJps.solution, conflict)){
+        solution = PJps.solution;
+        std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+        return true;
+      }
+
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
       for (const auto& c : constraints) {
@@ -672,25 +678,64 @@ class CBS {
 
     return false;
   }
+
+private:
+  typedef struct HighLevelNodeJps {
+    std::vector<PlanResult<Location, Action, Cost> > solution;
+    std::vector<Constraints> constraints;
+
+    Cost cost;
+
+    int id;
+    int agent_id = -1;
+
+    typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
+                                     boost::heap::mutable_<true> >::handle_type
+        handle;
+
+    bool operator<(const HighLevelNodeJps& n) const {
+      // if (cost != n.cost)
+      return cost > n.cost;
+      // return id > n.id;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const HighLevelNodeJps& c) {
+      os << "id: " << c.id <<  " agentId "<< c.agent_id << " cost: " << c.cost << std::endl;
+      for (size_t i = 0; i < c.solution.size(); ++i) {
+        // os << "Agent: " << i << std::endl;
+        // os << " States:" << std::endl;
+        // for (size_t t = 0; t < c.solution[i].states.size(); ++t) {
+        //   os << "  " << c.solution[i].states[t].first << std::endl;
+        // }
+        os << " Constraints:" << std::endl;
+        os << c.constraints[i];
+        // os << " cost: " << c.solution[i].cost << std::endl;
+      }
+      return os;
+    }
+  };  
+
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result){
+      Conflict& result, HighLevelNodeJps& CurNode){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
-    std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
+    // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
       int tt = 0;
       Location a(-1, -1), b(-1, -1); 
       int time_a, time_b;
+
       for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+        // std::cout << " jump id " << jump_point_id << " ****************\n";
+
         if(jump_point_id == solution[i].states.size() - 1){
           solution_path[i].states.push_back(solution[i].states[jump_point_id]);
-          solution_path[i].actions.push_back(solution[i].actions[jump_point_id]);
-          point_id[i].push_back(jump_point_id);          
-          if(tt > max_t) max_t = tt;
+          point_id[i].push_back(jump_point_id);         
           tt++;
+         if(tt > max_t) max_t = tt;          
           continue;
         }
         a = solution[i].states[jump_point_id].first;
@@ -747,18 +792,201 @@ class CBS {
       }
     }
 
-    for(size_t i = 0; i < solution.size(); i++){
-      std::cout << "Agent " << i << " ----------------------------------------------------\n";
-      for(size_t jj = 0; jj < solution_path[i].states.size(); jj++){
-        std::cout << "time: " << jj << ", location (" << solution_path[i].states[jj].first.x << ", " 
-        << solution_path[i].states[jj].first.y << " ) id " << point_id[i][jj] << " \n";
+        		// for (size_t ii = 0; ii < solution[19].actions.size(); ++ii) {
+        		// 	std::cout << solution[19].states[ii].second << ": " <<
+        		// 				solution[19].states[ii].first << "->" << solution[19].actions[ii].first
+						// 		<< "(cost: " << solution[19].actions[ii].second << ")" << std::endl;
+        		// }
+        		// std::cout << solution[19].states.back().second << ": " <<
+        		//   		   solution[19].states.back().first << std::endl;
+            // std::cout << " id :: ";
+            // for(int ii = 0; ii < point_id[19].size(); ii++){
+            //   std::cout << " id " << point_id[19][ii];
+            // }
+            // std::cout << "\n";
+
+    // for(size_t i = 0; i < solution.size(); i++){
+    //   std::cout << "Agent " << i << " ----------------------------------------------------\n";
+    //   for(size_t jj = 0; jj < solution_path[i].states.size(); jj++){
+    //     std::cout << "time: " << jj << ", location (" << solution_path[i].states[jj].first.x << ", " 
+    //     << solution_path[i].states[jj].first.y << " ) id " << point_id[i][jj] << " \n";
+    //   }
+    // }
+    // max_t = 0;
+    // for (const auto& sol : solution_path) {
+    //   max_t = std::max<int>(max_t, sol.states.size() - 1);
+    // }
+
+    bool is_restart = false;
+    std::vector<std::unordered_set<int>> jump_point(solution.size());
+    for (int t = 0; t < max_t; ++t) {
+      is_restart = false;
+      // check drive-drive vertex collisions
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1 = getState(i, solution_path, t);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2 = getState(j, solution_path, t);
+          if (state1 == state2) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+        
+            int JumpPointId = point_id[i][t];
+            int PreJumpPointId = -1;
+            int AftJumpPointID = -1;
+            if(t - 1 >= 0){
+              if(point_id[i][t - 1] != JumpPointId) return true;
+            }
+            if(t + 1 < solution_path.size()){
+              if(point_id[i][t + 1] != JumpPointId) return true;
+            }
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;
+
+            Location goalLoc = solution[i].states[JumpPointId+1].first;
+            int time_a = solution[i].states[JumpPointId].second;
+            int time_b = solution[i].states[JumpPointId + 1].second;
+            int cost_t = time_b - time_a;
+            
+            State initialState(-1, -1, time_a);
+            initialState.x = solution[i].states[JumpPointId].first.x;
+            initialState.y = solution[i].states[JumpPointId].first.y;
+            initialState.time = time_a;
+            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return true;
+            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y 
+               || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
+
+            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelSearch_t lowLevel(llenv);            
+            PlanResult<State, Action, int>segmentPath;
+            bool success = lowLevel.search(initialState, segmentPath);
+            jump_point[i].insert(JumpPointId);        
+
+            if(segmentPath.cost != cost_t){
+              
+        		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        			std::cout << solution[i].states[ii].second << ": " <<
+        						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solution[i].states.back().second << ": " <<
+        		  		   solution[i].states.back().first << std::endl;
+
+              for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
+                std::cout << segmentPath.states[iii].second << ": " <<
+                segmentPath.states[iii].first << "->" << segmentPath.actions[iii].first
+                << "(cost: " << segmentPath.actions[iii].second << ")" << std::endl;
+              }
+              std::cout << segmentPath.states.back().second << ": " <<
+              segmentPath.states.back().first << std::endl;
+
+              std::cout << "agent " << i <<", "<< j << " id " << JumpPointId <<  ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
+              std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
+              std::cout << "test\n";
+              // return false;
+            }else{
+              size_t jjj = 0;
+              for(size_t iii = time_a; iii < time_b; ++iii){
+                solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
+                solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                jjj++;
+              }
+              is_restart = true;
+              t = time_a;
+              break;
+            }
+            // return true;
+          }
+        }
+        if(is_restart) break;
       }
+      // if(is_restart) continue;
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1a = getState(i, solution_path, t);
+        Location state1b = getState(i, solution_path, t + 1);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2a = getState(j, solution_path, t);
+          Location state2b = getState(j, solution_path, t + 1);
+          if (state1a == state2b && state1b == state2a) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+           
+            int JumpPointId = point_id[i][t];
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;            
+
+            Location goalLoc = solution[i].states[JumpPointId+1].first;
+            int time_a = solution[i].states[JumpPointId].second;
+            int time_b = solution[i].states[JumpPointId + 1].second;
+            int cost_t = time_b - time_a;
+            State initialState(-1, -1, time_a);
+            initialState.x = solution[i].states[JumpPointId].first.x;
+            initialState.y = solution[i].states[JumpPointId].first.y;
+            initialState.time = time_a;
+            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return true;
+            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
+            || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
+
+            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelSearch_t lowLevel(llenv);            
+            PlanResult<State, Action, int>segmentPath;
+            bool success = lowLevel.search(initialState, segmentPath);
+            jump_point[i].insert(JumpPointId);
+
+            if(segmentPath.cost != cost_t){
+              for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
+                std::cout << segmentPath.states[iii].second << ": " <<
+                segmentPath.states[iii].first << "->" << segmentPath.actions[iii].first
+                << "(cost: " << segmentPath.actions[iii].second << ")" << std::endl;
+              }
+              std::cout << segmentPath.states.back().second << ": " <<
+              segmentPath.states.back().first << std::endl;
+
+              std::cout << "agent " << i <<", "<< j << ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
+              std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
+              // return false;
+            }else{
+              size_t jjj = 0;
+              for(size_t iii = time_a; iii < time_b; ++iii){
+                solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
+                solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                jjj++;
+              }
+              is_restart = true;
+              t = time_a - 1;
+              break;
+            }
+          }
+        }
+        if(is_restart) break;
+      }
+      
     }
-    
-    return false;
+    return false;    
+    // bool is_conflict = getFirstConflict(solution_path, result, true, CurNode);
+    // return is_conflict;
   }
 
- private:
+  Location getState(size_t agentIdx,
+                 const std::vector<PlanResult<Location, Action, int> >& solution,
+                 size_t t) {
+    assert(agentIdx < solution.size());
+    if (t < solution[agentIdx].states.size()) {
+      return solution[agentIdx].states[t].first;
+    }
+    assert(!solution[agentIdx].states.empty());
+    return solution[agentIdx].states.back().first;
+  }     
+
+ 
   struct HighLevelNode {
     std::vector<PlanResult<State, Action, Cost> > solution;
     std::vector<Constraints> constraints;
@@ -792,43 +1020,8 @@ class CBS {
       return os;
     }
   };
-
-
-  struct HighLevelNodeJps {
-    std::vector<PlanResult<Location, Action, Cost> > solution;
-    std::vector<Constraints> constraints;
-
-    Cost cost;
-
-    int id;
-    int agent_id = -1;
-
-    typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
-                                     boost::heap::mutable_<true> >::handle_type
-        handle;
-
-    bool operator<(const HighLevelNodeJps& n) const {
-      // if (cost != n.cost)
-      return cost > n.cost;
-      // return id > n.id;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const HighLevelNodeJps& c) {
-      os << "id: " << c.id <<  " agentId "<< c.agent_id << " cost: " << c.cost << std::endl;
-      for (size_t i = 0; i < c.solution.size(); ++i) {
-        // os << "Agent: " << i << std::endl;
-        // os << " States:" << std::endl;
-        // for (size_t t = 0; t < c.solution[i].states.size(); ++t) {
-        //   os << "  " << c.solution[i].states[t].first << std::endl;
-        // }
-        os << " Constraints:" << std::endl;
-        os << c.constraints[i];
-        // os << " cost: " << c.solution[i].cost << std::endl;
-      }
-      return os;
-    }
-  };  
-
+ 
+private:
   struct LowLevelEnvironment {
     LowLevelEnvironment(Environment& env, size_t agentIdx,
                         const Constraints& constraints)
@@ -838,6 +1031,15 @@ class CBS {
     {
       m_env.setLowLevelContext(agentIdx, &constraints);
     }
+    LowLevelEnvironment(Environment& env, size_t agentIdx, Location loc,
+                        const Constraints& constraints)
+        : m_env(env)
+    // , m_agentIdx(agentIdx)
+    // , m_constraints(constraints)
+    {
+      m_env.setLowLevelContext(agentIdx, &constraints);
+      m_env.setGoal(loc);
+    }    
 
     Cost admissibleHeuristic(const State& s) {
       return m_env.admissibleHeuristic(s);
@@ -847,6 +1049,7 @@ class CBS {
 
     void getNeighbors(const State& s,
                       std::vector<Neighbor<State, Action, Cost> >& neighbors) {
+      // std::cout << "Current " << s.x << ", " << s.y << ",time " << s.time << " \n";
       m_env.getNeighbors(s, neighbors);
     }
 
