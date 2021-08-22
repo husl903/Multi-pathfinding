@@ -195,6 +195,7 @@ class SIPP {
     State state;
     unsigned int dir;
     size_t interval;
+    int nc_cat = 0;
   };
 
   struct SIPPStateHasher {

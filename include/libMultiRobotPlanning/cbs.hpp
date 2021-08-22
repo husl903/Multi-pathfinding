@@ -106,13 +106,13 @@ class CBS {
       //   start.solution[i] = solution[i];
       //   std::cout << "use existing solution for agent: " << i << std::endl;
       // } else {
-        // m_env.setLowLevelContext(i, &start.constraints[i]);
-        // canonical_astar can_astar(m_env);
-        // bool success = can_astar.search(initialStates[i], start.solution[i]);
+        m_env.setLowLevelContext(i, &start.constraints[i]);
+        canonical_astar can_astar(m_env, start.solution);
+        bool success = can_astar.search(initialStates[i], start.solution[i]);
         
-      LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
-      LowLevelSearch_t lowLevel(llenv);
-      bool success = lowLevel.search(initialStates[i], start.solution[i]);
+      // LowLevelEnvironment llenv(m_env, start.solution, i, start.constraints[i]);
+      // LowLevelSearch_t lowLevel(llenv);
+      // bool success = lowLevel.search(initialStates[i], start.solution[i]);
       if (!success) {
         return false;
       }
@@ -431,19 +431,19 @@ class CBS {
 */
         // std::cout << "===================================================================\n";
 
-        m_env.setExactHeuristTrue();
-        LowLevelEnvironment llenv(m_env, i, newNode.constraints[i]);
-        LowLevelSearch_t lowLevel(llenv);
+        // m_env.setExactHeuristTrue();
+        // LowLevelEnvironment llenv(m_env, newNode.solution, i, newNode.constraints[i]);
+        // LowLevelSearch_t lowLevel(llenv);
 
-        Timer timerAstar;
-        timerAstar.reset();
-        int ExpA =  m_env.lowLevelExpanded();
-        PlanResult<State, Action, int> solutiontemp4;        
-        bool successCA = lowLevel.search(initialStates[i], newNode.solution[i]);
-        timerAstar.stop();
-        int ExpAstar = m_env.lowLevelExpanded() - ExpA;
-        int GenAstar = m_env.lowLevelGenerated();
-        double tAstar = timerAstar.elapsedSeconds();
+        // Timer timerAstar;
+        // timerAstar.reset();
+        // int ExpA =  m_env.lowLevelExpanded();
+        // PlanResult<State, Action, int> solutiontemp4;        
+        // bool successCA = lowLevel.search(initialStates[i], newNode.solution[i]);
+        // timerAstar.stop();
+        // int ExpAstar = m_env.lowLevelExpanded() - ExpA;
+        // int GenAstar = m_env.lowLevelGenerated();
+        // double tAstar = timerAstar.elapsedSeconds();
 
         // m_env.setExactHeuristTrue();
         // LowLevelEnvironment llenvP(m_env, i, newNode.constraints[i]);
@@ -458,14 +458,14 @@ class CBS {
         // int GenAstarP = m_env.lowLevelGenerated();
         // double tAstarP = timerAstarP.elapsedSeconds();
         
-        // m_env.setExactHeuristTrue();
-        // m_env.setLowLevelContext(i, &newNode.constraints[i]);        
-        // canonical_astar can_astar(m_env);
-        // Timer timerCAstar;
-        // timerCAstar.reset();
-        // bool successCA = can_astar.search(initialStates[i], newNode.solution[i]);
-        // timerCAstar.stop();
-        // double tCAstar = timerCAstar.elapsedSeconds();
+        m_env.setExactHeuristTrue();
+        m_env.setLowLevelContext(i, &newNode.constraints[i]);        
+        canonical_astar can_astar(m_env, newNode.solution);
+        Timer timerCAstar;
+        timerCAstar.reset();
+        bool successCA = can_astar.search(initialStates[i], newNode.solution[i]);
+        timerCAstar.stop();
+        double tCAstar = timerCAstar.elapsedSeconds();
         newNode.cost += newNode.solution[i].cost;
 /*        std::cout successCA<< i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
@@ -695,9 +695,9 @@ class CBS {
   };
 
   struct LowLevelEnvironment {
-    LowLevelEnvironment(Environment& env, size_t agentIdx,
-                        const Constraints& constraints)
-        : m_env(env)
+    LowLevelEnvironment(Environment& env, std::vector<PlanResult<State, Action, Cost>>& cat,
+                        size_t agentIdx, const Constraints& constraints)
+        : m_env(env), m_cat(cat)
     // , m_agentIdx(agentIdx)
     // , m_constraints(constraints)
     {
@@ -713,6 +713,23 @@ class CBS {
     void getNeighbors(const State& s,
                       std::vector<Neighbor<State, Action, Cost> >& neighbors) {
       m_env.getNeighbors(s, neighbors);
+      // std::cout << "current state xy " << s.x << ", " << s.y << " " << s.time << "------------------" << std::endl;
+      for(size_t nei = 0; nei < neighbors.size(); nei++){
+        neighbors[nei].state.nc_cat = 0;
+        int current_time = s.time + 1;
+        State temp_s(-1, -1, -1);
+        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+          if(m_cat[agent_id].states.empty()) continue;
+          if (current_time < m_cat[agent_id].states.size()) {
+            temp_s = m_cat[agent_id].states[current_time].first;
+          }else{
+            temp_s = m_cat[agent_id].states.back().first;     
+          }
+          if(temp_s == neighbors[nei].state){
+            neighbors[nei].state.nc_cat++;
+          }
+        }
+      }
     }
 
     void onExpandNode(const State& s, Cost fScore, Cost gScore) {
@@ -726,7 +743,8 @@ class CBS {
     }
 
    private:
-    Environment& m_env;
+    Environment& m_env; 
+    std::vector<PlanResult<State, Action, Cost>>& m_cat;
     // size_t m_agentIdx;
     // const Constraints& m_constraints;
   };

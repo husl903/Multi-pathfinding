@@ -90,7 +90,8 @@ public:
 
 
  public:
-  CANAstar(Environment& environment) : m_env(environment), m_astar(m_env) {}
+  CANAstar(Environment& environment, std::vector<PlanResult<State, Action, Cost>>& cat) 
+          : m_env(environment, cat), m_astar(m_env) {}
 
   void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
 	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
@@ -158,7 +159,8 @@ public:
 
   // private:
   struct CANAstarEnvironment {
-    CANAstarEnvironment(Environment& env) : m_env(env) {}
+    CANAstarEnvironment(Environment& env, 
+                        std::vector<PlanResult<State, Action, Cost>>& cat) : m_env(env), m_cat(cat) {}
 
     Cost admissibleHeuristic(const State& s) {
         return m_env.admissibleHeuristic(s);
@@ -343,6 +345,23 @@ public:
         }
       }
 
+      for(size_t nei = 0; nei < neighbors.size(); nei++){
+        neighbors[nei].state.nc_cat = 0;
+        int current_time = s.time + 1;
+        State temp_s(-1, -1, -1);
+        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+          if(m_cat[agent_id].states.empty()) continue;
+          if (current_time < m_cat[agent_id].states.size()) {
+            temp_s = m_cat[agent_id].states[current_time].first;
+          }else{
+            temp_s = m_cat[agent_id].states.back().first;     
+          }
+          if(temp_s == neighbors[nei].state){
+            neighbors[nei].state.nc_cat++;
+          }
+        }
+      }
+
 //      m_env.getNeighbors(s, neighbors);
     }
 
@@ -364,7 +383,7 @@ public:
     Cost m_lastGScore;
     std::vector<Neighbor<State, Action, Cost>> jps_successors;
     bool flag_is_solution = false;
-
+    std::vector<PlanResult<State, Action, Cost>>& m_cat;
   };
 
  private:

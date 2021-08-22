@@ -180,8 +180,10 @@ class AStar {
       // Our heap is a maximum heap, so we invert the comperator function here
       if (fScore != other.fScore) {
         return fScore > other.fScore;
-      } else {
-    	return gScore < other.gScore;
+      } else if(gScore != other.gScore){
+    	  return gScore < other.gScore;
+      } else{
+        return state.nc_cat > other.state.nc_cat;
       }
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;

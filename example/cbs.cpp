@@ -32,11 +32,12 @@ struct State {
     // return os << "(" << s.x << "," << s.y << ")";
   }
 
-  unsigned int dir = 0xff;
-  unsigned int dir_p = 0xff;
   int time;
   int x;
   int y;
+  unsigned int dir = 0xff;
+  unsigned int dir_p = 0xff;
+  int nc_cat = 0;
 };
 
 namespace std {
@@ -393,25 +394,7 @@ class Environment {
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
 //	  std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  here here-----------\n";
     neighbors.clear();
-    {
-      //Up
-      State n(s.time + 1, s.x, s.y + 1);
-      m_lowLevelGeneration++;
-      if (stateValid(n) && transitionValid(s, n)) {
-        neighbors.emplace_back(Neighbor<State, Action, int>(n, Action::Up, 1));
-//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
-      }
-    }
-    {
-      //Down
-      State n(s.time + 1, s.x, s.y - 1);
-      m_lowLevelGeneration++;
-      if (stateValid(n) && transitionValid(s, n)) {
-        neighbors.emplace_back(
-            Neighbor<State, Action, int>(n, Action::Down, 1));
-//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
-      }
-    }
+
     {
       //left
       State n(s.time + 1, s.x - 1, s.y);
@@ -431,6 +414,26 @@ class Environment {
       }
     }
 
+    {
+      //Up
+      State n(s.time + 1, s.x, s.y + 1);
+      m_lowLevelGeneration++;
+      if (stateValid(n) && transitionValid(s, n)) {
+        neighbors.emplace_back(Neighbor<State, Action, int>(n, Action::Up, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
+      }
+    }
+    {
+      //Down
+      State n(s.time + 1, s.x, s.y - 1);
+      m_lowLevelGeneration++;
+      if (stateValid(n) && transitionValid(s, n)) {
+        neighbors.emplace_back(
+            Neighbor<State, Action, int>(n, Action::Down, 1));
+//        if(isOutput) std::cout << "Succ---- : " << n.x << ", " << n.y << " time " << s.time + 1 << " f " << admissibleHeuristic(n) << "  \n";
+      }
+    }  
+
     if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
         || isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
     		|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1),s.time)
@@ -447,7 +450,8 @@ class Environment {
         neighbors.emplace_back(
             Neighbor<State, Action, int>(n, Action::Wait, 1));
       }
-    }    
+    }       
+   
   }
 
   bool getFirstConflict(
