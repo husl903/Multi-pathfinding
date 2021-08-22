@@ -108,14 +108,12 @@ class CBS {
     startJps.id = 0;
     m_env.Reset();
     m_env.resetTemporalObstacle();    
-    
-    for (size_t i = 0; i < initialStates.size(); ++i) {
-        
-        jpst_bit jps1(m_env);
-        // sipp_t jps1(m_env);
-        jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-        PlanResult<Location, Action, int> solutiontempJps;
+    jpst_bit jps1(m_env);
+    // sipp_t jps1(m_env);
+    jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
+    for (size_t i = 0; i < initialStates.size(); ++i) {
+      
         Location goal = m_env.setGoal(i);
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
@@ -1020,8 +1018,7 @@ private:
               solution_path[i].states.begin() + time_b);
               solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
               solution_path[i].actions.begin() + time_b);              
-
-// std::cout << "Herererererererereere        After \n";     
+   
 //         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
 //         			std::cout << solution[i].states[ii].second << ": " <<
 //         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
@@ -1042,9 +1039,303 @@ private:
       
     }
     return false;    
-    // bool is_conflict = getFirstConflict(solution_path, result, true, CurNode);
-    // return is_conflict;
   }
+
+  bool getFirstConflict(
+      std::vector<PlanResult<Location, Action, int> >& solution,
+      Conflict& result, HighLevelNodeJps& CurNode, bool jpst_flag){
+    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
+    std::vector<std::vector<int>> point_id(solution.size());
+    std::vector<std::vector<int>> point_st(solution.size());
+    int max_t = 0;
+    for(size_t i = 0; i < solution.size(); i++){
+      int tt = 0;
+      Location a(-1, -1), b(-1, -1); 
+      int time_a, time_b;
+      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+        if(jump_point_id == solution[i].states.size() - 1){
+          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
+          point_id[i].push_back(jump_point_id);         
+          tt++;
+         if(tt > max_t) max_t = tt;          
+          continue;
+        }
+        a = solution[i].states[jump_point_id].first;
+        b = solution[i].states[jump_point_id + 1].first;
+        time_a = solution[i].states[jump_point_id].second;
+        time_b = solution[i].states[jump_point_id + 1].second;
+        int delta_t = time_b - time_a;
+        int flag_y = 1;
+        Action ac_c;
+        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
+        else { flag_y = 1; ac_c = Action::Up;}
+
+        point_st[i].push_back(tt);
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
+          Location temp_loc(a.x, a.y+flag_y*temp_y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
+        }
+        if(a.x != b.x){
+          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id); 
+          tt++;        
+        }
+        int flag_x = 1;
+        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
+        else{flag_x = -1; ac_c = Action::Left;}
+        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
+          Location temp_loc(a.x + flag_x*temp_x, b.y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          point_id[i].push_back(jump_point_id);
+          tt++;
+        } 
+        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
+          Location temp_loc(-1, -1);
+          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
+          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          int timed = abs(a.x - b.x) + abs(a.y - b.y);
+          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
+            point_id[i].push_back(jump_point_id);
+            tt++;
+          }
+        }
+      }
+      if(tt - 1 != solution[i].cost){
+        std::cout << "recover path is not correct\n";
+        return false;
+      }
+    }
+
+    bool is_restart = false;
+    std::vector<std::unordered_set<int>> jump_point(solution.size());
+    for (int t = 0; t < max_t; ++t) {
+      is_restart = false;
+      // check drive-drive vertex collisions
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1 = getState(i, solution_path, t);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2 = getState(j, solution_path, t);
+          if (state1 == state2) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+        
+            int JumpPointId = point_id[i][t];
+            int PreJumpPointId = -1;
+            int AftJumpPointID = -1;
+            if(t - 1 >= 0){
+              if(point_id[i][t - 1] != JumpPointId) return true;
+            }
+            if(t + 1 < solution_path.size()){
+              if(point_id[i][t + 1] != JumpPointId) return true;
+            }
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;
+
+            Location goalLoc = solution[i].states[JumpPointId+1].first;
+            int time_a = solution[i].states[JumpPointId].second;
+            int time_b = solution[i].states[JumpPointId + 1].second;
+            int cost_t = time_b - time_a;
+            
+            State initialState(-1, -1, time_a);
+            initialState.x = solution[i].states[JumpPointId].first.x;
+            initialState.y = solution[i].states[JumpPointId].first.y;
+            initialState.time = time_a;
+            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return true;
+            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y 
+               || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
+
+            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelSearch_t lowLevel(llenv);            
+            PlanResult<State, Action, int>segmentPath;
+            bool success = lowLevel.search(initialState, segmentPath);
+            jump_point[i].insert(JumpPointId);        
+
+            if(segmentPath.cost != cost_t){
+              
+        		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        			std::cout << solution[i].states[ii].second << ": " <<
+        						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solution[i].states.back().second << ": " <<
+        		  		   solution[i].states.back().first << std::endl;
+
+              for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
+                std::cout << segmentPath.states[iii].second << ": " <<
+                segmentPath.states[iii].first << "->" << segmentPath.actions[iii].first
+                << "(cost: " << segmentPath.actions[iii].second << ")" << std::endl;
+              }
+              std::cout << segmentPath.states.back().second << ": " <<
+              segmentPath.states.back().first << std::endl;
+
+              std::cout << "agent " << i <<", "<< j << " id " << JumpPointId <<  ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
+              std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
+              std::cout << "test\n";
+              // return false;
+            }else{
+              size_t jjj = 0;
+              for(size_t iii = time_a; iii < time_b; ++iii){
+                solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
+                solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                solution_path[i].states[iii].second = iii;
+                solution_path[i].actions[iii] = segmentPath.actions[jjj];
+                // std::cout << "segpath xy " << segmentPath.states[jjj].first.x << ", " 
+                // << segmentPath.states[jjj].first.y << std::endl; 
+                jjj++;
+              }
+
+            //   std::cout << "Herererererererereere        begin \n";
+        		// for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        		// 	std::cout << solution[i].states[ii].second << ": " <<
+        		// 				solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+						// 		<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        		// }
+        		// std::cout << solution[i].states.back().second << ": " <<
+        		//   		   solution[i].states.back().first << std::endl;
+              
+
+              auto it = solution[i].states.begin();
+              auto it_ac = solution[i].actions.begin();
+              solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+              solution_path[i].states.begin() + time_b);
+
+              solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+              solution_path[i].actions.begin() + time_b); 
+
+// std::cout << "Herererererererereere        After \n";     
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;                
+
+              is_restart = true;
+              t = time_a - 1;
+              break;
+            }
+            // return true;
+          }
+        }
+        if(is_restart) break;
+      }
+      // if(is_restart) continue;
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1a = getState(i, solution_path, t);
+        Location state1b = getState(i, solution_path, t + 1);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2a = getState(j, solution_path, t);
+          Location state2b = getState(j, solution_path, t + 1);
+          if (state1a == state2b && state1b == state2a) {
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+
+            int JumpPointId = point_id[i][t];
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;            
+
+            Location goalLoc = solution[i].states[JumpPointId+1].first;
+            int time_a = solution[i].states[JumpPointId].second;
+            int time_b = solution[i].states[JumpPointId + 1].second;
+            int cost_t = time_b - time_a;
+            State initialState(-1, -1, time_a);
+            initialState.x = solution[i].states[JumpPointId].first.x;
+            initialState.y = solution[i].states[JumpPointId].first.y;
+            initialState.time = time_a;
+            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return true;
+            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
+            || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
+
+            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelSearch_t lowLevel(llenv);            
+            PlanResult<State, Action, int>segmentPath;
+            bool success = lowLevel.search(initialState, segmentPath);
+            jump_point[i].insert(JumpPointId);
+
+            if(segmentPath.cost != cost_t){
+              for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
+                std::cout << segmentPath.states[iii].second << ": " <<
+                segmentPath.states[iii].first << "->" << segmentPath.actions[iii].first
+                << "(cost: " << segmentPath.actions[iii].second << ")" << std::endl;
+              }
+              std::cout << segmentPath.states.back().second << ": " <<
+              segmentPath.states.back().first << std::endl;
+
+              std::cout << "agent " << i <<", "<< j << ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
+              std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
+              // return false;
+            }else{
+              size_t jjj = 0;
+              PlanResult<Location, Action, int> solution_temp_1;
+              for(size_t iii = time_a; iii < time_b; ++iii){
+                solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
+                solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
+                solution_path[i].states[iii].second = iii;
+                solution_path[i].actions[iii] = segmentPath.actions[jjj];                
+                // std::cout << " Edge x, y " << segmentPath.states[jjj].first.x << ", " 
+                // << segmentPath.states[jjj].first.y << std::endl;
+                jjj++;
+              }
+
+
+// std::cout << "Herererererererereere        Begin \n";     
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;  
+//               std::cout << time_a << ", " << time_b -1 << " \n";
+//               auto it_path = solution_path[i].states.begin() + time_b -1;
+//               std::cout << (*it_path).first.x << ", " << (*it_path).first.y << " test\n";
+
+              auto it = solution[i].states.begin();
+              auto it_ac = solution[i].actions.begin();
+              solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+              solution_path[i].states.begin() + time_b);
+              solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+              solution_path[i].actions.begin() + time_b);              
+   
+//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+//         			std::cout << solution[i].states[ii].second << ": " <<
+//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+//         		}
+//         		std::cout << solution[i].states.back().second << ": " <<
+//         		  		   solution[i].states.back().first << std::endl;  
+//               std::cout << time_a << ", " << time_b -1 << " \n";
+
+              is_restart = true;
+              t = time_a - 1;
+              break;
+            }
+          }
+        }
+        if(is_restart) break;
+      }
+      
+    }
+    return false;    
+  }  
 
   Location getState(size_t agentIdx,
                  const std::vector<PlanResult<Location, Action, int> >& solution,

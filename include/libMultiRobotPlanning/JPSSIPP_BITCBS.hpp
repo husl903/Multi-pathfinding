@@ -201,15 +201,15 @@ public:
   // public:
   struct JPSSIPPState {
     JPSSIPPState(const State& state, size_t interval)
-        : state(state), interval(interval), dir(0x00), g_cost(0), flag_wait(false){}
+        : state(state), interval(interval), dir(0x00), g_cost(0){}
 
     JPSSIPPState(const State& state, size_t interval, unsigned int dir)
-        : state(state), interval(interval), dir(dir), g_cost(0), flag_wait(false){}
+        : state(state), interval(interval), dir(dir), g_cost(0){}
 
-    JPSSIPPState(const State& state, size_t interval, unsigned int dir, unsigned int dir_p, Cost g_cost, bool flag_wait)
-        : state(state), interval(interval), dir(dir), dir_p(dir_p), g_cost(g_cost), flag_wait(flag_wait){}
-    JPSSIPPState(const State& state, size_t interval, unsigned int dir, Cost g_cost, bool flag_wait)
-        : state(state), interval(interval), dir(dir), g_cost(g_cost), flag_wait(flag_wait){}
+    JPSSIPPState(const State& state, size_t interval, unsigned int dir, unsigned int dir_p, Cost g_cost)
+        : state(state), interval(interval), dir(dir), dir_p(dir_p), g_cost(g_cost){}
+    JPSSIPPState(const State& state, size_t interval, unsigned int dir, Cost g_cost)
+        : state(state), interval(interval), dir(dir), g_cost(g_cost){}
 
 
     bool operator==(const JPSSIPPState& other) const {
@@ -226,7 +226,6 @@ public:
     State state;
     unsigned int dir = 0xf;
 	unsigned int dir_p = 0xf;
-    bool flag_wait = false;
     Action action;
     size_t interval = -1;
   };
@@ -240,14 +239,14 @@ public:
     }
   };
 
-  struct JPSSIPPStateHasherOpen {
-    size_t operator()(const JPSSIPPState& s) const {
-      size_t seed = 0;
-      boost::hash_combine(seed, std::hash<State>()(s.state));
-      boost::hash_combine(seed, s.g_cost);
-      return seed;
-    }
-  };
+//   struct JPSSIPPStateHasherOpen {
+//     size_t operator()(const JPSSIPPState& s) const {
+//       size_t seed = 0;
+//       boost::hash_combine(seed, std::hash<State>()(s.state));
+//       boost::hash_combine(seed, s.g_cost);
+//       return seed;
+//     }
+//   };
 
   struct JPSSIPPAction {
     JPSSIPPAction(const Action& action, Cost time) : action(action), time(time) {}
@@ -339,7 +338,6 @@ public:
       	      if(m_env.stateValid(State(s.state.x - 1, s.state.y)) &&
       	    		  isTemporalObstacleAfterT(State(s.state.x - 1, s.state.y), m_lastGScore + 1, left_start_t)){
         		   temp_state.dir = 0x00;
-        		   temp_state.flag_wait = true;
         		   temp_state.state.x = s.state.x - 1;
         		   temp_state.state.y = s.state.y;
 
@@ -434,7 +432,6 @@ public:
       	    		  && isTemporalObstacleAfterT(State(s.state.x + 1, s.state.y), m_lastGScore + 1, right_start_t)){
            		   JPSSIPPState temp_state = s;
            		   temp_state.dir = 0x00;
-           		   temp_state.flag_wait = true;
            		   temp_state.state.x = s.state.x + 1;
            		   temp_state.state.y = s.state.y;
            		   const auto& sis = safeIntervals(State(s.state.x + 1, s.state.y));
@@ -524,7 +521,6 @@ public:
          	   if(m_env.stateValid(State(s.state.x, s.state.y + 1))
          			   && isTemporalObstacleAfterT(State(s.state.x, s.state.y + 1), m_lastGScore + 1, up_start_t)){
          		   JPSSIPPState temp_state = s;
-         		   temp_state.flag_wait = true;
          		   temp_state.state.x = s.state.x;
          		   temp_state.state.y = s.state.y + 1;
         		   const auto& sis = safeIntervals(State(s.state.x, s.state.y + 1));
@@ -565,7 +561,6 @@ public:
      	    		  isTemporalObstacleAfterT(State(s.state.x, s.state.y - 1), m_lastGScore + 1, down_start_t)){
         		   JPSSIPPState temp_state = s;
         		   temp_state.dir = 0x00;
-        		   temp_state.flag_wait = true;
         		   temp_state.state.x = s.state.x;
         		   temp_state.state.y = s.state.y - 1;
 
@@ -612,7 +607,6 @@ public:
 					if(re_start[re_i].rt == -1) continue;
 					temp_state.action = Action::Left;
 					temp_state.dir |= re_start[re_i].dir;
-					temp_state.flag_wait = re_start[re_i].flag_wait;
 					int re_ii;
 					for(re_ii = re_i + 1; re_ii < re_start.size(); re_ii++){
 						if(re_start[re_ii].rt == re_start[re_i].rt){
@@ -629,7 +623,7 @@ public:
 
           	  for ( auto& m : jps_successors) {
           		  neighbors.emplace_back(Neighbor<JPSSIPPState, JPSSIPPAction, Cost>(
-  						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir, m.state.dir_p, m_lastGScore + m.cost, m.state.flag_wait),
+  						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir, m.state.dir_p, m_lastGScore + m.cost),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
            		  	Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
 					if(m_env.isDebug)

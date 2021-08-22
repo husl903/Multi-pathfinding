@@ -206,9 +206,9 @@ class JPSTAStar {
         return fScore > other.fScore;
       } else if(gScore != other.gScore){
         return gScore < other.gScore;
-      } else if(state.dir_p != other.state.dir_p){
+      }/* else if(state.dir_p != other.state.dir_p){
     	  return state.dir_p > other.state.dir_p;
-      }else{
+      }*/else{
         return state.dir > other.state.dir;
       }
     }
