@@ -345,22 +345,22 @@ public:
         }
       }
 
-      for(size_t nei = 0; nei < neighbors.size(); nei++){
-        neighbors[nei].state.nc_cat = 0;
-        int current_time = s.time + 1;
-        State temp_s(-1, -1, -1);
-        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
-          if(m_cat[agent_id].states.empty()) continue;
-          if (current_time < m_cat[agent_id].states.size()) {
-            temp_s = m_cat[agent_id].states[current_time].first;
-          }else{
-            temp_s = m_cat[agent_id].states.back().first;     
-          }
-          if(temp_s == neighbors[nei].state){
-            neighbors[nei].state.nc_cat++;
-          }
-        }
-      }
+      // for(size_t nei = 0; nei < neighbors.size(); nei++){
+      //   neighbors[nei].state.nc_cat = 0;
+      //   int current_time = s.time + 1;
+      //   State temp_s(-1, -1, -1);
+      //   for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+      //     if(m_cat[agent_id].states.empty()) continue;
+      //     if (current_time < m_cat[agent_id].states.size()) {
+      //       temp_s = m_cat[agent_id].states[current_time].first;
+      //     }else{
+      //       temp_s = m_cat[agent_id].states.back().first;     
+      //     }
+      //     if(temp_s == neighbors[nei].state){
+      //       neighbors[nei].state.nc_cat++;
+      //     }
+      //   }
+      // }
 
 //      m_env.getNeighbors(s, neighbors);
     }

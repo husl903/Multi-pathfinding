@@ -106,13 +106,13 @@ class CBS {
       //   start.solution[i] = solution[i];
       //   std::cout << "use existing solution for agent: " << i << std::endl;
       // } else {
-        m_env.setLowLevelContext(i, &start.constraints[i]);
-        canonical_astar can_astar(m_env, start.solution);
-        bool success = can_astar.search(initialStates[i], start.solution[i]);
+        // m_env.setLowLevelContext(i, &start.constraints[i]);
+        // canonical_astar can_astar(m_env, start.solution);
+        // bool success = can_astar.search(initialStates[i], start.solution[i]);
         
-      // LowLevelEnvironment llenv(m_env, start.solution, i, start.constraints[i]);
-      // LowLevelSearch_t lowLevel(llenv);
-      // bool success = lowLevel.search(initialStates[i], start.solution[i]);
+      LowLevelEnvironment llenv(m_env, start.solution, i, start.constraints[i]);
+      LowLevelSearch_t lowLevel(llenv);
+      bool success = lowLevel.search(initialStates[i], start.solution[i]);
       if (!success) {
         return false;
       }
@@ -431,19 +431,19 @@ class CBS {
 */
         // std::cout << "===================================================================\n";
 
-        // m_env.setExactHeuristTrue();
-        // LowLevelEnvironment llenv(m_env, newNode.solution, i, newNode.constraints[i]);
-        // LowLevelSearch_t lowLevel(llenv);
+        m_env.setExactHeuristTrue();
+        LowLevelEnvironment llenv(m_env, newNode.solution, i, newNode.constraints[i]);
+        LowLevelSearch_t lowLevel(llenv);
 
-        // Timer timerAstar;
-        // timerAstar.reset();
-        // int ExpA =  m_env.lowLevelExpanded();
-        // PlanResult<State, Action, int> solutiontemp4;        
-        // bool successCA = lowLevel.search(initialStates[i], newNode.solution[i]);
-        // timerAstar.stop();
-        // int ExpAstar = m_env.lowLevelExpanded() - ExpA;
-        // int GenAstar = m_env.lowLevelGenerated();
-        // double tAstar = timerAstar.elapsedSeconds();
+        Timer timerAstar;
+        timerAstar.reset();
+        int ExpA =  m_env.lowLevelExpanded();
+        PlanResult<State, Action, int> solutiontemp4;        
+        bool successCA = lowLevel.search(initialStates[i], newNode.solution[i]);
+        timerAstar.stop();
+        int ExpAstar = m_env.lowLevelExpanded() - ExpA;
+        int GenAstar = m_env.lowLevelGenerated();
+        double tAstar = timerAstar.elapsedSeconds();
 
         // m_env.setExactHeuristTrue();
         // LowLevelEnvironment llenvP(m_env, i, newNode.constraints[i]);
@@ -458,14 +458,14 @@ class CBS {
         // int GenAstarP = m_env.lowLevelGenerated();
         // double tAstarP = timerAstarP.elapsedSeconds();
         
-        m_env.setExactHeuristTrue();
-        m_env.setLowLevelContext(i, &newNode.constraints[i]);        
-        canonical_astar can_astar(m_env, newNode.solution);
-        Timer timerCAstar;
-        timerCAstar.reset();
-        bool successCA = can_astar.search(initialStates[i], newNode.solution[i]);
-        timerCAstar.stop();
-        double tCAstar = timerCAstar.elapsedSeconds();
+        // m_env.setExactHeuristTrue();
+        // m_env.setLowLevelContext(i, &newNode.constraints[i]);        
+        // canonical_astar can_astar(m_env, newNode.solution);
+        // Timer timerCAstar;
+        // timerCAstar.reset();
+        // bool successCA = can_astar.search(initialStates[i], newNode.solution[i]);
+        // timerCAstar.stop();
+        // double tCAstar = timerCAstar.elapsedSeconds();
         newNode.cost += newNode.solution[i].cost;
 /*        std::cout successCA<< i << ", Start, (" << initialStates[i].x << " " << initialStates[i].y <<
         		"), Goal, (" << goal.x << " " << goal.y <<
