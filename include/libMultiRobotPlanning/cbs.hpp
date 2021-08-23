@@ -341,7 +341,7 @@ class CBS {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, true);
       if(return_value  == 0){
         solution = PJps.solution;
-        if(getFirstConflict(PJps.solution, conflict, PJps)) std::cout << "not equal ";
+        if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -358,6 +358,13 @@ class CBS {
       //     continue;
       //   }
       // }
+      if(return_value == 1){
+        if(TryBypassSipp(conflict, PJps)){
+          auto handle = openJps.push(PJps);
+          (*handle).handle = handle;
+          continue;          
+        }
+      }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
@@ -391,10 +398,8 @@ class CBS {
         bool is_first_constraint_v = true;
         bool is_first_constraint_e = true;
 
-       jpst_bit jpstbit(m_env);
-       jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-      //  jps_sipp jps(m_env);
-      //  jps.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+//        jpst_bit jpstbit(m_env);
+//        jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
 //         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
 //         	Location location(constraint.x, constraint.y);
@@ -434,24 +439,14 @@ class CBS {
 //         	}
 //         }
 
-// //        jps.sortCollisionVertex();
-// //        jps.sortCollisionEdgeConstraint();
-//         jpstbit.sortCollisionVertex();
-//         jpstbit.sortCollisionEdgeConstraint();
+        // jpstbit.sortCollisionVertex();
+        // jpstbit.sortCollisionEdgeConstraint();
         PlanResult<Location, Action, int> solutiontempJps;
         Location goal = m_env.setGoal(i);
         m_env.Reset();
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;
-        // m_env.setExactHeuristTrue();
-        // Timer timerJps;
-        // timerJps.reset();
-        // bool isJpsSucc = jps.search(startNode, Action::Wait, solutiontempJps, 0, true);
-        // timerJps.stop();
-        // double tJps = timerJps.elapsedSeconds();
-        // int ExpJps = m_env.num_expansion;
-        // int GenJps = m_env.num_generation;
         
         // Timer timerJpstbit;
         // timerJpstbit.reset();
@@ -854,7 +849,79 @@ private:
     return false;
   }
 
+  bool TryBypassSipp(Conflict cft, HighLevelNodeJps& CurNode){
+        int i = cft.agent1;
+        PlanResult<Location, Action, int> solutionSipp;
+        sipp_t sipp(m_env, CurNode.solution);
+        sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        m_env.resetTemporalObstacle();
+        bool is_first_constraint_v = true;
+        for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+        	Location location(constraint.x, constraint.y);
+          m_env.setTemporalObstacle(location, constraint.time);
+        	if(is_first_constraint_v){
+        		sipp.setCollisionVertex(location, constraint.time, constraint.time, true);
+        		is_first_constraint_v = false;
+        	}else{
+        		sipp.setCollisionVertex(location, constraint.time, constraint.time, false);
+        	}
+        }
+        bool is_first_constraint_e = true;
+        for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+        	Location loc(constraint.x2, constraint.y2);
+          m_env.setTemporalEdgeConstraint(loc, constraint.time);
+        	if(constraint.x1 == constraint.x2){
+        		if(constraint.y1 == constraint.y2 - 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
+        		}else if(constraint.y1 == constraint.y2 + 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
+        		}
+        	}else{
+        		if(constraint.x1 == constraint.x2 - 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
+        		}else if(constraint.x1 == constraint.x2 + 1){
+        			sipp.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
+        		}
+        	}
+        	if(is_first_constraint_e){
+        		is_first_constraint_e = false;
+        	}
+        }
 
+    if(cft.type == Conflict::Vertex){
+      Location state1(cft.x1, cft.y1);
+      m_env.setTemporalObstacle(state1, cft.time);
+      sipp.setCollisionVertex(state1, cft.time, cft.time, is_first_constraint_v);
+      is_first_constraint_v = false;
+    }
+    if(cft.type == Conflict::Edge){
+      Location state2(cft.x2, cft.y2);
+      m_env.setTemporalObstacle(state2, cft.time);
+      Action ac_temp;
+      if(cft.x1 == cft.x2){
+        if(cft.y1 == cft.y2 - 1) ac_temp = Action::Down;
+        else ac_temp = Action::Up;
+      }else{
+        if(cft.x1 == cft.x2 - 1) ac_temp = Action::Left;
+        else ac_temp = Action::Right;
+      }
+      sipp.setEdgeConstraint(state2, cft.time, ac_temp, is_first_constraint_e);
+      is_first_constraint_e = false;
+    }        
+    sipp.sortCollisionVertex();
+    sipp.sortCollisionEdgeConstraint();
+    m_env.setGoal(i);
+    m_env.Reset();
+    Location startNode = CurNode.solution[i].states[0].first;
+
+    PlanResult<Location, Action, int> tempsolution;
+    bool isSippSucc = sipp.search(startNode, Action::Wait, tempsolution, 0);
+
+    if(tempsolution.cost == CurNode.solution[i].cost){
+      CurNode.solution[i] = tempsolution;
+      return true;
+    }else return false;
+  }
 
  bool TryBypassAstar(Conflict cft, HighLevelNodeJps& CurNode, int& jump_id){
     
