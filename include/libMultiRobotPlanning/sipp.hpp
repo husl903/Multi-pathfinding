@@ -157,10 +157,17 @@ class SIPP {
                              astarsolution.actions[i].second));
       } else {
         // additional wait action before
-        solution.states.push_back(
-            std::make_pair<>(astarsolution.states[i].first.state,
-                             astarsolution.states[i].second));
-        solution.actions.push_back(std::make_pair<>(waitAction, waitTime));
+        // std::cout << "Wait Action " << astarsolution.states[i].first.state << ", " 
+        // << astarsolution.states[i].second << ", action " << waitAction << ", " << waitTime << ", " 
+        // << astarsolution.actions[i].first.action << ", "<< astarsolution.actions[i].first.time << " \n";
+
+        for(Cost ii = 0; ii < waitTime; ii++){
+          solution.states.push_back(
+              std::make_pair<>(astarsolution.states[i].first.state,
+                             astarsolution.states[i].second + ii));
+          solution.actions.push_back(std::make_pair<>(waitAction, 1));
+        }
+
         solution.states.push_back(
             std::make_pair<>(astarsolution.states[i].first.state,
                              astarsolution.states[i].second + waitTime));
@@ -195,7 +202,6 @@ class SIPP {
     State state;
     unsigned int dir;
     size_t interval;
-    int nc_cat;
   };
 
   struct SIPPStateHasher {
@@ -240,7 +246,7 @@ class SIPP {
         const SIPPState& s,
         std::vector<Neighbor<SIPPState, SIPPAction, Cost> >& neighbors) {
       std::vector<Neighbor<State, Action, Cost> > motions;
-//  	  std::cout << "Sipp Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
+  	  // std::cout << "Sipp Current state ---------------------------------------GScore " << m_lastGScore << " " << s.state.x << " " << s.state.y << " dir " << s.dir << " \n";
 
 
       m_env.getNeighbors(s.state, motions);
@@ -280,7 +286,7 @@ class SIPP {
                 neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
                     SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
                     t - m_lastGScore));
-//                std::cout << " Sipp Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
+              //  std::cout << " Sipp Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
         	}else if(is_EdgeConstraint){
         		t++;
         		while(t - 1 <= end_t && t <= si.end){
@@ -289,7 +295,7 @@ class SIPP {
                         neighbors.emplace_back(Neighbor<SIPPState, SIPPAction, Cost>(
                             SIPPState(m.state, i, dir_1), SIPPAction(m.action, m.cost),
                             t - m_lastGScore));
-//                        std::cout << " Sipp Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
+                      //  std::cout << " Sipp Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " ++++++++++++\n";
 //                        std::cout << "Successor : " << m.state.x << " " << m.state.y <<" Cost " << m.cost  << " dir " << dir_1 << " Gscore " << t << " \n";
                         break;
         			}
@@ -450,25 +456,23 @@ class SIPP {
     		if(m_edgeCollision_t[index][high] == ec) return true;
     		mid = low + (high - low)/2;
     		if(m_edgeCollision_t[index][mid] == ec) return true;
-    		else if(m_edgeCollision_t[index][mid].t == ec.t){
-				int temp_it = mid;
-				while(--temp_it){
-					if(m_edgeCollision_t[index][temp_it].t != ec.t) break;
-					if(m_edgeCollision_t[index][temp_it] == ec) return true;
+			else if(m_edgeCollision_t[index][mid].t == ec.t){
+				int itt = mid;
+				while (--itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
 				}
-				temp_it = mid;
-				while(++temp_it){
-					if(m_edgeCollision_t[index][temp_it].t != ec.t) break;
-					if(m_edgeCollision_t[index][temp_it] == ec) return true;
-					if(temp_it > m_edgeCollision_t[index].size() - 1) break;
+				itt = mid;
+				while(++itt){
+					if(m_edgeCollision_t[index][itt].t != ec.t) break;
+					if(m_edgeCollision_t[index][itt] == ec) return true;
 				}
-				return false;
+				return false;				
 			}else if(m_edgeCollision_t[index][mid].t < ec.t){
     			low = mid + 1;
     		} else high = mid -1;
     	}
     	return false;
-
 /*    	if(!m_env.isTemporalObstacle(m_env.getLocation(location)) || !m_env.stateValid(m_env.getLocation(location))) return false;
     	int index = m_env.getIndex(location);
     	if(m_edgeCollision_t[index].size() == 0) return false;
