@@ -38,6 +38,7 @@ struct State {
   int time;
   int x;
   int y;
+  int nc_cat = 0;
 };
 
 namespace std {

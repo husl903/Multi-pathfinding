@@ -229,7 +229,8 @@ int main(int argc, char* argv[]) {
   Environment env(dimx, dimy, obstacles, m_temporal_obstacles, goal);
 
   typedef SIPP<State, State, Action, int, Environment> sipp_t;
-  sipp_t sipp(env);
+  std::vector<PlanResult<State, Action, int> > cat;
+  sipp_t sipp(env, cat);
   sipp.setEdgeCollisionSize(dimx, dimy);
   std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 

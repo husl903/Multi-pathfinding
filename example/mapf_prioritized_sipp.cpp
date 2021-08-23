@@ -237,7 +237,8 @@ int main(int argc, char* argv[]) {
     out << "  agent" << i << ":" << std::endl;
 
     Environment env(dimx, dimy, obstacles, temporal_obstacles, goals[i]);
-    sipp_t sipp(env);
+    std::vector<PlanResult<State, Action, int>> m_cat;
+    sipp_t sipp(env, m_cat);
     sipp.setEdgeCollisionSize(dimx, dimy);
 
     for (const auto& collisionIntervals : allCollisionIntervals) {

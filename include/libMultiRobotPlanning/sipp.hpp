@@ -91,7 +91,9 @@ class SIPP {
   };
 
  public:
-  SIPP(Environment& environment) : m_env(environment), m_astar(m_env) {}
+  // SIPP(Environment& environment) : m_env(environment), m_astar(m_env) {}
+  SIPP(Environment& environment, 
+       std::vector<PlanResult<Location, Action, int> >& solution) : m_env(environment, solution), m_astar(m_env) {}
 
   void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
 	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
@@ -202,6 +204,7 @@ class SIPP {
     State state;
     unsigned int dir;
     size_t interval;
+    int nc_cat = 0;
   };
 
   struct SIPPStateHasher {
@@ -222,8 +225,9 @@ class SIPP {
 
   // private:
   struct SIPPEnvironment {
-    SIPPEnvironment(Environment& env) : m_env(env) {}
-
+    // SIPPEnvironment(Environment& env) : m_env(env) {}
+    SIPPEnvironment(Environment& env, 
+        std::vector<PlanResult<Location, Action, int> >& solution) : m_env(env), m_cat(solution) {}
     Cost admissibleHeuristic(const SIPPState& s) {
       return m_env.admissibleHeuristic(s.state);
     }
@@ -308,6 +312,23 @@ class SIPP {
           }
         }
       }
+      for(size_t nei = 0; nei < neighbors.size(); nei++){
+        neighbors[nei].state.nc_cat = 0;
+        int current_time = m_lastGScore + neighbors[nei].cost;
+        Location temp_s(-1, -1);
+        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+          if(m_cat[agent_id].states.empty()) continue;
+          if (current_time < m_cat[agent_id].states.size()) {
+            temp_s = m_cat[agent_id].states[current_time].first;
+          }else{
+            temp_s = m_cat[agent_id].states.back().first;     
+          }
+          if(temp_s.x == neighbors[nei].state.state.x && temp_s.y == neighbors[nei].state.state.y){
+            neighbors[nei].state.nc_cat++;
+          }
+        }
+      }
+
     }
 
     void onExpandNode(const SIPPState& s, Cost fScore, Cost gScore) {
@@ -532,6 +553,7 @@ class SIPP {
 
    private:
     Environment& m_env;
+    std::vector<PlanResult<Location, Action, int> >& m_cat;
     Cost m_lastGScore;
     std::unordered_map<Location, std::vector<interval> > m_safeIntervals;
     std::vector<std::vector<interval> > m_safeIntervals_t;

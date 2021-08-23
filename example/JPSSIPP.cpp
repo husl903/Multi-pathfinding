@@ -883,7 +883,8 @@ int main(int argc, char *argv[])
 		jps_sipp jpssipp(env);
 		jpst_old1 jpstold1(env);
 		jpst_old2 jpstold2(env);
-		sipp_t sipp(env);
+		std::vector<PlanResult<State, Action, int> > cat;
+		sipp_t sipp(env, cat);
 
 		jpssipp.setEdgeCollisionSize(dimx, dimy);
 		jpstold1.setEdgeCollisionSize(dimx, dimy);
