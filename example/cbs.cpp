@@ -490,11 +490,11 @@ class Environment {
 
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result) {
+      Conflict& result, int& jump_id) {
     bool isprint = false;
     std::vector<PathPoint> point_t; //store the line points of all paths 
     std::vector<PathPoint> pool_k; //for each path store the current point,the size is the number of paths
-
+    int jump_id_conf = -1;
     //Construct the line points
     for(size_t i = 0; i < solution.size(); i++){
       Location a(-1, -1), b(-1, -1); 
@@ -618,7 +618,8 @@ class Environment {
               result.agent2 = pool_k[jj].path_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
-              result.y1 = pool_k[jj].y;         
+              result.y1 = pool_k[jj].y;       
+              jump_id_conf = current_p.point_id;  
               if(isprint) std::cout << " test 11 \n";    
             }
           } else if(current_p.ac == Action::Up){
@@ -627,6 +628,7 @@ class Environment {
               result.time = current_p.init_t + dis/2;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               if(dis%2 == 0){
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x;
@@ -649,6 +651,8 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
+
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;
@@ -662,6 +666,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;
@@ -674,6 +679,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;       
@@ -693,6 +699,7 @@ class Environment {
               result.time = current_p.init_t;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;    
@@ -704,6 +711,7 @@ class Environment {
               result.time = current_p.init_t + dis/2;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               if(dis%2 == 0){
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x;
@@ -726,6 +734,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;         
@@ -739,6 +748,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = current_p.y;         
@@ -751,6 +761,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;       
@@ -769,6 +780,7 @@ class Environment {
               result.time = current_p.init_t;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;
@@ -783,6 +795,7 @@ class Environment {
               result.time = current_p.init_t + dis/2;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               if(dis%2 == 0){
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x - dis/2;
@@ -805,6 +818,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = pool_k[jj].y;        
@@ -819,6 +833,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = pool_k[jj].y;        
@@ -831,6 +846,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x- pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;      
@@ -850,6 +866,7 @@ class Environment {
               result.time = current_p.init_t;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y; 
@@ -862,6 +879,7 @@ class Environment {
               result.time = current_p.init_t + dis/2;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               if(dis%2 == 0){
                 result.type = Conflict::Vertex;
                 result.x1 = pool_k[jj].x + dis/2;
@@ -884,6 +902,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = pool_k[jj].y;     
@@ -897,6 +916,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x - pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = pool_k[jj].y;     
@@ -909,6 +929,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.x- pool_k[jj].x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;   
@@ -928,6 +949,7 @@ class Environment {
               result.time = current_p.init_t + abs(pool_k[jj].x - current_p.x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;        
@@ -940,6 +962,7 @@ class Environment {
               result.time = current_p.init_t + abs(pool_k[jj].x - current_p.x);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;
@@ -953,6 +976,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;      
@@ -965,6 +989,7 @@ class Environment {
               result.time = current_p.init_t + abs(current_p.y - pool_k[jj].y);
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = pool_k[jj].x;
               result.y1 = pool_k[jj].y;      
@@ -978,6 +1003,7 @@ class Environment {
               result.time = current_p.init_t;
               result.agent1 = current_p.path_id;
               result.agent2 = pool_k[jj].path_id;
+              jump_id_conf = current_p.point_id;
               result.type = Conflict::Vertex;
               result.x1 = current_p.x;
               result.y1 = current_p.y;      
@@ -993,6 +1019,7 @@ class Environment {
 
     }
 
+    jump_id = jump_id_conf;
     if(result.time != std::numeric_limits<int>::max()) {
       if(isprint) std::cout << " conflict " << result.x1 << ", " << result.y1  << ", time, " << result.time << ", agent, " << result.agent1  << ", " << result.agent2 << ", " << result.type<< " !!!!!!\n";
       return true;
@@ -1446,6 +1473,9 @@ Location  setGoal(int agentId){
   void setExactHeuristFalse(){
 	  isExact = false;
   }
+  void setIsSegPlanning(bool isSeg_t){
+	  isSeg = isSeg_t;
+  }
 
 #if 0
   // We use another A* search for simplicity
@@ -1577,9 +1607,17 @@ Location  setGoal(int agentId){
 		return (s.y * m_dimx + s.x);
 	}
 
-
 	void setGoal(Location goal){
 		m_goal = goal;
+    goalID = getNodeId(m_goal);    
+    isOutput = true;
+	}
+
+	void setGoal(Location goal, int agentId){
+		m_goal = goal;
+    m_agentIdx = agentId;
+    goalID = getNodeId(m_goal);    
+    isOutput = true;
 	}
 
   double getPreTime(int i){
@@ -1626,6 +1664,7 @@ public:
  public:
   jpst_gridmap *jpst_gm_;
   bool isDebug = false;
+  bool isSeg = false;
 };
 
 

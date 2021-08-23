@@ -116,6 +116,11 @@ public:
 	//   m_env.jpst_gm_->add_obstacle(location.x, location.y)
   }
 
+  void setCollisionVertex(const Location& location, int startTime, int EndTime, bool& is_first, bool&	 isV){
+	  m_env.setCollisionVertex(location, startTime, EndTime, is_first, isV);
+	//   m_env.jpst_gm_->add_obstacle(location.x, location.y)
+  }
+
   void clearObstacle(const Location& location){
 	  m_env.clearObstacle(location);
   }
@@ -267,14 +272,17 @@ public:
 
     bool mightHaveSolution(const State& goal) {
       const auto& si = safeIntervals(goal);
-      return m_env.isSolution(goal) && !si.empty() &&
+      if(!m_env.isSeg) return m_env.isSolution(goal) && !si.empty() &&
              si.back().end == std::numeric_limits<Cost>::max();
+	  else return m_env.isSolution(goal);
     }
 
     bool isSolution(const JPSSIPPState& s) {
-      return m_env.isSolution(s.state) &&
+
+      	if(!m_env.isSeg) return m_env.isSolution(s.state) &&
              safeIntervals(s.state).at(s.interval).end ==
                  std::numeric_limits<Cost>::max();
+		else return m_env.isSolution(s.state);
     }
 
     void getNeighbors(
@@ -2549,6 +2557,22 @@ public:
     		m_safeIntervals_t[index].clear();
     	}
     	m_safeIntervals_t[index].push_back({startTime, endTime});
+
+		m_env.jpst_gm_->add_obstacle(location.x, location.y);
+    }
+
+   void setCollisionVertex(const Location& location, int& startTime, int& endTime, bool& is_first, bool& isV){
+    	int index = m_env.getIndex(location);
+	   	// std::cout << "  " << location.x << "  --- " << location.y <<  " time: " << startTime << " , " << endTime << "\n";
+    	if(is_first){
+    		m_safeIntervals_t[index].clear();
+    	}
+		if(isV){
+			for(size_t num = 0; num < m_safeIntervals_t[index].size(); num++){
+				if(m_safeIntervals_t[index][num].start == startTime) return;
+			}
+		}
+		m_safeIntervals_t[index].push_back({startTime, endTime});
 
 		m_env.jpst_gm_->add_obstacle(location.x, location.y);
     }
