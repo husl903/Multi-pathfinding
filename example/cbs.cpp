@@ -8,6 +8,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <libMultiRobotPlanning/cbs.hpp>
+#include <libMultiRobotPlanning/cbs_astar.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 
