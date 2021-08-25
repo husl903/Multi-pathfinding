@@ -9,6 +9,7 @@
 
 #include <libMultiRobotPlanning/cbs.hpp>
 #include <libMultiRobotPlanning/cbs_astar.hpp>
+#include <libMultiRobotPlanning/cbs_caastar.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 
@@ -16,6 +17,8 @@
 using namespace std;
 
 using libMultiRobotPlanning::CBS;
+using libMultiRobotPlanning::CBSAstar;
+using libMultiRobotPlanning::CBSCAstar;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
 using libMultiRobotPlanning::gridmap;
@@ -35,11 +38,12 @@ struct State {
     // return os << "(" << s.x << "," << s.y << ")";
   }
 
-  unsigned int dir = 0xff;
   int time;
   int x;
   int y;
   int nc_cat = 0;
+  unsigned int dir = 0xff;
+  unsigned int dir_p = 0xff;
 };
 
 namespace std {
@@ -1842,10 +1846,25 @@ int main(int argc, char* argv[]) {
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<Location, Action, int> > solution;
 
+  CBSAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_astar(mapf);
+  std::vector<PlanResult<State, Action, int> > solution_astar;
+
+  CBSCAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_castar(mapf);
+  std::vector<PlanResult<State, Action, int> > solution_castar;
+
+
   Timer timer;
   bool success = cbs.search(startStates, solution);
   timer.stop();
+
+  std::cout << "Here next Astar \n";
+  bool successA = cbs_astar.search(startStates, solution_astar);
+
+  bool successCA= cbs_castar.search(startStates, solution_castar);
+
+
   if (success) {
+    return 0;
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
     int cost = 0;
     int makespan = 0;
