@@ -10,6 +10,7 @@
 #include <libMultiRobotPlanning/cbs.hpp>
 #include <libMultiRobotPlanning/cbs_astar.hpp>
 #include <libMultiRobotPlanning/cbs_caastar.hpp>
+#include <libMultiRobotPlanning/cbs_sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 
@@ -17,6 +18,7 @@
 using namespace std;
 
 using libMultiRobotPlanning::CBS;
+using libMultiRobotPlanning::CBSSIPP;
 using libMultiRobotPlanning::CBSAstar;
 using libMultiRobotPlanning::CBSCAstar;
 using libMultiRobotPlanning::Neighbor;
@@ -363,8 +365,7 @@ class Environment {
   //          s.time > m_lastGoalConstraint;
   // }
   bool isSolution(const State& s) {
-    return s.x == m_goal.x && s.y == m_goal.y;
-    // &&s.time > m_lastGoalConstraint;
+    return s.x == m_goal.x && s.y == m_goal.y && s.time > m_lastGoalConstraint;
   }  
   bool isSolution(const Location& s) {
 //	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
@@ -488,10 +489,6 @@ class Environment {
 
   static bool comparsion(PathPoint p_a, PathPoint p_b){
     return p_a.init_t < p_b.init_t;
-  //  if(p_a.init_t != p_b.init_t) return p_a.init_t < p_b.init_t;
-  //  else{
-  //    return p_a.path_id < p_b.path_id;
-  //  }
   }
 
   bool getFirstConflict(
@@ -1382,10 +1379,25 @@ class Environment {
 			  m_temporal_edge_constraint[s.x][s.y]>=T;
   }
 
+  bool isEdgeConstraintAtT(const Location s1, Location s2, int T){
+		if(s1.x >= 0 && s1.x < m_dimx && s1.y >= 0 && s1.y < m_dimy){
+      assert(m_constraints);
+      const auto& con = m_constraints->edgeConstraints;
+      return con.find(EdgeConstraint(T, s1.x, s1.y, s2.x, s2.y)) !=
+           con.end();    
+    }
+    else return false;
+  }    
+
   bool isTemporalObstacleAfterT(const Location& s, int T){
 		return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy
 			  && m_last_ob_g[s.x][s.y] >= T;
   }
+  bool isTemporalObstacleAtT(const Location& s, int T){
+    assert(m_constraints);
+    const auto& con = m_constraints->vertexConstraints;    
+		return con.find(VertexConstraint(T, s.x, s.y)) != con.end();
+  }    
   void setTemporalEdgeConstraint(const Location& s){
 	  m_temporal_edge_constraint[s.x][s.y] = true;
   }
@@ -1846,6 +1858,10 @@ int main(int argc, char* argv[]) {
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<Location, Action, int> > solution;
 
+  CBSSIPP<State, Location, Action, int, Conflict, Constraints, Environment> cbs_sipp(mapf);
+  std::vector<PlanResult<Location, Action, int> > solution_sipp;
+
+
   CBSAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_astar(mapf);
   std::vector<PlanResult<State, Action, int> > solution_astar;
 
@@ -1854,16 +1870,21 @@ int main(int argc, char* argv[]) {
 
 
   Timer timer;
+  std::cout << "jpst " << ", ";
   bool success = cbs.search(startStates, solution);
   timer.stop();
 
-  std::cout << "Here next Astar \n";
+  std::cout << "sipp " << ", ";
+  bool successSipp = cbs_sipp.search(startStates, solution_sipp);
+
+  std::cout << "astar " << ", ";
   bool successA = cbs_astar.search(startStates, solution_astar);
 
+  std::cout << "castar " << ", ";
   bool successCA= cbs_castar.search(startStates, solution_castar);
 
 
-  if (success) {
+  if (successSipp) {
     return 0;
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
     int cost = 0;
