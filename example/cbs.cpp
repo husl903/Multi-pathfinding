@@ -413,14 +413,14 @@ class Environment {
     // }
 //	  if(isOutput) std::cout << "Current state : " << s.x << ", " << s.y << " time " << s.time << " f " << admissibleHeuristic(s) << "  -----------\n";
     neighbors.clear();
-/*   if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
+   if(isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y), s.time)
     		|| isTemporalEdgeConstraintAfterT(Location(s.x, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x, s.y + 1), s.time)
 			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y - 1), s.time)
 			|| isTemporalEdgeConstraintAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalEdgeConstraintAfterT(Location(s.x - 1, s.y + 1), s.time)
 			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y), s.time)
 			|| isTemporalObstacleAfterT(Location(s.x, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x, s.y + 1), s.time)
 			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y - 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y - 1), s.time)
-			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))*/
+			|| isTemporalObstacleAfterT(Location(s.x + 1, s.y + 1), s.time) || isTemporalObstacleAfterT(Location(s.x - 1, s.y + 1), s.time))
       //  if(isTemporalEdgeConstraint(Location(s.x + 1, s.y)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y))
       //   		|| isTemporalEdgeConstraint(Location(s.x, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x, s.y + 1))
     	// 		|| isTemporalEdgeConstraint(Location(s.x + 1, s.y - 1)) || isTemporalEdgeConstraint(Location(s.x - 1, s.y - 1))
@@ -1838,9 +1838,9 @@ int main(int argc, char* argv[]) {
   int num_agent = 0;
   std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
   std::vector<double> preTime;
+  numAgent = 53;
   preTime.resize(numAgent+1);
   Timer t;
-  // numAgent = 200;
   for (const auto& node : config["agents"]) {
     const auto& start = node["start"];
     const auto& goal = node["goal"];
@@ -1855,14 +1855,14 @@ int main(int argc, char* argv[]) {
     t.stop();
     double preT1 = t.elapsedSeconds();
     preTime[num_agent] = preT1;
-    std::cout <<   "(" << startStates[num_agent].x << " " << startStates[num_agent].y <<
+    std::cout << numAgent <<  "(" << startStates[num_agent].x << " " << startStates[num_agent].y <<
     		")" << " , " <<  "(" << goals[num_agent].x << " " << goals[num_agent].y <<
     		")" << ", " << preT1 << "\n";
     num_agent++;
     if(num_agent > numAgent) break;
   }
   t.stop();
-
+  std::cout << "Here \n";
   double preT = t.elapsedSeconds();
 
   std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
@@ -1886,23 +1886,23 @@ int main(int argc, char* argv[]) {
   CBSCAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_castar(mapf);
   std::vector<PlanResult<State, Action, int> > solution_castar;
   Timer timer;
-  bool success1 = cbs_astar.search(startStates, solution_astar);
-  timer.stop();
+  // bool success1 = cbs_astar.search(startStates, solution_astar);
+  // timer.stop();
 
   
-  if(success1) std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
+  // if(success1) std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
   
-   mapf.setCAT(false);
+  //  mapf.setCAT(false);
 
-  Timer timer2;
-  bool success2 = cbs_astar.search(startStates, solution_astar);
-  timer2.stop();   
-  if(success1) std::cout << inputFile << " Planning successful! time " << timer2.elapsedSeconds() << std::endl;
-
-
-  return 0;
+  // Timer timer2;
+  // bool success2 = cbs_astar.search(startStates, solution_astar);
+  // timer2.stop();   
+  // if(success1) std::cout << inputFile << " Planning successful! time " << timer2.elapsedSeconds() << std::endl;
 
 
+  // return 0;
+
+  std::cout << startStates.size() << " Here \n";
   bool successJpst = true, successSipp = true, successA = true, successCA = true;
   int num_agent_iter = 0;
   std::vector<State> startStates_temp;
@@ -1910,6 +1910,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
     Timer timer_t1;
     std::cout << "JPST, " << num_agent_iter << ", ";
+    solution.clear();
     successJpst = cbs.search(startStates_temp, solution);
     timer_t1.stop();
     if(successJpst) std::cout << inputFile << " Planning successful! time " << timer_t1.elapsedSeconds() << std::endl;
@@ -1936,9 +1937,32 @@ int main(int argc, char* argv[]) {
     if(successCA) std::cout << inputFile << " Planning successful! time " << timer_t4.elapsedSeconds() << std::endl;
     else std::cout << inputFile << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << std::endl;
 
+    Timer timer_t8;
+    std::cout << "JpstAstar, " << num_agent_iter << ", ";
+    successCA= cbs_jpsta.search(startStates_temp, solution_jpsta);
+    timer_t8.stop();
+    if(successCA) std::cout << inputFile << " Planning successful! time " << timer_t8.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t8.elapsedSeconds() << std::endl;
+
     mapf.setCAT(false);
 
+    Timer timer_t5;
+    std::cout << "SIPPNoCAT, " << num_agent_iter << ", ";
+    successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
+    timer_t5.stop();
+    if(successSipp) std::cout << inputFile << " Planning successful! time " << timer_t5.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t5.elapsedSeconds() << std::endl;
+
+    Timer timer_t6;
+    std::cout << "AstarNoCAT, "<< num_agent_iter << ", ";
+    successA = cbs_astar.search(startStates_temp, solution_astar);
+    timer_t6.stop();
+    if(successA) std::cout << inputFile << " Planning successful! time " << timer_t6.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t6.elapsedSeconds() << std::endl;
+
+    
     num_agent_iter++;
+    if(num_agent_iter > startStates.size() - 1) break;
   } 
 
   // Timer timer;
