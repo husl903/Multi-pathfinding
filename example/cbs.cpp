@@ -9,6 +9,7 @@
 
 #include <libMultiRobotPlanning/cbs.hpp>
 #include <libMultiRobotPlanning/cbs_astar.hpp>
+#include <libMultiRobotPlanning/cbs_jpst_astar.hpp>
 #include <libMultiRobotPlanning/cbs_caastar.hpp>
 #include <libMultiRobotPlanning/cbs_sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
@@ -18,6 +19,7 @@
 using namespace std;
 
 using libMultiRobotPlanning::CBS;
+using libMultiRobotPlanning::CBSJPSTAstar;
 using libMultiRobotPlanning::CBSSIPP;
 using libMultiRobotPlanning::CBSAstar;
 using libMultiRobotPlanning::CBSCAstar;
@@ -1462,6 +1464,14 @@ class Environment {
 		jump_point_map[s.x][s.y] = true;
   }
 
+  void setCAT(bool isCAT_tt){
+    isCAT = isCAT_tt;
+  }
+  
+  void setBP(bool isBP_tt){
+    isCAT = isBP_tt;
+  }
+
   void setJPS(){
 		is_jps = true;
   }
@@ -1494,6 +1504,7 @@ Location  setGoal(int agentId){
   void setIsSegPlanning(bool isSeg_t){
 	  isSeg = isSeg_t;
   }
+
 
 #if 0
   // We use another A* search for simplicity
@@ -1683,6 +1694,8 @@ public:
   jpst_gridmap *jpst_gm_;
   bool isDebug = false;
   bool isSeg = false;
+  bool isBP = true;
+  bool isCAT = true; 
 };
 
 
@@ -1827,6 +1840,7 @@ int main(int argc, char* argv[]) {
   std::vector<double> preTime;
   preTime.resize(numAgent+1);
   Timer t;
+  // numAgent = 200;
   for (const auto& node : config["agents"]) {
     const auto& start = node["start"];
     const auto& goal = node["goal"];
@@ -1858,6 +1872,10 @@ int main(int argc, char* argv[]) {
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<Location, Action, int> > solution;
 
+  CBSJPSTAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpsta(mapf);
+  std::vector<PlanResult<Location, Action, int> > solution_jpsta;
+
+
   CBSSIPP<State, Location, Action, int, Conflict, Constraints, Environment> cbs_sipp(mapf);
   std::vector<PlanResult<Location, Action, int> > solution_sipp;
 
@@ -1867,24 +1885,82 @@ int main(int argc, char* argv[]) {
 
   CBSCAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_castar(mapf);
   std::vector<PlanResult<State, Action, int> > solution_castar;
-
-
   Timer timer;
-  std::cout << "jpst " << ", ";
-  bool success = cbs.search(startStates, solution);
+  bool success1 = cbs_astar.search(startStates, solution_astar);
   timer.stop();
 
-  std::cout << "sipp " << ", ";
-  bool successSipp = cbs_sipp.search(startStates, solution_sipp);
+  
+  if(success1) std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
+  
+   mapf.setCAT(false);
 
-  std::cout << "astar " << ", ";
-  bool successA = cbs_astar.search(startStates, solution_astar);
+  Timer timer2;
+  bool success2 = cbs_astar.search(startStates, solution_astar);
+  timer2.stop();   
+  if(success1) std::cout << inputFile << " Planning successful! time " << timer2.elapsedSeconds() << std::endl;
 
-  std::cout << "castar " << ", ";
-  bool successCA= cbs_castar.search(startStates, solution_castar);
+
+  return 0;
 
 
-  if (successSipp) {
+  bool successJpst = true, successSipp = true, successA = true, successCA = true;
+  int num_agent_iter = 0;
+  std::vector<State> startStates_temp;
+  while(successJpst || successSipp || successA || successA){
+    startStates_temp.push_back(startStates[num_agent_iter]);
+    Timer timer_t1;
+    std::cout << "JPST, " << num_agent_iter << ", ";
+    successJpst = cbs.search(startStates_temp, solution);
+    timer_t1.stop();
+    if(successJpst) std::cout << inputFile << " Planning successful! time " << timer_t1.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t1.elapsedSeconds() << std::endl;
+
+    Timer timer_t2;
+    std::cout << "SIPP, " << num_agent_iter << ", ";
+    successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
+    timer_t2.stop();
+    if(successSipp) std::cout << inputFile << " Planning successful! time " << timer_t2.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t2.elapsedSeconds() << std::endl;
+
+    Timer timer_t3;
+    std::cout << "Astar, "<< num_agent_iter << ", ";
+    successA = cbs_astar.search(startStates_temp, solution_astar);
+    timer_t3.stop();
+    if(successA) std::cout << inputFile << " Planning successful! time " << timer_t3.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t3.elapsedSeconds() << std::endl;
+
+    Timer timer_t4;
+    std::cout << "CAstar, " << num_agent_iter << ", ";
+    successCA= cbs_castar.search(startStates_temp, solution_castar);
+    timer_t4.stop();
+    if(successCA) std::cout << inputFile << " Planning successful! time " << timer_t4.elapsedSeconds() << std::endl;
+    else std::cout << inputFile << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << std::endl;
+
+    mapf.setCAT(false);
+
+    num_agent_iter++;
+  } 
+
+  // Timer timer;
+  // std::cout << "jpst " << ", ";
+  // bool success = cbs.search(startStates, solution);
+  // timer.stop();
+  // std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
+
+  // std::cout << "sipp " << ", ";
+  // Timer tsipp;
+  // bool successSipp = cbs_sipp.search(startStates, solution_sipp);
+  // tsipp.stop();
+  // std::cout << inputFile << " Planning successful! time " << tsipp.elapsedSeconds() << std::endl;
+
+  // std::cout << "astar " << ", ";
+  // bool successA = cbs_astar.search(startStates, solution_astar);
+
+  // std::cout << "castar " << ", ";
+  // bool successCA= cbs_castar.search(startStates, solution_castar);
+
+
+  if (successJpst) {
     return 0;
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
     int cost = 0;

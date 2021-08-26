@@ -358,13 +358,13 @@ class CBSSIPP {
       //     continue;
       //   }
       // }
-      if(return_value == 1){
-        if(TryBypassSipp(conflict, PJps)){
-          auto handle = openJps.push(PJps);
-          (*handle).handle = handle;
-          continue;          
-        }
-      }
+      // if(return_value == 1){
+      //   if(TryBypassSipp(conflict, PJps)){
+      //     auto handle = openJps.push(PJps);
+      //     (*handle).handle = handle;
+      //     continue;          
+      //   }
+      // }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);

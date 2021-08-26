@@ -161,6 +161,7 @@ class Environment {
  public:
   int num_generation = 0;
   int num_expansion = 0;
+  bool isCAT = true;
  private:
   int m_dimx;
   int m_dimy;

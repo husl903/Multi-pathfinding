@@ -312,6 +312,7 @@ class SIPP {
           }
         }
       }
+      if(m_env.isCAT){
       for(size_t nei = 0; nei < neighbors.size(); nei++){
         neighbors[nei].state.nc_cat = 0;
         int current_time = m_lastGScore + neighbors[nei].cost;
@@ -327,6 +328,7 @@ class SIPP {
             neighbors[nei].state.nc_cat++;
           }
         }
+      }
       }
 
     }

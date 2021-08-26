@@ -333,7 +333,7 @@ class CBS {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
       if(return_value  == 0){
         solution = PJps.solution;
-        if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
+        // if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }

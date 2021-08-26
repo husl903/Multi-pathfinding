@@ -725,6 +725,7 @@ class CBSAstar {
                       std::vector<Neighbor<State, Action, Cost> >& neighbors) {
       m_env.getNeighbors(s, neighbors);
       // std::cout << "current state xy " << s.x << ", " << s.y << " " << s.time << "------------------" << std::endl;
+      if(m_env.isCAT){
       for(size_t nei = 0; nei < neighbors.size(); nei++){
         neighbors[nei].state.nc_cat = 0;
         int current_time = s.time + 1;
@@ -740,6 +741,7 @@ class CBSAstar {
             neighbors[nei].state.nc_cat++;
           }
         }
+      }
       }
     }
 

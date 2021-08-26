@@ -625,10 +625,12 @@ private:
 	bool is_jps = true;
 	bool isExact = false;
 	bool isFI = true;
+	
 
 public:
 	jpst_gridmap *jpst_gm_;
 	bool isDebug = false;
+	bool isCAT = false;
 };
 
 
