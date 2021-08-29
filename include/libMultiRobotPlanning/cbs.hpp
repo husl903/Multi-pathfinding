@@ -4,6 +4,9 @@
 #include <map>
 #include <time.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include "a_star.hpp"
 #include "sipp.hpp"
@@ -301,14 +304,27 @@ class CBS {
     timer.reset();
     int num_node = 0;
     int gen_node = 0;
+    struct rusage r_usage;
+   	getrusage(RUSAGE_SELF, &r_usage);
+
+    
     while(!openJps.empty()){
       num_node++;
       // if(num_node > 50) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
+        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
+      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   if(r_usage.ru_maxrss > 13631488){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+      //     return false;
+      //   }
+      // }
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -333,7 +349,6 @@ class CBS {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
       if(return_value  == 0){
         solution = PJps.solution;
-        // if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -343,11 +358,13 @@ class CBS {
       //   (*handle).handle = handle;
       //   continue;
       // }
-      if(return_value == 1 && jump_id_clf != -1){
-        if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
-          auto handle = openJps.push(PJps);
-          (*handle).handle = handle;
-          continue;
+      if(m_env.isBP){
+        if(return_value == 1 && jump_id_clf != -1){
+          if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
+            auto handle = openJps.push(PJps);
+            (*handle).handle = handle;
+            continue;
+          }
         }
       }
 

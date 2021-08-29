@@ -3,6 +3,10 @@
 
 #include <map>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 
 #include "a_star.hpp"
 #include "sipp.hpp"
@@ -215,6 +219,9 @@ class CBSAstar {
     std::cout << "time " << tSipp << " \n";*/
 
     // std::priority_queue<HighLevelNode> open;
+        struct rusage r_usage;
+   	getrusage(RUSAGE_SELF, &r_usage);
+
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         open;
@@ -237,9 +244,17 @@ class CBSAstar {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
-        std::cout << "Num_node " << num_node << " ";
+        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
+      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   if(r_usage.ru_maxrss > 13631488){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+      //     return false;
+      //   }
+      // }
 
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);
@@ -251,6 +266,8 @@ class CBSAstar {
         solution = P.solution;
         return true;
       }
+
+
 
       // create additional nodes to resolve conflict
       // std::cout << "Found conflict: " << conflict << std::endl;
@@ -667,6 +684,60 @@ class CBSAstar {
 
     return false;
   }
+
+  // bool TryBypassAstar(Conflict cft, HighLevelNodeJps& CurNode){
+  //   int i = cft.agent1;
+  //   PlanResult<Location, Action, int> solutionSipp;
+  //   sipp_t sipp(m_env, CurNode.solution);
+  //   sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+  //   m_env.resetTemporalObstacle();
+  //   bool is_first_constraint_v = true;
+  //   for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+  //    	Location location(constraint.x, constraint.y);
+  //     m_env.setTemporalObstacle(location, constraint.time);
+  //   }
+  //   bool is_first_constraint_e = true;
+  //   for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+  //    	Location loc(constraint.x2, constraint.y2);
+  //      m_env.setTemporalEdgeConstraint(loc, constraint.time);
+  //   }
+
+  //   if(cft.type == Conflict::Vertex){
+  //     Location state1(cft.x1, cft.y1);
+  //     m_env.setTemporalObstacle(state1, cft.time);
+  //     sipp.setCollisionVertex(state1, cft.time, cft.time, is_first_constraint_v);
+  //     is_first_constraint_v = false;
+  //   }
+  //   if(cft.type == Conflict::Edge){
+  //     Location state2(cft.x2, cft.y2);
+  //     m_env.setTemporalObstacle(state2, cft.time);
+  //     Action ac_temp;
+  //     if(cft.x1 == cft.x2){
+  //       if(cft.y1 == cft.y2 - 1) ac_temp = Action::Down;
+  //       else ac_temp = Action::Up;
+  //     }else{
+  //       if(cft.x1 == cft.x2 - 1) ac_temp = Action::Left;
+  //       else ac_temp = Action::Right;
+  //     }
+  //     sipp.setEdgeConstraint(state2, cft.time, ac_temp, is_first_constraint_e);
+  //     is_first_constraint_e = false;
+  //   }        
+  //   sipp.sortCollisionVertex();
+  //   sipp.sortCollisionEdgeConstraint();
+  //   m_env.setGoal(i);
+  //   m_env.Reset();
+  //   Location startNode = CurNode.solution[i].states[0].first;
+
+  //   PlanResult<Location, Action, int> tempsolution;
+  //   bool isSippSucc = sipp.search(startNode, Action::Wait, tempsolution, 0);
+
+  //   if(tempsolution.cost == CurNode.solution[i].cost){
+  //     CurNode.solution[i] = tempsolution;
+  //     return true;
+  //   }else return false;
+  // }
+
+
 
  private:
   struct HighLevelNode {

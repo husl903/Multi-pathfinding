@@ -367,7 +367,8 @@ class Environment {
   //          s.time > m_lastGoalConstraint;
   // }
   bool isSolution(const State& s) {
-    return s.x == m_goal.x && s.y == m_goal.y && s.time > m_lastGoalConstraint;
+    if(!isSeg) return s.x == m_goal.x && s.y == m_goal.y && s.time > m_lastGoalConstraint;
+    if(isSeg) return s.x == m_goal.x && s.y == m_goal.y;
   }  
   bool isSolution(const Location& s) {
 //	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
@@ -1469,7 +1470,7 @@ class Environment {
   }
   
   void setBP(bool isBP_tt){
-    isCAT = isBP_tt;
+    isBP = isBP_tt;
   }
 
   void setJPS(){
@@ -1838,7 +1839,7 @@ int main(int argc, char* argv[]) {
   int num_agent = 0;
   std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
   std::vector<double> preTime;
-  numAgent = 53;
+  numAgent = 100;
   preTime.resize(numAgent+1);
   Timer t;
   for (const auto& node : config["agents"]) {
@@ -1886,10 +1887,9 @@ int main(int argc, char* argv[]) {
   CBSCAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_castar(mapf);
   std::vector<PlanResult<State, Action, int> > solution_castar;
   Timer timer;
-  // bool success1 = cbs_astar.search(startStates, solution_astar);
+  // bool success1 = cbs_jpsta.search(startStates, solution_jpsta);
   // timer.stop();
 
-  
   // if(success1) std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
   
   //  mapf.setCAT(false);
@@ -1898,72 +1898,95 @@ int main(int argc, char* argv[]) {
   // bool success2 = cbs_astar.search(startStates, solution_astar);
   // timer2.stop();   
   // if(success1) std::cout << inputFile << " Planning successful! time " << timer2.elapsedSeconds() << std::endl;
-
-
   // return 0;
 
   std::cout << startStates.size() << " Here \n";
   bool successJpst = true, successSipp = true, successA = true, successCA = true;
+  bool successJpstA = true, successSippNoCat = true, successANoCAT = true, successJpstNoBP = true, successCANoCAT = true;
   int num_agent_iter = 0;
   std::vector<State> startStates_temp;
-  while(successJpst || successSipp || successA || successA){
+  while(successJpstNoBP)
+  // || successSipp || successA || successCA || successJpstA || successSippNoCat || successANoCAT || successCANoCAT || successJpstNoBP)
+  {
+  //  || successSipp || successA || successA || successJpstA || successSippNoCat || successANoCAT || successJpstNoBP){
+
     startStates_temp.push_back(startStates[num_agent_iter]);
-    Timer timer_t1;
-    std::cout << "JPST, " << num_agent_iter << ", ";
-    solution.clear();
-    successJpst = cbs.search(startStates_temp, solution);
-    timer_t1.stop();
-    if(successJpst) std::cout << inputFile << " Planning successful! time " << timer_t1.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t1.elapsedSeconds() << std::endl;
+    // Timer timer_t1;
+    // std::cout << "JPST, " << num_agent_iter << ", ";
+    // solution.clear();
+    // successJpst = cbs.search(startStates_temp, solution);
+    // timer_t1.stop();
+    // if(successJpst) std::cout << " Planning successful! Yeah time " << timer_t1.elapsedSeconds() << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t1.elapsedSeconds() << inputFile  << std::endl;
 
-    Timer timer_t2;
-    std::cout << "SIPP, " << num_agent_iter << ", ";
-    successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
-    timer_t2.stop();
-    if(successSipp) std::cout << inputFile << " Planning successful! time " << timer_t2.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t2.elapsedSeconds() << std::endl;
+    // Timer timer_t2;
+    // std::cout << "SIPPCAT, " << num_agent_iter << ", ";
+    // successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
+    // timer_t2.stop();
+    // if(successSipp) std::cout << " Planning successful! Yeah time " << timer_t2.elapsedSeconds()  << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t2.elapsedSeconds() << inputFile <<  std::endl;
 
-    Timer timer_t3;
-    std::cout << "Astar, "<< num_agent_iter << ", ";
-    successA = cbs_astar.search(startStates_temp, solution_astar);
-    timer_t3.stop();
-    if(successA) std::cout << inputFile << " Planning successful! time " << timer_t3.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t3.elapsedSeconds() << std::endl;
+    // Timer timer_t3;
+    // std::cout << "AstarCAT, "<< num_agent_iter << ", ";
+    // successA = cbs_astar.search(startStates_temp, solution_astar);
+    // timer_t3.stop();
+    // if(successA) std::cout << " Planning successful! Yeah time " << timer_t3.elapsedSeconds() << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t3.elapsedSeconds() << inputFile << std::endl;
 
-    Timer timer_t4;
-    std::cout << "CAstar, " << num_agent_iter << ", ";
-    successCA= cbs_castar.search(startStates_temp, solution_castar);
-    timer_t4.stop();
-    if(successCA) std::cout << inputFile << " Planning successful! time " << timer_t4.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << std::endl;
+    // Timer timer_t4;
+    // std::cout << "CAstarCAT, " << num_agent_iter << ", ";
+    // successCA= cbs_castar.search(startStates_temp, solution_castar);
+    // timer_t4.stop();
+    // if(successCA) std::cout << " Planning successful! Yeah time " << timer_t4.elapsedSeconds() << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << inputFile <<  std::endl;
 
-    Timer timer_t8;
-    std::cout << "JpstAstar, " << num_agent_iter << ", ";
-    successCA= cbs_jpsta.search(startStates_temp, solution_jpsta);
-    timer_t8.stop();
-    if(successCA) std::cout << inputFile << " Planning successful! time " << timer_t8.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t8.elapsedSeconds() << std::endl;
+    // Timer timer_t8;
+    // std::cout << "JpstAstar, " << num_agent_iter << ", ";
+    // successJpstA= cbs_jpsta.search(startStates_temp, solution_jpsta);
+    // timer_t8.stop();
+    // if(successJpstA) std::cout << " Planning successful! Yeah time " << timer_t8.elapsedSeconds() << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t8.elapsedSeconds() << inputFile << std::endl;
 
     mapf.setCAT(false);
+    mapf.setBP(false);
 
-    Timer timer_t5;
-    std::cout << "SIPPNoCAT, " << num_agent_iter << ", ";
-    successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
-    timer_t5.stop();
-    if(successSipp) std::cout << inputFile << " Planning successful! time " << timer_t5.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t5.elapsedSeconds() << std::endl;
+    // Timer timer_t5;
+    // std::cout << "SIPPNoCAT, " << num_agent_iter << ", ";
+    // successSippNoCat = cbs_sipp.search(startStates_temp, solution_sipp);
+    // timer_t5.stop();
+    // if(successSippNoCat) std::cout << " Planning successful! Yeah time " << timer_t5.elapsedSeconds() << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t5.elapsedSeconds() << inputFile << std::endl;
 
-    Timer timer_t6;
-    std::cout << "AstarNoCAT, "<< num_agent_iter << ", ";
-    successA = cbs_astar.search(startStates_temp, solution_astar);
-    timer_t6.stop();
-    if(successA) std::cout << inputFile << " Planning successful! time " << timer_t6.elapsedSeconds() << std::endl;
-    else std::cout << inputFile << " Planning NOT successful! time " << timer_t6.elapsedSeconds() << std::endl;
+    // Timer timer_t6;
+    // std::cout << "AstarNoCAT, "<< num_agent_iter << ", ";
+    // successANoCAT = cbs_astar.search(startStates_temp, solution_astar);
+    // timer_t6.stop();
+    // if(successANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t6.elapsedSeconds() << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t6.elapsedSeconds() << inputFile << std::endl;
 
-    
+    // Timer timer_t9;
+    // std::cout << "CAstarNoCAT, "<< num_agent_iter << ", ";
+    // successCANoCAT = cbs_castar.search(startStates_temp, solution_castar);
+    // timer_t9.stop();
+    // if(successCANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t9.elapsedSeconds() << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t9.elapsedSeconds() << inputFile << std::endl;
+
+    Timer timer_t7;
+    std::cout << "JPSTNoBP, " << num_agent_iter << ", ";
+    solution.clear();
+    successJpstNoBP = cbs.search(startStates_temp, solution);
+    timer_t7.stop();
+    if(successJpstNoBP) std::cout << " Planning successful! Yeah time " << timer_t7.elapsedSeconds() << inputFile << std::endl;
+    else std::cout << " Planning NOT successful! time " << timer_t7.elapsedSeconds() << inputFile  << std::endl;
+
+    // mapf.setCAT(true);
+    // mapf.setBP(true);
+    std::cout.flush();
     num_agent_iter++;
     if(num_agent_iter > startStates.size() - 1) break;
   } 
+
+  return 0;
 
   // Timer timer;
   // std::cout << "jpst " << ", ";

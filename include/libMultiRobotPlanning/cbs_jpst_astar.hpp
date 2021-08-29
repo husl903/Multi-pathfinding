@@ -4,6 +4,10 @@
 #include <map>
 #include <time.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 
 #include "a_star.hpp"
 #include "sipp.hpp"
@@ -288,6 +292,8 @@ class CBSJPSTAstar {
     // double tSipp = timerJpstbit.elapsedSeconds();
     // std::cout << "time " << tSipp << " \n";
     // return true;
+    struct rusage r_usage;
+   	getrusage(RUSAGE_SELF, &r_usage);
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
@@ -307,8 +313,17 @@ class CBSJPSTAstar {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
+        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
+      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   if(r_usage.ru_maxrss > 13631488){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+      //     return false;
+      //   }
+      // }      
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -333,7 +348,6 @@ class CBSJPSTAstar {
       int return_value = getFirstConflict(PJps.solution, conflict, PJps);
       if(return_value  == 0){
         solution = PJps.solution;
-        // if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -1036,6 +1050,7 @@ private:
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
     // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
+    
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
       int tt = 0;
@@ -1171,11 +1186,22 @@ private:
             if(initialState.x == goalLoc.x || initialState.y == goalLoc.y //stright line
                || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;  // have replanned
 
+            m_env.resetTemporalObstacle();
+            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+        	    Location location(constraint.x, constraint.y);
+        	    m_env.setTemporalObstacle(location, constraint.time);
+            }
+            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+        	    Location location(constraint.x2, constraint.y2);
+        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
+            }
+            m_env.setIsSegPlanning(true);
             LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
             bool success = lowLevel.search(initialState, segmentPath);
-            jump_point[i].insert(JumpPointId);        
+            jump_point[i].insert(JumpPointId); 
+            m_env.setIsSegPlanning(false);
 
             if(segmentPath.cost != cost_t){
               
@@ -1280,11 +1306,23 @@ private:
             if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
             || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
 
+
+            m_env.resetTemporalObstacle();
+            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+        	    Location location(constraint.x, constraint.y);
+        	    m_env.setTemporalObstacle(location, constraint.time);
+            }
+            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+        	    Location location(constraint.x2, constraint.y2);
+        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
+            }
+            m_env.setIsSegPlanning(true);
             LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
             bool success = lowLevel.search(initialState, segmentPath);
             jump_point[i].insert(JumpPointId);
+            m_env.setIsSegPlanning(false);
 
             if(segmentPath.cost != cost_t){
               for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {

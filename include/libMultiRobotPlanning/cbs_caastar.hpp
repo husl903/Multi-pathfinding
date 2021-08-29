@@ -3,6 +3,10 @@
 
 #include <map>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 
 #include "a_star.hpp"
 #include "sipp.hpp"
@@ -210,6 +214,9 @@ class CBSCAstar {
     std::cout << "time " << tSipp << " \n";*/
 
     // std::priority_queue<HighLevelNode> open;
+    struct rusage r_usage;
+   	getrusage(RUSAGE_SELF, &r_usage);
+
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         open;
@@ -232,9 +239,16 @@ class CBSCAstar {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
-        std::cout << "Num_node " << num_node << " ";
+        std::cout << " ,done, time-out fail" << ", num_node,  " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   if(r_usage.ru_maxrss > 13631488){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+      //     return false;
+      //   }
+      // }
 
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);
@@ -372,6 +386,7 @@ class CBSCAstar {
                       std::vector<Neighbor<State, Action, Cost> >& neighbors) {
       m_env.getNeighbors(s, neighbors);
       // std::cout << "current state xy " << s.x << ", " << s.y << " " << s.time << "------------------" << std::endl;
+      if(m_env.isCAT){
       for(size_t nei = 0; nei < neighbors.size(); nei++){
         neighbors[nei].state.nc_cat = 0;
         int current_time = s.time + 1;
@@ -387,6 +402,7 @@ class CBSCAstar {
             neighbors[nei].state.nc_cat++;
           }
         }
+      }
       }
     }
 

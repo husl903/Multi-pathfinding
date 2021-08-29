@@ -4,6 +4,10 @@
 #include <map>
 #include <time.h>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 
 #include "a_star.hpp"
 #include "sipp.hpp"
@@ -296,7 +300,8 @@ class CBSSIPP {
     // double tSipp = timerJpstbit.elapsedSeconds();
     // std::cout << "time " << tSipp << " \n";
     // return true;
-
+    struct rusage r_usage;
+   	getrusage(RUSAGE_SELF, &r_usage);
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;    
@@ -315,8 +320,17 @@ class CBSSIPP {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
+        std::cout << " ,done, time-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
+      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   if(r_usage.ru_maxrss > 13631488){
+      //     std::cout << " ,done, memory-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+      //     return false;
+      //   }
+      // }
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -341,7 +355,7 @@ class CBSSIPP {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, true);
       if(return_value  == 0){
         solution = PJps.solution;
-        if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
+//        if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
