@@ -247,7 +247,6 @@ class CBSAstar {
         std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
-      
       // if(num_node % 100 == 0){
       //   getrusage(RUSAGE_SELF, &r_usage);
       //   if(r_usage.ru_maxrss > 13631488){
@@ -266,7 +265,13 @@ class CBSAstar {
         solution = P.solution;
         return true;
       }
-
+      if(m_env.isBP){
+        if(TryBypassAstar(conflict, P)){
+          auto handle = open.push(P);
+          (*handle).handle = handle;
+            continue;
+        }
+      }
 
 
       // create additional nodes to resolve conflict
@@ -286,6 +291,7 @@ class CBSAstar {
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
+
       for (const auto& c : constraints) {
         // std::cout << "Add HL node for " << c.first << std::endl;
         size_t i = c.first;
@@ -456,7 +462,7 @@ class CBSAstar {
         timerAstar.reset();
         int ExpA =  m_env.lowLevelExpanded();
         PlanResult<State, Action, int> solutiontemp4;        
-        bool successCA = lowLevel.search(initialStates[i], newNode.solution[i]);
+        bool successA = lowLevel.search(initialStates[i], newNode.solution[i]);
         timerAstar.stop();
         int ExpAstar = m_env.lowLevelExpanded() - ExpA;
         int GenAstar = m_env.lowLevelGenerated();
@@ -654,7 +660,7 @@ class CBSAstar {
         // 		  		   newNode.solution[jj].states.back().first << std::endl;
         // }
 
-        if (successCA) {
+        if (successA) {
         //   if(newNode.solution[i].cost != solutiontemp.cost){
         //     std::cout << "Not equal\n";
         //     return false;
@@ -684,60 +690,6 @@ class CBSAstar {
 
     return false;
   }
-
-  // bool TryBypassAstar(Conflict cft, HighLevelNodeJps& CurNode){
-  //   int i = cft.agent1;
-  //   PlanResult<Location, Action, int> solutionSipp;
-  //   sipp_t sipp(m_env, CurNode.solution);
-  //   sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-  //   m_env.resetTemporalObstacle();
-  //   bool is_first_constraint_v = true;
-  //   for(auto & constraint : CurNode.constraints[i].vertexConstraints){
-  //    	Location location(constraint.x, constraint.y);
-  //     m_env.setTemporalObstacle(location, constraint.time);
-  //   }
-  //   bool is_first_constraint_e = true;
-  //   for(auto & constraint : CurNode.constraints[i].edgeConstraints){
-  //    	Location loc(constraint.x2, constraint.y2);
-  //      m_env.setTemporalEdgeConstraint(loc, constraint.time);
-  //   }
-
-  //   if(cft.type == Conflict::Vertex){
-  //     Location state1(cft.x1, cft.y1);
-  //     m_env.setTemporalObstacle(state1, cft.time);
-  //     sipp.setCollisionVertex(state1, cft.time, cft.time, is_first_constraint_v);
-  //     is_first_constraint_v = false;
-  //   }
-  //   if(cft.type == Conflict::Edge){
-  //     Location state2(cft.x2, cft.y2);
-  //     m_env.setTemporalObstacle(state2, cft.time);
-  //     Action ac_temp;
-  //     if(cft.x1 == cft.x2){
-  //       if(cft.y1 == cft.y2 - 1) ac_temp = Action::Down;
-  //       else ac_temp = Action::Up;
-  //     }else{
-  //       if(cft.x1 == cft.x2 - 1) ac_temp = Action::Left;
-  //       else ac_temp = Action::Right;
-  //     }
-  //     sipp.setEdgeConstraint(state2, cft.time, ac_temp, is_first_constraint_e);
-  //     is_first_constraint_e = false;
-  //   }        
-  //   sipp.sortCollisionVertex();
-  //   sipp.sortCollisionEdgeConstraint();
-  //   m_env.setGoal(i);
-  //   m_env.Reset();
-  //   Location startNode = CurNode.solution[i].states[0].first;
-
-  //   PlanResult<Location, Action, int> tempsolution;
-  //   bool isSippSucc = sipp.search(startNode, Action::Wait, tempsolution, 0);
-
-  //   if(tempsolution.cost == CurNode.solution[i].cost){
-  //     CurNode.solution[i] = tempsolution;
-  //     return true;
-  //   }else return false;
-  // }
-
-
 
  private:
   struct HighLevelNode {
@@ -774,7 +726,73 @@ class CBSAstar {
       }
       return os;
     }
-  };
+  };  
+
+  bool TryBypassAstar(Conflict cft, HighLevelNode& CurNode){
+    int i = cft.agent1;
+    PlanResult<State, Action, int> solutionA;
+
+    m_env.setExactHeuristTrue();
+    m_env.resetTemporalObstacle();
+    for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+     	Location location(constraint.x, constraint.y);
+      m_env.setTemporalObstacle(location, constraint.time);
+    }
+    bool is_first_constraint_e = true;
+    for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+     	Location loc(constraint.x2, constraint.y2);
+       m_env.setTemporalEdgeConstraint(loc, constraint.time);
+    }
+
+    Constraints ct;
+    if(cft.type == Conflict::Vertex){
+      Location state1(cft.x1, cft.y1);
+      m_env.setTemporalObstacle(state1, cft.time);
+      m_env.createConstraintsFromV(cft.time, cft.x1, cft.y1, ct);
+      CurNode.constraints[i].add(ct);
+    }
+    if(cft.type == Conflict::Edge){
+      Location state2(cft.x2, cft.y2);
+      m_env.setTemporalObstacle(state2, cft.time);
+      m_env.createConstraintsFromE(cft.time, cft.x1, cft.y1, cft.x2, cft.y2, ct);
+      CurNode.constraints[i].add(ct);
+    }        
+
+    LowLevelEnvironment llenv(m_env, CurNode.solution, i, CurNode.constraints[i]);
+    LowLevelSearch_t lowLevel(llenv);
+
+    m_env.setGoal(i);
+    m_env.Reset();
+    State startNode = CurNode.solution[i].states[0].first;
+    startNode.time = 0;
+    bool isSuccA = lowLevel.search(startNode, solutionA);
+
+    if(cft.type == Conflict::Vertex){
+      for(auto& vc : ct.vertexConstraints){
+        auto iter = CurNode.constraints[i].vertexConstraints.find(vc);
+        if(iter != CurNode.constraints[i].vertexConstraints.end())
+        CurNode.constraints[i].vertexConstraints.erase(iter);
+      }
+
+    }
+    if(cft.type == Conflict::Edge){
+      for(auto& ec : ct.edgeConstraints){
+        auto iter = CurNode.constraints[i].edgeConstraints.find(ec);
+        if(iter != CurNode.constraints[i].edgeConstraints.end())
+        CurNode.constraints[i].edgeConstraints.erase(iter);
+      }      
+    }   
+
+    if(isSuccA && solutionA.cost == CurNode.solution[i].cost){
+      // std::cout << " --- \n";
+      CurNode.solution[i] = solutionA;
+      return true;
+    }else return false;
+  }
+
+
+
+ private:
 
   struct LowLevelEnvironment {
     LowLevelEnvironment(Environment& env, std::vector<PlanResult<State, Action, Cost>>& cat,
@@ -797,22 +815,22 @@ class CBSAstar {
       m_env.getNeighbors(s, neighbors);
       // std::cout << "current state xy " << s.x << ", " << s.y << " " << s.time << "------------------" << std::endl;
       if(m_env.isCAT){
-      for(size_t nei = 0; nei < neighbors.size(); nei++){
-        neighbors[nei].state.nc_cat = 0;
-        int current_time = s.time + 1;
-        State temp_s(-1, -1, -1);
-        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
-          if(m_cat[agent_id].states.empty()) continue;
-          if (current_time < m_cat[agent_id].states.size()) {
-            temp_s = m_cat[agent_id].states[current_time].first;
-          }else{
-            temp_s = m_cat[agent_id].states.back().first;     
-          }
-          if(temp_s == neighbors[nei].state){
-            neighbors[nei].state.nc_cat++;
+        for(size_t nei = 0; nei < neighbors.size(); nei++){
+          neighbors[nei].state.nc_cat = 0;
+          int current_time = s.time + 1;
+          State temp_s(-1, -1, -1);
+          for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+            if(m_cat[agent_id].states.empty()) continue;
+            if (current_time < m_cat[agent_id].states.size()) {
+              temp_s = m_cat[agent_id].states[current_time].first;
+            }else{
+              temp_s = m_cat[agent_id].states.back().first;     
+            }
+            if(temp_s == neighbors[nei].state){
+              neighbors[nei].state.nc_cat++;
+            }
           }
         }
-      }
       }
     }
 

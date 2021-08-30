@@ -355,7 +355,6 @@ class CBSSIPP {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, true);
       if(return_value  == 0){
         solution = PJps.solution;
-//        if(m_env.getFirstConflict(PJps.solution, conflict, true)) std::cout << "not equal \n";
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -372,13 +371,15 @@ class CBSSIPP {
       //     continue;
       //   }
       // }
-      // if(return_value == 1){
-      //   if(TryBypassSipp(conflict, PJps)){
-      //     auto handle = openJps.push(PJps);
-      //     (*handle).handle = handle;
-      //     continue;          
-      //   }
-      // }
+      if(m_env.isBP){
+        if(return_value == 1){
+          if(TryBypassSipp(conflict, PJps)){
+            auto handle = openJps.push(PJps);
+            (*handle).handle = handle;
+            continue;          
+          }
+        }
+      }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
