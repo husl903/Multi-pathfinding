@@ -494,6 +494,141 @@ class Environment {
     return p_a.init_t < p_b.init_t;
   }
 
+ bool CheckValid(
+      std::vector<PlanResult<Location, Action, int> >& solution){
+
+    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
+    
+    int max_t = 0;
+    for(size_t i = 0; i < solution.size(); i++){
+      int tt = 0;
+      Location a(-1, -1), b(-1, -1); 
+      int time_a, time_b;
+      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+
+        if(jump_point_id == solution[i].states.size() - 1){
+          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
+          tt++;
+         if(tt > max_t) max_t = tt;          
+          continue;
+        }
+        a = solution[i].states[jump_point_id].first;
+        b = solution[i].states[jump_point_id + 1].first;
+        time_a = solution[i].states[jump_point_id].second;
+        time_b = solution[i].states[jump_point_id + 1].second;
+        int delta_t = time_b - time_a;
+        int flag_y = 1;
+        Action ac_c;
+        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
+        else { flag_y = 1; ac_c = Action::Up;}
+
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from 0 insure the first location is added
+          Location temp_loc(a.x, a.y+flag_y*temp_y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          if(isObstacle(temp_loc)){
+            return false;
+          }
+          tt++;
+        }
+        if(a.x != b.x){
+          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          if(isObstacle(temp_loc)){
+            return false;
+          }
+          tt++;        
+        }
+        int flag_x = 1;
+        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
+        else{flag_x = -1; ac_c = Action::Left;}
+        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){// from 1 insure the last location is not added
+          Location temp_loc(a.x + flag_x*temp_x, b.y);
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
+          if(isObstacle(temp_loc)){
+            return false;
+          }
+          tt++;
+        } 
+        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
+          Location temp_loc(-1, -1);
+          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
+          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          if(a.x == b.x && a.y == b.y) temp_loc = a;
+          if(isObstacle(temp_loc)){
+            return false;
+          }
+        	// 	for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        	// 		std::cout << solution[i].states[ii].second << ": " <<
+        	// 					solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+					// 			<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        	// 	}
+        	// 	std::cout << solution[i].states.back().second << ": " <<
+        	// 	  		   solution[i].states.back().first << std::endl;
+
+          // }
+          int timed = abs(a.x - b.x) + abs(a.y - b.y);
+          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
+            tt++;
+          }
+        }
+      }
+      if(tt - 1 != solution[i].cost){
+           std::cout << "recover path is not correct\n";
+        return false;
+      }
+    }
+
+    Conflict result;
+    std::vector<std::unordered_set<int>> jump_point(solution.size());
+    for (int t = 0; t < max_t; ++t) {
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1 = getState(i, solution_path, t);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2 = getState(j, solution_path, t);
+          if (state1 == state2) {
+            return false;
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+          }
+        }
+      }
+      // if(is_restart) continue;
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution_path.size(); ++i) {
+        Location state1a = getState(i, solution_path, t);
+        Location state1b = getState(i, solution_path, t + 1);
+        for (size_t j = i + 1; j < solution_path.size(); ++j) {
+          Location state2a = getState(j, solution_path, t);
+          Location state2b = getState(j, solution_path, t + 1);
+          if (state1a == state2b && state1b == state2a) {
+            return false;
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+            
+          }
+        }
+      }
+      
+    }
+    return true;    
+  }
+
+
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result, int& jump_id) {
@@ -1085,97 +1220,6 @@ class Environment {
 
     return false;
   }  
-
-  bool getFirstConflict(
-      const std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result, bool isFlag, bool isFlag1) {
-    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
-    std::vector<std::vector<int>> point_id(solution.size());
-    std::vector<std::vector<int>> point_st(solution.size());
-    // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
-    int max_t = 0;
-    // return false;
-    for(size_t i = 0; i < solution.size(); i++){
-      // std::cout << "Agent i " << i << " \n";
-      int tt = 0;
-      Location a(-1, -1), b(-1, -1); 
-      int time_a, time_b;
-      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
-        // std::cout << " step 000 \n";
-        if(jump_point_id == solution[i].states.size() - 1){
-          // std::cout << " Heres \n";
-          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
-          // solution_path[i].actions.push_back(solution[i].actions[jump_point_id]);
-          point_id[i].push_back(jump_point_id);          
-          if(tt > max_t) max_t = tt;
-          tt++;
-          // std::cout << "Not Not\n";
-          break;
-        }
-        // std::cout << " step 111 \n";
-        a = solution[i].states[jump_point_id].first;
-        b = solution[i].states[jump_point_id + 1].first;
-        time_a = solution[i].states[jump_point_id].second;
-        time_b = solution[i].states[jump_point_id + 1].second;
-        int delta_t = time_b - time_a;
-        int flag_y = 1;
-        Action ac_c;
-        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
-        else { flag_y = 1; ac_c = Action::Up;}
-        point_st[i].push_back(tt);
-        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
-          Location temp_loc(a.x, a.y+flag_y*temp_y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id);
-          tt++;
-        }
-        // std::cout << " step 222 \n";
-
-        if(a.x != b.x){
-          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id); 
-          tt++;        
-        }
-                // std::cout << " step 3333 \n";
-        int flag_x = 1;
-        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
-        else{flag_x = -1; ac_c = Action::Left;}
-        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
-          Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id);
-          tt++;
-        } 
-                // std::cout << " step 444 \n";
-
-        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
-          Location temp_loc(-1, -1);
-          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
-          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
-          int timed = abs(a.x - b.x) + abs(a.y - b.y);
-          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
-            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
-            point_id[i].push_back(jump_point_id);
-            tt++;
-          }
-                  // std::cout << " step 555 \n";
-
-        }
-        // std::cout << " step 666 \n";
-      }
-      if(tt - 1 != solution[i].cost){
-        std::cout << "recover path is not correct\n";
-        return false;
-      }
-    }
-    bool is_conflict = getFirstConflict(solution_path, result, true);
-    return is_conflict;
-  }
 
   bool getFirstConflict(
       const std::vector<PlanResult<Location, Action, int> >& solution,
@@ -1905,79 +1949,81 @@ int main(int argc, char* argv[]) {
   bool successJpstA = true, successSippNoCat = true, successANoCAT = true, successJpstNoBP = true, successCANoCAT = true;
   int num_agent_iter = 0;
   std::vector<State> startStates_temp;
-  while(successJpstNoBP)
+  while(successJpstA)
   // || successSipp || successA || successCA || successJpstA || successSippNoCat || successANoCAT || successCANoCAT || successJpstNoBP)
   {
   //  || successSipp || successA || successA || successJpstA || successSippNoCat || successANoCAT || successJpstNoBP){
 
     startStates_temp.push_back(startStates[num_agent_iter]);
+
     // Timer timer_t1;
-    // std::cout << "JPST, " << num_agent_iter << ", ";
+    // std::cout << "JPST-J, " << num_agent_iter << ", ";
     // solution.clear();
     // successJpst = cbs.search(startStates_temp, solution);
     // timer_t1.stop();
-    // if(successJpst) std::cout << " Planning successful! Yeah time " << timer_t1.elapsedSeconds() << inputFile << std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t1.elapsedSeconds() << inputFile  << std::endl;
+    // if(successJpst) std::cout << " Planning successful! Yeah time " << timer_t1.elapsedSeconds() <<  ", " << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t1.elapsedSeconds() << " ," << inputFile  << std::endl;
 
     // Timer timer_t2;
-    // std::cout << "SIPPCAT, " << num_agent_iter << ", ";
+    // std::cout << "SIPPCATBP, " << num_agent_iter << ", ";
     // successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
     // timer_t2.stop();
-    // if(successSipp) std::cout << " Planning successful! Yeah time " << timer_t2.elapsedSeconds()  << inputFile <<  std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t2.elapsedSeconds() << inputFile <<  std::endl;
+    // if(successSipp) std::cout << " Planning successful! Yeah time " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t2.elapsedSeconds() << ", " << inputFile <<  std::endl;
 
     // Timer timer_t3;
-    // std::cout << "AstarCAT, "<< num_agent_iter << ", ";
+    // std::cout << "AstarCATBP, "<< num_agent_iter << ", ";
     // successA = cbs_astar.search(startStates_temp, solution_astar);
     // timer_t3.stop();
-    // if(successA) std::cout << " Planning successful! Yeah time " << timer_t3.elapsedSeconds() << inputFile <<  std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t3.elapsedSeconds() << inputFile << std::endl;
+    // if(successA) std::cout << " Planning successful! Yeah time " << timer_t3.elapsedSeconds() << ", " << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t3.elapsedSeconds() << ", " << inputFile << std::endl;
 
     // Timer timer_t4;
     // std::cout << "CAstarCAT, " << num_agent_iter << ", ";
     // successCA= cbs_castar.search(startStates_temp, solution_castar);
     // timer_t4.stop();
-    // if(successCA) std::cout << " Planning successful! Yeah time " << timer_t4.elapsedSeconds() << inputFile <<  std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << inputFile <<  std::endl;
+    // if(successCA) std::cout << " Planning successful! Yeah time " << timer_t4.elapsedSeconds() << ", " << inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t4.elapsedSeconds() << ", " << inputFile <<  std::endl;
 
-    // Timer timer_t8;
-    // std::cout << "JpstAstar, " << num_agent_iter << ", ";
-    // successJpstA= cbs_jpsta.search(startStates_temp, solution_jpsta);
-    // timer_t8.stop();
-    // if(successJpstA) std::cout << " Planning successful! Yeah time " << timer_t8.elapsedSeconds() << inputFile << std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t8.elapsedSeconds() << inputFile << std::endl;
+    Timer timer_t8;
+    std::cout << "JpstAstar, " << num_agent_iter << ", ";
+    solution_jpsta.clear();
+    successJpstA= cbs_jpsta.search(startStates_temp, solution_jpsta);
+    timer_t8.stop();
+    if(successJpstA) std::cout << " Planning successful! Yeah time " << timer_t8.elapsedSeconds() << ", "<< inputFile << std::endl;
+    else std::cout << " Planning NOT successful! time " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;
 
-    mapf.setCAT(false);
-    mapf.setBP(false);
+    // mapf.setCAT(false);
+    // mapf.setBP(false);
 
     // Timer timer_t5;
     // std::cout << "SIPPNoCAT, " << num_agent_iter << ", ";
     // successSippNoCat = cbs_sipp.search(startStates_temp, solution_sipp);
     // timer_t5.stop();
-    // if(successSippNoCat) std::cout << " Planning successful! Yeah time " << timer_t5.elapsedSeconds() << inputFile <<  std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t5.elapsedSeconds() << inputFile << std::endl;
+    // if(successSippNoCat) std::cout << " Planning successful! Yeah time " << timer_t5.elapsedSeconds() << ", "<< inputFile <<  std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t5.elapsedSeconds() << ", " << inputFile << std::endl;
 
     // Timer timer_t6;
     // std::cout << "AstarNoCAT, "<< num_agent_iter << ", ";
     // successANoCAT = cbs_astar.search(startStates_temp, solution_astar);
     // timer_t6.stop();
-    // if(successANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t6.elapsedSeconds() << inputFile << std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t6.elapsedSeconds() << inputFile << std::endl;
+    // if(successANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t6.elapsedSeconds() << ", "<< inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t6.elapsedSeconds() << ", " << inputFile << std::endl;
 
     // Timer timer_t9;
     // std::cout << "CAstarNoCAT, "<< num_agent_iter << ", ";
     // successCANoCAT = cbs_castar.search(startStates_temp, solution_castar);
     // timer_t9.stop();
-    // if(successCANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t9.elapsedSeconds() << inputFile << std::endl;
-    // else std::cout << " Planning NOT successful! time " << timer_t9.elapsedSeconds() << inputFile << std::endl;
+    // if(successCANoCAT) std::cout  << " Planning successful! Yeah time " << timer_t9.elapsedSeconds() << ", "<< inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t9.elapsedSeconds() << ", " << inputFile << std::endl;
 
-    Timer timer_t7;
-    std::cout << "JPSTNoBP, " << num_agent_iter << ", ";
-    solution.clear();
-    successJpstNoBP = cbs.search(startStates_temp, solution);
-    timer_t7.stop();
-    if(successJpstNoBP) std::cout << " Planning successful! Yeah time " << timer_t7.elapsedSeconds() << inputFile << std::endl;
-    else std::cout << " Planning NOT successful! time " << timer_t7.elapsedSeconds() << inputFile  << std::endl;
+    // Timer timer_t7;
+    // std::cout << "JPSTNoBP, " << num_agent_iter << ", ";
+    // solution.clear();
+    // successJpstNoBP = cbs.search(startStates_temp, solution);
+    // timer_t7.stop();
+    // if(successJpstNoBP) std::cout << " Planning successful! Yeah time " << timer_t7.elapsedSeconds() << ", " << inputFile << std::endl;
+    // else std::cout << " Planning NOT successful! time " << timer_t7.elapsedSeconds() << ", " << inputFile  << std::endl;
 
     // mapf.setCAT(true);
     // mapf.setBP(true);

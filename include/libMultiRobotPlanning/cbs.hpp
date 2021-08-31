@@ -349,6 +349,10 @@ class CBS {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
       if(return_value  == 0){
         solution = PJps.solution;
+        if(!m_env.CheckValid(PJps.solution)){
+          std::cout << "Check solution fails \n";
+          return false;
+        }
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
         return true;
       }
@@ -1059,13 +1063,14 @@ private:
     return false;
   }
 
-  bool getFirstConflict(
+ bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
       Conflict& result, HighLevelNodeJps& CurNode){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
     // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
+    
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
       int tt = 0;
@@ -1092,11 +1097,15 @@ private:
         else { flag_y = 1; ac_c = Action::Up;}
 
         point_st[i].push_back(tt);
-        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from 0 insure the first location is added
           Location temp_loc(a.x, a.y+flag_y*temp_y);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
+          if(m_env.isObstacle(temp_loc)){
+            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+             << " jump_id + 1 " << b.x << ", " << b.y << " 111 "<< std::endl;
+          }
           tt++;
         }
         if(a.x != b.x){
@@ -1104,22 +1113,44 @@ private:
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id); 
+          if(m_env.isObstacle(temp_loc)){
+            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+             << " jump_id + 1 " << b.x << ", " << b.y   << " 222 "<< std::endl;
+          }
           tt++;        
         }
         int flag_x = 1;
         if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
         else{flag_x = -1; ac_c = Action::Left;}
-        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
+        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){// from 1 insure the last location is not added
           Location temp_loc(a.x + flag_x*temp_x, b.y);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
+          if(m_env.isObstacle(temp_loc)){
+            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+             << " jump_id + 1 " << b.x << ", " << b.y   << " 3333 "<< std::endl;
+          }
           tt++;
         } 
         if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
           Location temp_loc(-1, -1);
           if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
           else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          if(a.x == b.x && a.y == b.y) temp_loc = a;
+          if(m_env.isObstacle(temp_loc)){
+            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+             << " jump_id + 1 " << b.x << ", " << b.y  << " 4444"<< std::endl;
+          }
+        	// 	for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
+        	// 		std::cout << solution[i].states[ii].second << ": " <<
+        	// 					solution[i].states[ii].first << "->" << solution[i].actions[ii].first
+					// 			<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+        	// 	}
+        	// 	std::cout << solution[i].states.back().second << ": " <<
+        	// 	  		   solution[i].states.back().first << std::endl;
+
+          // }
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
             solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
@@ -1176,6 +1207,7 @@ private:
             result.type = Conflict::Vertex;
             result.x1 = state1.x;
             result.y1 = state1.y;
+            return true;
         
             int JumpPointId = point_id[i][t];
             int PreJumpPointId = -1;
@@ -1201,11 +1233,24 @@ private:
             if(initialState.x == goalLoc.x || initialState.y == goalLoc.y //stright line
                || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;  // have replanned
 
+            m_env.resetTemporalObstacle();
+            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+        	    Location location(constraint.x, constraint.y);
+        	    m_env.setTemporalObstacle(location, constraint.time);
+            }
+            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+        	    Location location(constraint.x2, constraint.y2);
+        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
+            }
+            if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
+            else m_env.setIsSegPlanning(true);
+
             LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
             bool success = lowLevel.search(initialState, segmentPath);
-            jump_point[i].insert(JumpPointId);        
+            jump_point[i].insert(JumpPointId); 
+            m_env.setIsSegPlanning(false);
 
             if(segmentPath.cost != cost_t){
               
@@ -1294,6 +1339,7 @@ private:
             result.y1 = state1a.y;
             result.x2 = state1b.x;
             result.y2 = state1b.y;
+            return true;
 
             int JumpPointId = point_id[i][t];
             if(JumpPointId + 1 > solution[i].states.size()-1) return true;            
@@ -1310,11 +1356,25 @@ private:
             if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
             || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
 
+
+            m_env.resetTemporalObstacle();
+            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+        	    Location location(constraint.x, constraint.y);
+        	    m_env.setTemporalObstacle(location, constraint.time);
+            }
+            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+        	    Location location(constraint.x2, constraint.y2);
+        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
+            }
+
+            if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
+            else m_env.setIsSegPlanning(true);
             LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
             bool success = lowLevel.search(initialState, segmentPath);
             jump_point[i].insert(JumpPointId);
+            m_env.setIsSegPlanning(false);
 
             if(segmentPath.cost != cost_t){
               for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
@@ -1443,6 +1503,7 @@ private:
           Location temp_loc(-1, -1);
           if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
           else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
+          if(a.x == b.x && a.y == b.y) temp_loc = a;
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
             solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
