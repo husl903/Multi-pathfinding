@@ -1220,7 +1220,7 @@ private:
             result.type = Conflict::Vertex;
             result.x1 = state1.x;
             result.y1 = state1.y;
-        
+            if(t > point_id[i].size() - 1) return true;
             int JumpPointId = point_id[i][t];
             int PreJumpPointId = -1;
             int AftJumpPointID = -1;
@@ -1263,8 +1263,9 @@ private:
             jump_point[i].insert(JumpPointId); 
             m_env.setIsSegPlanning(false);
 
+
             if(segmentPath.cost != cost_t){
-              
+             std::cout << " t time " << t << " i " << i << " j " << j << std::endl;
         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
         			std::cout << solution[i].states[ii].second << ": " <<
         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
@@ -1272,6 +1273,21 @@ private:
         		}
         		std::cout << solution[i].states.back().second << ": " <<
         		  		   solution[i].states.back().first << std::endl;
+              std::cout << "---------------------------------------------------------\n";
+        		for (size_t ii = 0; ii < solution_path[i].actions.size(); ++ii) {
+        			std::cout << solution_path[i].states[ii].second << ": " <<
+        						solution_path[i].states[ii].first << "->" << solution_path[i].actions[ii].first
+								<< "(cost: " << solution_path[i].actions[ii].second << ")" << std::endl;
+        		}
+        		std::cout << solution_path[i].states.back().second << ": " <<
+        		  		   solution_path[i].states.back().first << std::endl;
+                     std::cout << "---------------------------------------------------------\n";
+
+             for (size_t ii = 0; ii < point_id[i].size(); ++ii){
+               std::cout << point_id[i][ii] << ", ";
+             }
+
+             std::cout << "---------------------------------------\n";
 
               for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
                 std::cout << segmentPath.states[iii].second << ": " <<
@@ -1284,6 +1300,7 @@ private:
               std::cout << "agent " << i <<", "<< j << " id " << JumpPointId <<  ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
               std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
               std::cout << "test\n";
+
               // return false;
             }else{
               size_t jjj = 0;
