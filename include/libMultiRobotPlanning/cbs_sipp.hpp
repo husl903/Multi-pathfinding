@@ -324,13 +324,14 @@ class CBSSIPP {
     	  return false;
       }
       
-      // if(num_node % 100 == 0){
-      //   getrusage(RUSAGE_SELF, &r_usage);
-      //   if(r_usage.ru_maxrss > 13631488){
-      //     std::cout << " ,done, memory-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
-      //     return false;
-      //   }
-      // }
+      if(num_node % 100 == 0){
+        getrusage(RUSAGE_SELF, &r_usage);
+        // std::cout << r_usage.ru_maxrss << " memory \n"; 
+        if(r_usage.ru_maxrss > 15204352){
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          return false;
+        }
+      }      
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -371,15 +372,15 @@ class CBSSIPP {
       //     continue;
       //   }
       // }
-      if(m_env.isBP){
-        if(return_value == 1){
-          if(TryBypassSipp(conflict, PJps)){
-            auto handle = openJps.push(PJps);
-            (*handle).handle = handle;
-            continue;          
-          }
-        }
-      }
+      // if(m_env.isBP){
+      //   if(return_value == 1){
+      //     if(TryBypassSipp(conflict, PJps)){
+      //       auto handle = openJps.push(PJps);
+      //       (*handle).handle = handle;
+      //       continue;          
+      //     }
+      //   }
+      // }
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);

@@ -242,13 +242,14 @@ class CBSCAstar {
         std::cout << " ,done, time-out fail" << ", num_node,  " << num_node << " , gen_node, " << gen_node << ", ";
     	  return false;
       }
-      // if(num_node % 100 == 0){
-      //   getrusage(RUSAGE_SELF, &r_usage);
-      //   if(r_usage.ru_maxrss > 13631488){
-      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
-      //     return false;
-      //   }
-      // }
+      if(num_node % 100 == 0){
+        getrusage(RUSAGE_SELF, &r_usage);
+        // std::cout << r_usage.ru_maxrss << " memory \n"; 
+        if(r_usage.ru_maxrss > 15204352){
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          return false;
+        }
+      }      
 
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);

@@ -318,13 +318,14 @@ class CBS {
     	  return false;
       }
       
-      // if(num_node % 100 == 0){
-      //   getrusage(RUSAGE_SELF, &r_usage);
-      //   if(r_usage.ru_maxrss > 13631488){
-      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
-      //     return false;
-      //   }
-      // }
+      if(num_node % 100 == 0){
+        getrusage(RUSAGE_SELF, &r_usage);
+        // std::cout << r_usage.ru_maxrss << " memory \n"; 
+        if(r_usage.ru_maxrss > 15204352){
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          return false;
+        }
+      }      
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -364,6 +365,8 @@ class CBS {
       // }
       if(m_env.isBP){
         if(return_value == 1 && jump_id_clf != -1){
+                  // std::cout << "Time \n";
+
           if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
             auto handle = openJps.push(PJps);
             (*handle).handle = handle;

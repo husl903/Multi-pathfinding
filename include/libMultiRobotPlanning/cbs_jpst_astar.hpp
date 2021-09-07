@@ -297,7 +297,7 @@ class CBSJPSTAstar {
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
-        openJps;    
+        openJps;   
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
 
@@ -317,13 +317,14 @@ class CBSJPSTAstar {
     	  return false;
       }
       
-      // if(num_node % 100 == 0){
-      //   getrusage(RUSAGE_SELF, &r_usage);
-      //   if(r_usage.ru_maxrss > 13631488){
-      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
-      //     return false;
-      //   }
-      // }      
+      if(num_node % 100 == 0){
+        getrusage(RUSAGE_SELF, &r_usage);
+        // std::cout << r_usage.ru_maxrss << " memory \n"; 
+        if(r_usage.ru_maxrss > 15204352){
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          return false;
+        }
+      }      
 
       HighLevelNodeJps PJps = openJps.top();
       m_env.onExpandHighLevelNode(PJps.cost);
@@ -348,7 +349,6 @@ class CBSJPSTAstar {
       int return_value = getFirstConflict(PJps.solution, conflict, PJps);
       if(return_value  == 0){
         solution = PJps.solution;
-        int jump_id_clf = -1;
         if(!m_env.CheckValid(PJps.solution)){
           std::cout << "Check solution falis \n";
           return false;
@@ -1099,10 +1099,10 @@ private:
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
-          if(m_env.isObstacle(temp_loc)){
-            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-             << " jump_id + 1 " << b.x << ", " << b.y << " 111 "<< std::endl;
-          }
+          // if(m_env.isObstacle(temp_loc)){
+          //   std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+          //    << " jump_id + 1 " << b.x << ", " << b.y << " 111 "<< std::endl;
+          // }
           tt++;
         }
         if(a.x != b.x){
@@ -1124,10 +1124,10 @@ private:
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
-          if(m_env.isObstacle(temp_loc)){
-            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-             << " jump_id + 1 " << b.x << ", " << b.y   << " 3333 "<< std::endl;
-          }
+          // if(m_env.isObstacle(temp_loc)){
+          //   std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
+          //    << " jump_id + 1 " << b.x << ", " << b.y   << " 3333 "<< std::endl;
+          // }
           tt++;
         } 
         if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
@@ -1230,7 +1230,7 @@ private:
             if(t + 1 < solution_path.size()){
               if(point_id[i][t + 1] != JumpPointId) return true;
             }
-            if(JumpPointId + 1 >= solution[i].states.size()-1) return true;
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;
 
             Location goalLoc = solution[i].states[JumpPointId+1].first;
             int time_a = solution[i].states[JumpPointId].second;
@@ -1367,9 +1367,9 @@ private:
             result.y1 = state1a.y;
             result.x2 = state1b.x;
             result.y2 = state1b.y;
-
+            if(t > point_id[i].size() - 1) return true;
             int JumpPointId = point_id[i][t];
-            if(JumpPointId + 1 >= solution[i].states.size()-1) return true;            
+            if(JumpPointId + 1 > solution[i].states.size()-1) return true;            
 
             Location goalLoc = solution[i].states[JumpPointId+1].first;
             int time_a = solution[i].states[JumpPointId].second;
