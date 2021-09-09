@@ -1963,9 +1963,7 @@ int main(int argc, char* argv[]) {
  
   mapf.setBP(true);
   while(true)
-  // || successSipp || successA || successCA || successJpstA || successSippNoCat || successANoCAT || successCANoCAT || successJpstNoBP)
   {
-  //  || successSipp || successA || successA || successJpstA || successSippNoCat || successANoCAT || successJpstNoBP){
 
     startStates_temp.push_back(startStates[num_agent_iter]);
 

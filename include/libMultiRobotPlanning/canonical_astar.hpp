@@ -345,22 +345,36 @@ public:
         }
       }
 
-      // for(size_t nei = 0; nei < neighbors.size(); nei++){
-      //   neighbors[nei].state.nc_cat = 0;
-      //   int current_time = s.time + 1;
-      //   State temp_s(-1, -1, -1);
-      //   for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
-      //     if(m_cat[agent_id].states.empty()) continue;
-      //     if (current_time < m_cat[agent_id].states.size()) {
-      //       temp_s = m_cat[agent_id].states[current_time].first;
-      //     }else{
-      //       temp_s = m_cat[agent_id].states.back().first;     
-      //     }
-      //     if(temp_s == neighbors[nei].state){
-      //       neighbors[nei].state.nc_cat++;
-      //     }
-      //   }
-      // }
+      if(m_env.isCAT){
+        // std::cout << "CA CAT \n";
+        for(size_t nei = 0; nei < neighbors.size(); nei++){
+          neighbors[nei].state.nc_cat = s.nc_cat;
+          int current_time = s.time + 1;
+          State temp_s(-1, -1, -1), temp_s_p(-1, -1, -1);
+          for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+            if(m_cat[agent_id].states.empty()) continue;
+            if (current_time < m_cat[agent_id].states.size()) {
+              temp_s = m_cat[agent_id].states[current_time].first;
+            }else{
+              temp_s = m_cat[agent_id].states.back().first;     
+            }
+            if(temp_s.x == neighbors[nei].state.x && temp_s.y == neighbors[nei].state.y){
+              neighbors[nei].state.nc_cat++;
+              // std::cout << "Test \n";
+            }
+
+            if(current_time - 1 >= 0){
+              if(current_time - 1 < m_cat[agent_id].states.size()){
+                temp_s_p = m_cat[agent_id].states[current_time - 1].first;
+                if(temp_s_p.x == neighbors[nei].state.x && temp_s_p.y == neighbors[nei].state.y
+                  && temp_s.x == s.x && temp_s.y == s.y){
+                  neighbors[nei].state.nc_cat++;
+                }
+              }
+            }            
+          }
+        }
+      }
 
 //      m_env.getNeighbors(s, neighbors);
     }

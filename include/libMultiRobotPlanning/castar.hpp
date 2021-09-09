@@ -200,11 +200,12 @@ class CAStar {
         return fScore > other.fScore;
       } else if(gScore != other.gScore){
         return gScore < other.gScore;
-      }/* else if(state.nc_cat != other.state.nc_cat){
+      } else if(state.nc_cat != other.state.nc_cat){
+        // if(state.nc_cat !=0 || other.state.nc_cat != 0) std::cout << state.nc_cat << ", " << other.state.nc_cat << std::endl;
         return state.nc_cat > other.state.nc_cat;
-      }*/ else if(state.dir_p != other.state.dir_p){
+      }/* else if(state.dir_p != other.state.dir_p){
         return state.dir_p > other.state.dir_p;
-      }else return state.dir > other.state.dir;
+      }*/else return state.dir > other.state.dir;
      
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;

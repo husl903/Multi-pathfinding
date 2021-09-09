@@ -365,8 +365,6 @@ class CBS {
       // }
       if(m_env.isBP){
         if(return_value == 1 && jump_id_clf != -1){
-                  // std::cout << "Time \n";
-
           if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
             auto handle = openJps.push(PJps);
             (*handle).handle = handle;
