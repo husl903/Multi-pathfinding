@@ -244,14 +244,16 @@ class CBSAstar {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
-        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+        std::cout << " ,done, time-out fail" << ", num_node, " << num_node 
+        << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
       if(num_node % 100 == 0){
         getrusage(RUSAGE_SELF, &r_usage);
         // std::cout << r_usage.ru_maxrss << " memory \n"; 
-        if(r_usage.ru_maxrss > 15204352*4){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+        if(r_usage.ru_maxrss > 15204352){
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node 
+          << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";          
           return false;
         }
       }
@@ -261,7 +263,8 @@ class CBSAstar {
       open.pop();
       Conflict conflict;      
       if (!m_env.getFirstConflict(P.solution, conflict, P.num_conflict)) {
-        std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+        std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " 
+        << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
         solution = P.solution;
         return true;
       }
@@ -271,7 +274,8 @@ class CBSAstar {
       while(foundBypass){
         // std::cout << "Bypass \n";
         if(P.num_conflict == 0){
-          std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+          std::cout << ", done," << P.cost << ", " << " num_node, " << num_node << ", " 
+          << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
           solution = P.solution;
           return true;
         }
@@ -331,15 +335,16 @@ class CBSAstar {
           NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
 
           child_id++;
-          id++;
+          gen_node++;
         }
 
         if(!foundBypass){
           for(int ii = 0; ii < 2; ii++){
             if(is_solved[ii]){
+              NewChild[ii].id = id;
               auto handle = open.push(NewChild[ii]);
               (*handle).handle = handle;
-              gen_node++;
+              id++;
             }
           }
         }
@@ -349,7 +354,8 @@ class CBSAstar {
 
         // Conflict conflict;
         if (!m_env.getFirstConflict(P.solution, conflict)) {
-          std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+          std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " 
+          << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
           solution = P.solution;
           return true;
         }

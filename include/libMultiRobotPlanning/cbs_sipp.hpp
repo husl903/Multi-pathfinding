@@ -320,7 +320,7 @@ class CBSSIPP {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
-        std::cout << " ,done, time-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+        std::cout << " ,done, time-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
       
@@ -328,7 +328,7 @@ class CBSSIPP {
         getrusage(RUSAGE_SELF, &r_usage);
         // std::cout << r_usage.ru_maxrss << " memory \n"; 
         if(r_usage.ru_maxrss > 15204352){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";          
           return false;
         }
       }      
@@ -341,7 +341,7 @@ class CBSSIPP {
       int return_value = m_env.getFirstConflict(PJps.solution, conflict, true, PJps.num_conflict);
       if(return_value  == 0){
         solution = PJps.solution;
-        std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+        std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
         return true;
       }
 
@@ -350,7 +350,7 @@ class CBSSIPP {
       while(foundBypass){
         // std::cout << "Bypass \n";
         if(PJps.num_conflict == 0){
-          std::cout << ", done, cost , " << PJps.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+          std::cout << ", done, " << PJps.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
           solution = PJps.solution;
           return true;
         }
@@ -438,15 +438,16 @@ class CBSSIPP {
           NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
 
           child_id++;
-          id++;
+          gen_node++;
         }
 
         if(!foundBypass){
           for(int ii = 0; ii < 2; ii++){
             if(is_solved[ii]){
+              NewChild[ii].id = id;
               auto handle = openJps.push(NewChild[ii]);
               (*handle).handle = handle;
-              gen_node++;
+              id++;
             }
           }
         }
