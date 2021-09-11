@@ -250,22 +250,110 @@ class CBSAstar {
       if(num_node % 100 == 0){
         getrusage(RUSAGE_SELF, &r_usage);
         // std::cout << r_usage.ru_maxrss << " memory \n"; 
-        if(r_usage.ru_maxrss > 15204352){
+        if(r_usage.ru_maxrss > 15204352*4){
           std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
           return false;
         }
-      }      
+      }
 
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);
       open.pop();
-
-      Conflict conflict;
-      if (!m_env.getFirstConflict(P.solution, conflict)) {
+      Conflict conflict;      
+      if (!m_env.getFirstConflict(P.solution, conflict, P.num_conflict)) {
         std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
         solution = P.solution;
         return true;
       }
+
+      P.first_conflict = conflict;
+      bool foundBypass = true;
+      while(foundBypass){
+        // std::cout << "Bypass \n";
+        if(P.num_conflict == 0){
+          std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+          solution = P.solution;
+          return true;
+        }
+
+        Conflict conflict_temp = P.first_conflict;
+        HighLevelNode NewChild[2];
+        bool is_solved[2] = {false, false};
+        std::map<size_t, Constraints> constraints;
+        m_env.createConstraintsFromConflict(conflict_temp, constraints);
+        int child_id = 0;
+        foundBypass = false;
+        for(const auto& c : constraints){
+          size_t i = c.first;
+          NewChild[child_id] = P;
+          NewChild[child_id].id = id;
+          assert(!NewChild[child_id].constraints[i].overlap(c.second));
+          NewChild[child_id].constraints[i].add(c.second);
+          NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
+          m_env.resetTemporalObstacle();
+          for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
+        	  Location location(constraint.x, constraint.y);
+        	  m_env.setTemporalObstacle(location, constraint.time);
+          }
+
+          for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
+        	  Location loc(constraint.x2, constraint.y2);
+        	  m_env.setTemporalEdgeConstraint(loc, constraint.time);
+          }
+          m_env.setGoal(i);
+          m_env.Reset();
+          m_env.setExactHeuristTrue();
+          LowLevelEnvironment llenv(m_env, NewChild[child_id].solution, i, NewChild[child_id].constraints[i]);
+          LowLevelSearch_t lowLevel(llenv);
+
+          Timer timerAstar;
+          timerAstar.reset();
+          int ExpA =  m_env.lowLevelExpanded();
+          is_solved[child_id] = lowLevel.search(initialStates[i], NewChild[child_id].solution[i]);
+          timerAstar.stop();
+          int ExpAstar = m_env.lowLevelExpanded() - ExpA;
+          int GenAstar = m_env.lowLevelGenerated();
+          double tAstar = timerAstar.elapsedSeconds();
+          
+          if(!is_solved[child_id]) continue;
+
+          Conflict sub_conflict;
+          m_env.getFirstConflict(NewChild[child_id].solution, sub_conflict, NewChild[child_id].num_conflict);
+
+          NewChild[child_id].first_conflict = sub_conflict;
+          if(m_env.isBP && NewChild[child_id].solution[i].cost == P.solution[i].cost 
+             && NewChild[child_id].num_conflict < P.num_conflict){
+            // std::cout << "Here \n";
+            foundBypass = true;
+            P.solution[i] = NewChild[child_id].solution[i];
+            P.num_conflict = NewChild[child_id].num_conflict;
+          }
+          NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
+
+          child_id++;
+          id++;
+        }
+
+        if(!foundBypass){
+          for(int ii = 0; ii < 2; ii++){
+            if(is_solved[ii]){
+              auto handle = open.push(NewChild[ii]);
+              (*handle).handle = handle;
+              gen_node++;
+            }
+          }
+        }
+
+      }
+      continue;  
+
+        // Conflict conflict;
+        if (!m_env.getFirstConflict(P.solution, conflict)) {
+          std::cout << ", done, cost, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", ";
+          solution = P.solution;
+          return true;
+        }
+
       // if(m_env.isBP){
       //   if(TryBypassAstar(conflict, P)){
       //     auto handle = open.push(P);
@@ -702,6 +790,10 @@ class CBSAstar {
     int id;
 
     int agent_id = -1;
+
+    int num_conflict = 0;
+
+    Conflict first_conflict;
 
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >::handle_type
