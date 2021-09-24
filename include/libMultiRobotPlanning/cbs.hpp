@@ -347,7 +347,10 @@ class CBS {
 
       Conflict conflict;
       int jump_id_clf = -1;
-      int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
+//      int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
+
+      int return_value = getFirstConflict(PJps.solution, conflict, jump_id_clf);
+
       if(return_value  == 0){
         solution = PJps.solution;
         if(!m_env.CheckValid(PJps.solution)){
@@ -363,7 +366,7 @@ class CBS {
       //   (*handle).handle = handle;
       //   continue;
       // }
-      if(m_env.isBP){
+      if(m_env.isBP){ 
         if(return_value == 1 && jump_id_clf != -1){
           if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
             auto handle = openJps.push(PJps);
@@ -1403,17 +1406,6 @@ private:
               }
 
 
-// std::cout << "Herererererererereere        Begin \n";     
-//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-//         			std::cout << solution[i].states[ii].second << ": " <<
-//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-//         		}
-//         		std::cout << solution[i].states.back().second << ": " <<
-//         		  		   solution[i].states.back().first << std::endl;  
-//               std::cout << time_a << ", " << time_b -1 << " \n";
-//               auto it_path = solution_path[i].states.begin() + time_b -1;
-//               std::cout << (*it_path).first.x << ", " << (*it_path).first.y << " test\n";
 
               auto it = solution[i].states.begin();
               auto it_ac = solution[i].actions.begin();
@@ -1422,14 +1414,6 @@ private:
               solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
               solution_path[i].actions.begin() + time_b);              
    
-//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-//         			std::cout << solution[i].states[ii].second << ": " <<
-//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-//         		}
-//         		std::cout << solution[i].states.back().second << ": " <<
-//         		  		   solution[i].states.back().first << std::endl;  
-//               std::cout << time_a << ", " << time_b -1 << " \n";
 
               is_restart = true;
               t = time_a - 1;
@@ -1446,11 +1430,10 @@ private:
 
   int  getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result, HighLevelNodeJps& CurNode, bool jpst_flag){
+      Conflict& result, int conflict_id){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
-    // std::vector<VertexConstraint> v_constraint;
            
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
@@ -1541,133 +1524,8 @@ private:
             // std::cout << "Vertex Conflict " << point_id[i].size() << ", " << state1.x << ", " << state1.y << std::endl;
             if(t >= point_id[i].size()) return 2;
             int JumpPointId = point_id[i][t];
-            int PreJumpPointId = -1;
-            int AftJumpPointID = -1;
-            if(t - 1 >= 0){
-              if(point_id[i][t - 1] != JumpPointId) return 2;
-            }
-            if(t + 1 < solution_path.size()){
-              if(point_id[i][t + 1] != JumpPointId) return 2;
-            }
-            // std::cout << "time " << t << ", " <<JumpPointId <<  ", "<< JumpPointId + 1 << ", " << solution[i].states.size() - 1 << std::endl;
-            if(JumpPointId + 1 > solution[i].states.size() - 1) return 2;
-
-            Location goalLoc = solution[i].states[JumpPointId+1].first;
-            int time_a = solution[i].states[JumpPointId].second;
-            int time_b = solution[i].states[JumpPointId + 1].second;
-            int cost_t = time_b - time_a;
-            
-            State initialState(-1, -1, time_a);
-            initialState.x = solution[i].states[JumpPointId].first.x;
-            initialState.y = solution[i].states[JumpPointId].first.y;
-            initialState.time = time_a;
-            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return 2;
-            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y 
-               || jump_point[i].find(JumpPointId) != jump_point[i].end()) return 2;
-
-            m_env.Reset();
-            m_env.resetTemporalObstacle();
-            m_env.setGoal(goalLoc, i);
-            m_env.setExactHeuristTrue();
-            m_env.setIsSegPlanning(true);
-            jpst_bit jpstbit(m_env);
-            bool is_first_constraint_v = true;
-            bool is_first_constraint_e = true;
-            bool isV = true;
-            jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-            for (size_t idx = 0; idx < solution_path.size(); ++idx){
-              if(idx == i) continue;
-              for(int v_time = time_a; v_time <= time_b; v_time++){
-                Location v_loc = getState(idx, solution_path, v_time);
-        	      m_env.setTemporalObstacle(v_loc, v_time);
-        		    jpstbit.setCollisionVertex(v_loc, v_time, v_time, is_first_constraint_v, isV);
-                if(is_first_constraint_v) is_first_constraint_v = false;
-              }             
-            }
-            m_env.setTemporalObstacle(state1, t);
-            jpstbit.setCollisionVertex(state1, t, t, is_first_constraint_v, isV);
-            is_first_constraint_v = false;
-
-            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
-        	    Location location(constraint.x, constraint.y);
-        	    m_env.setTemporalObstacle(location, constraint.time);
-              jpstbit.setCollisionVertex(location, constraint.time, constraint.time, is_first_constraint_v, isV);  
-              if(is_first_constraint_v) is_first_constraint_v = false;
-            }
-        
-            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
-        	    Location location(constraint.x2, constraint.y2);
-        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
-        	    if(constraint.x1 == constraint.x2){
-        		    if(constraint.y1 == constraint.y2 - 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
-        		    }else if(constraint.y1 == constraint.y2 + 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
-        		    }
-        	    }else{
-        		    if(constraint.x1 == constraint.x2 - 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
-        		     }else if(constraint.x1 == constraint.x2 + 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
-        		    }
-        	    }
-        	    if(is_first_constraint_e){
-        		    is_first_constraint_e = false;
-        	    }
-            }
-            jpstbit.sortCollisionVertex();
-            jpstbit.sortCollisionEdgeConstraint();
-            Location startNode(solution[i].states[JumpPointId].first.x, 
-                      solution[i].states[JumpPointId].first.y);
-            PlanResult<Location, Action, int>segmentPathJPS;
-
-            bool isJpsSucc = jpstbit.search(startNode, Action::Wait, segmentPathJPS, time_a);
-            m_env.setIsSegPlanning(false);   
-
-            if(segmentPathJPS.cost == cost_t && isJpsSucc){
-              
-        		  // for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-        			//   std::cout << solution[i].states[ii].second << ": " <<
-        			// 			solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-							// 	  << "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-        		  // }
-        		  // std::cout << solution[i].states.back().second << ": " <<
-        		  // 		   solution[i].states.back().first << std::endl;
-
-              // for (size_t iii = 0; iii < segmentPathJPS.actions.size(); ++iii) {
-              //   std::cout << segmentPathJPS.states[iii].second << ": " <<
-              //   segmentPathJPS.states[iii].first << "->" << segmentPathJPS.actions[iii].first
-              //   << "(cost: " << segmentPathJPS.actions[iii].second << ")" << std::endl;
-              // }
-              // std::cout << segmentPathJPS.states.back().second << ": " <<
-              // segmentPathJPS.states.back().first << std::endl;  
-              // for(auto & constraint : CurNode.constraints[i].vertexConstraints){
-     
-              //   std::cout << constraint << "\n";
-              // }
-              // for(auto & constraint : CurNode.constraints[i].edgeConstraints){
-              //   std::cout << constraint << "\n";
-              // }
-              auto it = solution[i].states.begin();
-              auto it_ac = solution[i].actions.begin();
-
-              solution[i].states[JumpPointId] = segmentPathJPS.states[0];;
-              solution[i].actions[JumpPointId] = segmentPathJPS.actions[0];
-
-              // for(auto it = segmentPathJPS.states.begin() + 1; it != segmentPathJPS.states.end(); it++){
-              //   std::cout << (*it).first << " here\n";
-              // }
-              solution[i].states.insert(it + JumpPointId + 1, segmentPathJPS.states.begin() + 1,
-              segmentPathJPS.states.end() - 1);
-
-              solution[i].actions.insert(it_ac + JumpPointId + 1, segmentPathJPS.actions.begin() + 1,
-              segmentPathJPS.actions.end()); 
-
-              return 1;           
-            } else return 2;
           }
         }
-        if(is_restart) break;
       }
       // if(is_restart) continue;
       // drive-drive edge (swap)
@@ -1687,203 +1545,11 @@ private:
             result.x2 = state1b.x;
             result.y2 = state1b.y;
             return 2;
-
-            if(t >= point_id[i].size()) return 2;
-            int JumpPointId = point_id[i][t];
-            if(JumpPointId + 1 > solution[i].states.size()-1) return 2;            
-
-            Location goalLoc = solution[i].states[JumpPointId+1].first;
-            int time_a = solution[i].states[JumpPointId].second;
-            int time_b = solution[i].states[JumpPointId + 1].second;
-            int cost_t = time_b - time_a;
-            State initialState(-1, -1, time_a);
-            initialState.x = solution[i].states[JumpPointId].first.x;
-            initialState.y = solution[i].states[JumpPointId].first.y;
-            initialState.time = time_a;
-            if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) return 2;
-            if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
-            || jump_point[i].find(JumpPointId) != jump_point[i].end()) return 2;
-
-            m_env.Reset();
-            m_env.resetTemporalObstacle();
-            m_env.setGoal(goalLoc, i);
-            m_env.setExactHeuristTrue();
-            m_env.setIsSegPlanning(true);
-            jpst_bit jpstbit(m_env);
-            bool is_first_constraint_v = true;
-            bool is_first_constraint_e = true;
-            bool isV = true;
-            jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-            for (size_t idx = 0; idx < solution_path.size(); ++idx){
-              if(idx == i) continue;
-              for(int v_time = time_a; v_time <= time_b; v_time++){
-                Location v_loc = getState(idx, solution_path, v_time);
-        	      m_env.setTemporalObstacle(v_loc, v_time);
-        		    jpstbit.setCollisionVertex(v_loc, v_time, v_time, is_first_constraint_v, isV);
-                if(is_first_constraint_v) is_first_constraint_v = false;
-              }             
-            }
-
-            for(auto & constraint : CurNode.constraints[i].vertexConstraints){
-        	    Location location(constraint.x, constraint.y);
-        	    m_env.setTemporalObstacle(location, constraint.time);
-              jpstbit.setCollisionVertex(location, constraint.time, constraint.time, is_first_constraint_v, isV);  
-              if(is_first_constraint_v) is_first_constraint_v = false;
-            }
-        
-            for(auto & constraint : CurNode.constraints[i].edgeConstraints){
-        	    Location location(constraint.x2, constraint.y2);
-        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
-        	    if(constraint.x1 == constraint.x2){
-        		    if(constraint.y1 == constraint.y2 - 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
-        		    }else if(constraint.y1 == constraint.y2 + 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
-        		    }
-        	    }else{
-        		    if(constraint.x1 == constraint.x2 - 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
-        		     }else if(constraint.x1 == constraint.x2 + 1){
-        			    jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
-        		    }
-        	    }
-        	    if(is_first_constraint_e){
-        		    is_first_constraint_e = false;
-        	    }
-            }
-            
-            Action ac_temp;
-            if(state1a.x == state1b.x){
-              if(state1a.y == state1b.y - 1) ac_temp = Action::Down;
-              else ac_temp = Action::Up;
-            }else{
-              if(state1a.x == state1b.x - 1) ac_temp = Action::Left;
-              else ac_temp = Action::Right;
-            }
-            m_env.setTemporalObstacle(state1b, t);
-            jpstbit.setEdgeConstraint(state1b, t, ac_temp, is_first_constraint_e);         
-            
-            jpstbit.sortCollisionVertex();
-            jpstbit.sortCollisionEdgeConstraint();
-            Location startNode(solution[i].states[JumpPointId].first.x, 
-                      solution[i].states[JumpPointId].first.y);
-            PlanResult<Location, Action, int>segmentPathJPS;
-
-            bool isJpsSucc = jpstbit.search(startNode, Action::Wait, segmentPathJPS, time_a);
-            m_env.setIsSegPlanning(false);   
-
-            if(segmentPathJPS.cost == cost_t && isJpsSucc){
-              
-        		  // for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-        			//   std::cout << solution[i].states[ii].second << ": " <<
-        			// 			solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-							// 	  << "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-        		  // }
-        		  // std::cout << solution[i].states.back().second << ": " <<
-        		  // 		   solution[i].states.back().first << std::endl;
-
-              // for (size_t iii = 0; iii < segmentPathJPS.actions.size(); ++iii) {
-              //   std::cout << segmentPathJPS.states[iii].second << ": " <<
-              //   segmentPathJPS.states[iii].first << "->" << segmentPathJPS.actions[iii].first
-              //   << "(cost: " << segmentPathJPS.actions[iii].second << ")" << std::endl;
-              // }
-              // std::cout << segmentPathJPS.states.back().second << ": " <<
-              // segmentPathJPS.states.back().first << std::endl;  
-              // for(auto & constraint : CurNode.constraints[i].vertexConstraints){
-     
-              //   std::cout << constraint << "\n";
-              // }
-              // for(auto & constraint : CurNode.constraints[i].edgeConstraints){
-              //   std::cout << constraint << "\n";
-              // }
-              auto it = solution[i].states.begin();
-              auto it_ac = solution[i].actions.begin();
-
-              solution[i].states[JumpPointId] = segmentPathJPS.states[0];;
-              solution[i].actions[JumpPointId] = segmentPathJPS.actions[0];
-
-              // for(auto it = segmentPathJPS.states.begin() + 1; it != segmentPathJPS.states.end(); it++){
-              //   std::cout << (*it).first << " here\n";
-              // }
-              solution[i].states.insert(it + JumpPointId + 1, segmentPathJPS.states.begin() + 1,
-              segmentPathJPS.states.end() - 1);
-
-              solution[i].actions.insert(it_ac + JumpPointId + 1, segmentPathJPS.actions.begin() + 1,
-              segmentPathJPS.actions.end()); 
-
-              return 1;           
-            } else return 2;            
-
-/*            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
-            LowLevelSearch_t lowLevel(llenv);            
-            PlanResult<State, Action, int>segmentPath;
-            bool success = lowLevel.search(initialState, segmentPath);
-            jump_point[i].insert(JumpPointId);
-
-            if(segmentPath.cost != cost_t){
-              for (size_t iii = 0; iii < segmentPath.actions.size(); ++iii) {
-                std::cout << segmentPath.states[iii].second << ": " <<
-                segmentPath.states[iii].first << "->" << segmentPath.actions[iii].first
-                << "(cost: " << segmentPath.actions[iii].second << ")" << std::endl;
-              }
-              std::cout << segmentPath.states.back().second << ": " <<
-              segmentPath.states.back().first << std::endl;
-
-              std::cout << "agent " << i <<", "<< j << ", x, y " << initialState.x << ", " << initialState.y  << ", xy " << goalLoc.x << ", " << goalLoc.y << "Not correct \n";
-              std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
-              // return false;
-            }else{
-              size_t jjj = 0;
-              PlanResult<Location, Action, int> solution_temp_1;
-              for(size_t iii = time_a; iii < time_b; ++iii){
-                solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
-                solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
-                solution_path[i].states[iii].second = iii;
-                solution_path[i].actions[iii] = segmentPath.actions[jjj];                
-                // std::cout << " Edge x, y " << segmentPath.states[jjj].first.x << ", " 
-                // << segmentPath.states[jjj].first.y << std::endl;
-                jjj++;
-              }
-
-
-// std::cout << "Herererererererereere        Begin \n";     
-//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-//         			std::cout << solution[i].states[ii].second << ": " <<
-//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-//         		}
-//         		std::cout << solution[i].states.back().second << ": " <<
-//         		  		   solution[i].states.back().first << std::endl;  
-//               std::cout << time_a << ", " << time_b -1 << " \n";
-//               auto it_path = solution_path[i].states.begin() + time_b -1;
-//               std::cout << (*it_path).first.x << ", " << (*it_path).first.y << " test\n";
-
-              auto it = solution[i].states.begin();
-              auto it_ac = solution[i].actions.begin();
-              solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
-              solution_path[i].states.begin() + time_b);
-              solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
-              solution_path[i].actions.begin() + time_b);              
-   
-//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-//         			std::cout << solution[i].states[ii].second << ": " <<
-//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-//         		}
-//         		std::cout << solution[i].states.back().second << ": " <<
-//         		  		   solution[i].states.back().first << std::endl;  
-//               std::cout << time_a << ", " << time_b -1 << " \n";
-
-              is_restart = true;
-              t = time_a - 1;
-              break;
-            }*/
           }
         }
-        if(is_restart) break;
       }
-      
     }
+
     return 0;    
   }    
 

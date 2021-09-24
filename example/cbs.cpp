@@ -2040,7 +2040,8 @@ int main(int argc, char* argv[]) {
 
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-J, " << num_agent_iter << ", ";
+      std::cout << "JPST-J-lp, " << num_agent_iter << ", ";
+      mapf.setBP(false);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
       timer_t1.stop();
@@ -2049,7 +2050,7 @@ int main(int argc, char* argv[]) {
     }
     if(solver == solver_sipp){
       Timer timer_t2;
-      mapf.setBP(true);
+      mapf.setBP(false);
       std::cout << "SIPPCAT-BP, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
