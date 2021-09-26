@@ -307,7 +307,7 @@ class CBS {
     struct rusage r_usage;
    	getrusage(RUSAGE_SELF, &r_usage);
 
-    
+    int num_try_bypss = 0;
     while(!openJps.empty()){
       num_node++;
       // if(num_node > 50) return false;
@@ -347,9 +347,9 @@ class CBS {
 
       Conflict conflict;
       int jump_id_clf = -1;
-//      int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
+    int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
 
-      int return_value = getFirstConflict(PJps.solution, conflict, jump_id_clf);
+      // int return_value = getFirstConflict(PJps.solution, conflict, jump_id_clf);
 
       if(return_value  == 0){
         solution = PJps.solution;
@@ -367,8 +367,10 @@ class CBS {
       //   continue;
       // }
       if(m_env.isBP){ 
-        if(return_value == 1 && jump_id_clf != -1){
+        std::cout <<  conflict.agent1 << " Trybypass " << jump_id_clf << "\n";
+        if(jump_id_clf != -1){
           if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
+            num_try_bypss++;
             auto handle = openJps.push(PJps);
             (*handle).handle = handle;
             continue;
@@ -733,6 +735,8 @@ private:
 
   bool TryBypassJpst(Conflict cft, HighLevelNodeJps& CurNode, int& jump_id){
     
+    // std::cout << cft.agent1 << ", " << cft.agent2 << " \n";
+    // std::cout << cft << std::endl;
     int next_jump_id = jump_id + 1;
     int agentId = cft.agent1;
     if(next_jump_id >= CurNode.solution[agentId].states.size()) return false; //overflow
@@ -743,10 +747,26 @@ private:
     int cost_t = time_b - time_a;
     if(abs(start.x - goalLoc.x) + abs(start.y - goalLoc.y) == 1) return false; // adjacent grids
     if(start.x == goalLoc.x || start.y == goalLoc.y) return false; // the stright line
-    if(cft.x1 == start.x && cft.y1 == start.y) return false;
-    if(cft.x2 == start.x && cft.y2 == start.y) return false;
-    if(cft.x1 == goalLoc.x && cft.y1 == goalLoc.y) return false;
-    if(cft.x2 == goalLoc.x && cft.y2 == goalLoc.y) return false;
+    if(cft.x1 == start.x && cft.y1 == start.y) {
+      if(jump_id > 0) {
+        jump_id -= 1;
+        start = CurNode.solution[agentId].states[jump_id].first;
+        time_a = CurNode.solution[agentId].states[jump_id].second;
+        cost_t = time_b - time_a;
+      }
+      else return false;
+    }
+//    if(cft.x2 == start.x && cft.y2 == start.y) return false;
+    if(cft.x1 == goalLoc.x && cft.y1 == goalLoc.y) {
+      if(next_jump_id + 1 < CurNode.solution[agentId].states.size()){
+        next_jump_id += 1;
+        goalLoc = CurNode.solution[agentId].states[next_jump_id].first;
+        time_b = CurNode.solution[agentId].states[next_jump_id].second;
+        cost_t = time_b - time_a;
+      }
+      return false;
+    }
+//    if(cft.x2 == goalLoc.x && cft.y2 == goalLoc.y) return false;
 
     m_env.Reset();
     m_env.resetTemporalObstacle();
@@ -816,13 +836,13 @@ private:
 
     if(segmentPathJPS.cost == cost_t && isJpsSucc){
                     
-      // for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-      //   std::cout << solution[i].states[ii].second << ": " <<
-      // 			solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-			// 	  << "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
+      // for (size_t ii = 0; ii < CurNode.solution[agentId].actions.size(); ++ii) {
+      //   std::cout << CurNode.solution[agentId].states[ii].second << ": " <<
+      // 			CurNode.solution[agentId].states[ii].first << "->" << CurNode.solution[agentId].actions[ii].first
+			// 	  << "(cost: " << CurNode.solution[agentId].actions[ii].second << ")" << std::endl;
       // }
-      // std::cout << solution[i].states.back().second << ": " <<
-      // 		   solution[i].states.back().first << std::endl;
+      // std::cout << CurNode.solution[agentId].states.back().second << ": " <<
+      // 		   CurNode.solution[agentId].states.back().first << std::endl;
 
       // for (size_t iii = 0; iii < segmentPathJPS.actions.size(); ++iii) {
       //   std::cout << segmentPathJPS.states[iii].second << ": " <<
@@ -831,10 +851,10 @@ private:
       // }
       // std::cout << segmentPathJPS.states.back().second << ": " <<
       // segmentPathJPS.states.back().first << std::endl;  
-      // for(auto & constraint : CurNode.constraints[i].vertexConstraints){
+      // for(auto & constraint : CurNode.constraints[agentId].vertexConstraints){
       //   std::cout << constraint << "\n";
       // }
-      // for(auto & constraint : CurNode.constraints[i].edgeConstraints){
+      // for(auto & constraint : CurNode.constraints[agentId].edgeConstraints){
       //   std::cout << constraint << "\n";
       // }
       auto it = CurNode.solution[agentId].states.begin();
@@ -843,15 +863,30 @@ private:
       CurNode.solution[agentId].states[jump_id] = segmentPathJPS.states[0];;
       CurNode.solution[agentId].actions[jump_id] = segmentPathJPS.actions[0];
 
+
       // for(auto it = segmentPathJPS.states.begin() + 1; it != segmentPathJPS.states.end(); it++){
       //   std::cout << (*it).first << " here\n";
       // }
+      if(abs(jump_id - next_jump_id) > 1){
+        CurNode.solution[agentId].states.erase(it + jump_id + 1);
+      }
       CurNode.solution[agentId].states.insert(it + jump_id + 1, segmentPathJPS.states.begin() + 1,
               segmentPathJPS.states.end() - 1);
 
       CurNode.solution[agentId].actions.insert(it_ac + jump_id + 1, segmentPathJPS.actions.begin() + 1,
-              segmentPathJPS.actions.end()); 
+              segmentPathJPS.actions.end());
+      
+      // std::cout << agentId << " Bypass here \n";
 
+      // for (size_t ii = 0; ii < CurNode.solution[agentId].actions.size(); ++ii) {
+      //   std::cout << CurNode.solution[agentId].states[ii].second << ": " <<
+      // 			CurNode.solution[agentId].states[ii].first << "->" << CurNode.solution[agentId].actions[ii].first
+			// 	  << "(cost: " << CurNode.solution[agentId].actions[ii].second << ")" << std::endl;
+      // }
+      // std::cout << CurNode.solution[agentId].states.back().second << ": " <<
+      // 		   CurNode.solution[agentId].states.back().first << std::endl;
+
+      //   std::cout << "Agent id " << agentId << " -------------------------------------------------\n";      
       return true;
      }
 
@@ -1082,7 +1117,6 @@ private:
       int time_a, time_b;
 
       for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
-
         if(jump_point_id == solution[i].states.size() - 1){
           solution_path[i].states.push_back(solution[i].states[jump_point_id]);
           point_id[i].push_back(jump_point_id);         
@@ -1430,7 +1464,7 @@ private:
 
   int  getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result, int conflict_id){
+      Conflict& result, int& jump_id){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
@@ -1498,7 +1532,7 @@ private:
         }
       }
       if(tt - 1 != solution[i].cost){
-        std::cout << "recover path is not correct\n";
+        // std::cout <<"Agent " <<  i << "recover path is not correct " << tt - 1 << solution[i].cost << std::endl;
         return false;
       }
     }
@@ -1519,9 +1553,15 @@ private:
             result.type = Conflict::Vertex;
             result.x1 = state1.x;
             result.y1 = state1.y;
+            
+            if(t >= point_id[i].size()) jump_id = -1;
+            else jump_id = point_id[i][t];
+
+            // for(int sizeii = 0; sizeii < point_id[i].size(); sizeii++){
+            //   std::cout << "sizeii " << sizeii << ", " << point_id[i][sizeii] << std::endl;
+            // }
             return 2;
 
-            // std::cout << "Vertex Conflict " << point_id[i].size() << ", " << state1.x << ", " << state1.y << std::endl;
             if(t >= point_id[i].size()) return 2;
             int JumpPointId = point_id[i][t];
           }
@@ -1544,6 +1584,8 @@ private:
             result.y1 = state1a.y;
             result.x2 = state1b.x;
             result.y2 = state1b.y;
+            if(t >= point_id[i].size()) jump_id = -1;
+            else jump_id = point_id[i][t];
             return 2;
           }
         }

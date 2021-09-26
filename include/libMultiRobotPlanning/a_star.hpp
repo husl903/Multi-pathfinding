@@ -62,7 +62,7 @@ class AStar {
   AStar(Environment& environment) : m_env(environment) {}
 
   bool search(const State& startState,
-              PlanResult<State, Action, Cost>& solution, Cost initialCost = 0) {
+              PlanResult<State, Action, Cost>& solution, Cost initialCost = 0, Cost upper_bound = INT_MAX) {
     solution.states.clear();
     solution.states.push_back(std::make_pair<>(startState, 0));
     solution.actions.clear();
@@ -121,6 +121,7 @@ class AStar {
           if (iter == stateToHeap.end()) {  // Discover a new node
             Cost fScore =
                 tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
+            if(fScore > upper_bound) continue;
             auto handle =
                 openSet.push(Node(neighbor.state, fScore, tentative_gScore));
             (*handle).handle = handle;

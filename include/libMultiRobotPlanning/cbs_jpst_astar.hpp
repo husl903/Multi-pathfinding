@@ -1066,7 +1066,6 @@ private:
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
-    // std::cout << point_id.size() << ", " << point_st.size() << ", " << solution_path.size() << " \n";
     
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
@@ -1080,7 +1079,7 @@ private:
           solution_path[i].states.push_back(solution[i].states[jump_point_id]);
           point_id[i].push_back(jump_point_id);         
           tt++;
-         if(tt > max_t) max_t = tt;          
+          if(tt > max_t) max_t = tt;          
           continue;
         }
         a = solution[i].states[jump_point_id].first;
@@ -1094,26 +1093,18 @@ private:
         else { flag_y = 1; ac_c = Action::Up;}
 
         point_st[i].push_back(tt);
-        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from 0 insure the first location is added
+        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from zero insure the first location is added
           Location temp_loc(a.x, a.y+flag_y*temp_y);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
-          // if(m_env.isObstacle(temp_loc)){
-          //   std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-          //    << " jump_id + 1 " << b.x << ", " << b.y << " 111 "<< std::endl;
-          // }
           tt++;
         }
         if(a.x != b.x){
           Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id); 
-          // if(m_env.isObstacle(temp_loc)){
-          //   std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-          //    << " jump_id + 1 " << b.x << ", " << b.y   << " 222 "<< std::endl;
-          // }
+          point_id[i].push_back(jump_point_id);
           tt++;        
         }
         int flag_x = 1;
@@ -1124,10 +1115,6 @@ private:
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
-          // if(m_env.isObstacle(temp_loc)){
-          //   std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-          //    << " jump_id + 1 " << b.x << ", " << b.y   << " 3333 "<< std::endl;
-          // }
           tt++;
         } 
         if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
@@ -1135,19 +1122,6 @@ private:
           if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
           else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
           if(a.x == b.x && a.y == b.y) temp_loc = a;
-          if(m_env.isObstacle(temp_loc)){
-            std::cout << "Obstacle is here " << "X, Y " << temp_loc.x << ", " << temp_loc.y << " jump_id " <<  a.x << ", " << a.y
-             << " jump_id + 1 " << b.x << ", " << b.y  << " 4444"<< std::endl;
-          }
-        	// 	for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-        	// 		std::cout << solution[i].states[ii].second << ": " <<
-        	// 					solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-					// 			<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-        	// 	}
-        	// 	std::cout << solution[i].states.back().second << ": " <<
-        	// 	  		   solution[i].states.back().first << std::endl;
-
-          // }
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
             solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
@@ -1158,23 +1132,7 @@ private:
         }
       }
       if(tt - 1 != solution[i].cost){
-           std::cout << "recover path is not correct\n";
-        		// for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-        		// 	std::cout << solution[i].states[ii].second << ": " <<
-        		// 				solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-						// 		<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-        		// }
-        		// std::cout << solution[i].states.back().second << ": " <<
-        		//   		   solution[i].states.back().first << std::endl;
-            // std::cout << "------------------------------------------------------------------------------------\n";
-
-        		// for (size_t ii = 0; ii < solution_path[i].actions.size(); ++ii) {
-        		// 	std::cout << solution_path[i].states[ii].second << ": " <<
-        		// 				solution_path[i].states[ii].first << "->" << solution_path[i].actions[ii].first
-						// 		<< "(cost: " << solution_path[i].actions[ii].second << ")" << std::endl;
-        		// }
-        		// std::cout << solution_path[i].states.back().second << ": " <<
-        		//   		   solution_path[i].states.back().first << std::endl;
+        std::cout << "recover path is not correct\n";
         return false;
       }
     }
@@ -1191,7 +1149,6 @@ private:
             //   std::cout << " id " << point_id[19][ii];
             // }
             // std::cout << "\n";
-
     // for(size_t i = 0; i < solution.size(); i++){
     //   std::cout << "Agent " << i << " ----------------------------------------------------\n";
     //   for(size_t jj = 0; jj < solution_path[i].states.size(); jj++){
@@ -1256,13 +1213,12 @@ private:
             }
             if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
             else m_env.setIsSegPlanning(true);
-            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelEnvironment llenv(m_env, solution_path, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
-            bool success = lowLevel.search(initialState, segmentPath);
+            bool success = lowLevel.search(initialState, segmentPath, 0, cost_t);
             jump_point[i].insert(JumpPointId); 
             m_env.setIsSegPlanning(false);
-
 
             if(segmentPath.cost != cost_t){
              std::cout << " t time " << t << " i " << i << " j " << j << std::endl;
@@ -1301,7 +1257,6 @@ private:
               std::cout <<success << ", " << cost_t << ", " << segmentPath.cost << " cost---------\n"; 
               std::cout << "test\n";
 
-              // return false;
             }else{
               size_t jjj = 0;
               for(size_t iii = time_a; iii < time_b; ++iii){
@@ -1309,20 +1264,8 @@ private:
                 solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                 solution_path[i].states[iii].second = iii;
                 solution_path[i].actions[iii] = segmentPath.actions[jjj];
-                // std::cout << "segpath xy " << segmentPath.states[jjj].first.x << ", " 
-                // << segmentPath.states[jjj].first.y << std::endl; 
                 jjj++;
               }
-
-            //   std::cout << "Herererererererereere        begin \n";
-        		// for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-        		// 	std::cout << solution[i].states[ii].second << ": " <<
-        		// 				solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-						// 		<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-        		// }
-        		// std::cout << solution[i].states.back().second << ": " <<
-        		//   		   solution[i].states.back().first << std::endl;
-              
 
               auto it = solution[i].states.begin();
               auto it_ac = solution[i].actions.begin();
@@ -1330,16 +1273,7 @@ private:
               solution_path[i].states.begin() + time_b);
 
               solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
-              solution_path[i].actions.begin() + time_b); 
-
-// std::cout << "Herererererererereere        After \n";     
-//         		for (size_t ii = 0; ii < solution[i].actions.size(); ++ii) {
-//         			std::cout << solution[i].states[ii].second << ": " <<
-//         						solution[i].states[ii].first << "->" << solution[i].actions[ii].first
-// 								<< "(cost: " << solution[i].actions[ii].second << ")" << std::endl;
-//         		}
-//         		std::cout << solution[i].states.back().second << ": " <<
-//         		  		   solution[i].states.back().first << std::endl;                
+              solution_path[i].actions.begin() + time_b);              
 
               is_restart = true;
               t = time_a - 1;
@@ -1383,7 +1317,6 @@ private:
             if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
             || jump_point[i].find(JumpPointId) != jump_point[i].end()) return true;
 
-
             m_env.resetTemporalObstacle();
             for(auto & constraint : CurNode.constraints[i].vertexConstraints){
         	    Location location(constraint.x, constraint.y);
@@ -1396,10 +1329,10 @@ private:
 
             if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
             else m_env.setIsSegPlanning(true);
-            LowLevelEnvironment llenv(m_env, i, goalLoc, CurNode.constraints[i]);
+            LowLevelEnvironment llenv(m_env, solution_path, i, goalLoc, CurNode.constraints[i]);
             LowLevelSearch_t lowLevel(llenv);            
             PlanResult<State, Action, int>segmentPath;
-            bool success = lowLevel.search(initialState, segmentPath);
+            bool success = lowLevel.search(initialState, segmentPath, 0, cost_t);
             jump_point[i].insert(JumpPointId);
             m_env.setIsSegPlanning(false);
 
@@ -1423,8 +1356,6 @@ private:
                 solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                 solution_path[i].states[iii].second = iii;
                 solution_path[i].actions[iii] = segmentPath.actions[jjj];                
-                // std::cout << " Edge x, y " << segmentPath.states[jjj].first.x << ", " 
-                // << segmentPath.states[jjj].first.y << std::endl;
                 jjj++;
               }
 
@@ -1469,9 +1400,6 @@ private:
     }
     return false;    
   }
-
-
-
 
   int  getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
@@ -1963,17 +1891,18 @@ private:
  
 private:
   struct LowLevelEnvironment {
-    LowLevelEnvironment(Environment& env, size_t agentIdx,
-                        const Constraints& constraints)
-        : m_env(env)
+    LowLevelEnvironment(Environment& env, std::vector<PlanResult<Location, Action, Cost>>& cat, 
+                        size_t agentIdx, const Constraints& constraints)
+        : m_env(env), m_cat(cat)
     // , m_agentIdx(agentIdx)
     // , m_constraints(constraints)
     {
       m_env.setLowLevelContext(agentIdx, &constraints);
     }
-    LowLevelEnvironment(Environment& env, size_t agentIdx, Location loc,
+    LowLevelEnvironment(Environment& env, std::vector<PlanResult<Location, Action, Cost>>& cat, 
+                        size_t agentIdx, Location loc,
                         const Constraints& constraints)
-        : m_env(env)
+        : m_env(env), m_cat(cat)
     // , m_agentIdx(agentIdx)
     // , m_constraints(constraints)
     {
@@ -1991,6 +1920,35 @@ private:
                       std::vector<Neighbor<State, Action, Cost> >& neighbors) {
       // std::cout << "Current " << s.x << ", " << s.y << ",time " << s.time << " \n";
       m_env.getNeighbors(s, neighbors);
+      if(m_env.isCAT){
+        for(size_t nei = 0; nei < neighbors.size(); nei++){
+          neighbors[nei].state.nc_cat = s.nc_cat;
+          int current_time = s.time + 1;
+          Location temp_s(-1, -1), temp_s_p(-1, -1);
+          for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+            if(m_cat[agent_id].states.empty()) continue;
+            if (current_time < m_cat[agent_id].states.size()) {
+              temp_s = m_cat[agent_id].states[current_time].first;
+            }else{
+              temp_s = m_cat[agent_id].states.back().first;     
+            }
+            if(temp_s.x == neighbors[nei].state.x && temp_s.y == neighbors[nei].state.y){
+              neighbors[nei].state.nc_cat++;
+              // std::cout << "Here \n";
+            }
+            if(current_time - 1 >= 0){
+              if(current_time - 1 < m_cat[agent_id].states.size()){
+                temp_s_p = m_cat[agent_id].states[current_time - 1].first;
+                if(temp_s_p.x == neighbors[nei].state.x && temp_s_p.y == neighbors[nei].state.y
+                  && temp_s.x == s.x && temp_s.y == s.y){
+                  neighbors[nei].state.nc_cat++;
+                }
+              }
+            }
+          }
+        }
+      }
+
     }
 
     void onExpandNode(const State& s, Cost fScore, Cost gScore) {
@@ -2005,6 +1963,7 @@ private:
 
    private:
     Environment& m_env;
+    std::vector<PlanResult<Location, Action, Cost>>& m_cat;
     // size_t m_agentIdx;
     // const Constraints& m_constraints;
   };

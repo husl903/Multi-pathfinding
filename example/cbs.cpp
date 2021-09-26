@@ -330,8 +330,15 @@ class Environment {
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
 	if(isExact){
-		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
-		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+    if(!isSeg){
+		  if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		  else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+    }else{
+      if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+      else{
+        return abs(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] - m_eHeuristic[m_goals[m_agentIdx]][m_goal.x][m_goal.y]);
+      }
+    }
 	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
 	           std::abs(s.y - m_goals[m_agentIdx].y);
 
@@ -344,10 +351,10 @@ class Environment {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
-	if(isExact){
-		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
-		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
-	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
+	  if(isExact){
+		  if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		  else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+	  } else return std::abs(s.x - m_goals[m_agentIdx].x) +
            std::abs(s.y - m_goals[m_agentIdx].y);
   }
 
@@ -355,10 +362,10 @@ class Environment {
     // std::cout << "H: " <<  s << " " << m_heuristic[m_agentIdx][s.x + m_dimx *
     // s.y] << std::endl;
     // return m_heuristic[m_agentIdx][s.x + m_dimx * s.y];
-	if(isExact){
-		if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
-		else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
-	} else return std::abs(s.x - m_goals[m_agentIdx].x) +
+	  if(isExact){
+		  if(m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y] == -1) return INT_MAX;
+		  else return m_eHeuristic[m_goals[m_agentIdx]][s.x][s.y];
+	  } else return std::abs(s.x - m_goals[m_agentIdx].x) +
            std::abs(s.y - m_goals[m_agentIdx].y);
   }
 
@@ -1984,7 +1991,7 @@ int main(int argc, char* argv[]) {
 
   std::cout << " size " << goals.size() << " numAgent " << numAgent + 1 << " PreTime " << preT << " \n";
   Environment mapf(dimx, dimy, obstacles, goals, goals[0], map_obstacle,
-		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point, 
+		  map_temporal_obstacle, map_temporal_edge_constraint, map_jump_point , 
       last_ob_g, nei_ob_g, eHeuristic, preTime, &jpst_gm_);
   CBS<State, Location, Action, int, Conflict, Constraints, Environment> cbs(mapf);
   std::vector<PlanResult<Location, Action, int> > solution;
@@ -2041,7 +2048,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-lp, " << num_agent_iter << ", ";
-      mapf.setBP(false);
+      mapf.setBP(true);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
       timer_t1.stop();
@@ -2050,7 +2057,7 @@ int main(int argc, char* argv[]) {
     }
     if(solver == solver_sipp){
       Timer timer_t2;
-      mapf.setBP(false);
+      mapf.setBP(true);
       std::cout << "SIPPCAT-BP, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
@@ -2080,6 +2087,7 @@ int main(int argc, char* argv[]) {
     
     if(solver == solver_jpsta){
       Timer timer_t8;
+      mapf.setCAT(true);
       std::cout << "JpstAstar, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
