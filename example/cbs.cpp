@@ -2047,7 +2047,7 @@ int main(int argc, char* argv[]) {
 
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-J-lp, " << num_agent_iter << ", ";
+      std::cout << "JPST-J-c-BP, " << num_agent_iter << ", ";
       mapf.setBP(true);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
@@ -2087,8 +2087,8 @@ int main(int argc, char* argv[]) {
     
     if(solver == solver_jpsta){
       Timer timer_t8;
-      mapf.setCAT(true);
-      std::cout << "JpstAstar, " << num_agent_iter << ", ";
+      mapf.setCAT(false);
+      std::cout << "JpstAstarNoCAT, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();

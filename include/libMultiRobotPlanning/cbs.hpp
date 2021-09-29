@@ -347,7 +347,7 @@ class CBS {
 
       Conflict conflict;
       int jump_id_clf = -1;
-    int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
+      int return_value = m_env.getFirstConflict(PJps.solution, conflict, jump_id_clf);
 
       // int return_value = getFirstConflict(PJps.solution, conflict, jump_id_clf);
 
@@ -367,7 +367,7 @@ class CBS {
       //   continue;
       // }
       if(m_env.isBP){ 
-        std::cout <<  conflict.agent1 << " Trybypass " << jump_id_clf << "\n";
+//        std::cout <<  conflict.agent1 << " Trybypass " << jump_id_clf << "\n";
         if(jump_id_clf != -1){
           if(TryBypassJpst(conflict, PJps, jump_id_clf)) {
             num_try_bypss++;
@@ -748,6 +748,7 @@ private:
     if(abs(start.x - goalLoc.x) + abs(start.y - goalLoc.y) == 1) return false; // adjacent grids
     if(start.x == goalLoc.x || start.y == goalLoc.y) return false; // the stright line
     if(cft.x1 == start.x && cft.y1 == start.y) {
+      return false;
       if(jump_id > 0) {
         jump_id -= 1;
         start = CurNode.solution[agentId].states[jump_id].first;
@@ -758,13 +759,13 @@ private:
     }
 //    if(cft.x2 == start.x && cft.y2 == start.y) return false;
     if(cft.x1 == goalLoc.x && cft.y1 == goalLoc.y) {
+      return false;
       if(next_jump_id + 1 < CurNode.solution[agentId].states.size()){
         next_jump_id += 1;
         goalLoc = CurNode.solution[agentId].states[next_jump_id].first;
         time_b = CurNode.solution[agentId].states[next_jump_id].second;
         cost_t = time_b - time_a;
-      }
-      return false;
+      }else return false;
     }
 //    if(cft.x2 == goalLoc.x && cft.y2 == goalLoc.y) return false;
 

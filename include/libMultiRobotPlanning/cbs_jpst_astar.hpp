@@ -1922,7 +1922,7 @@ private:
       m_env.getNeighbors(s, neighbors);
       if(m_env.isCAT){
         for(size_t nei = 0; nei < neighbors.size(); nei++){
-          neighbors[nei].state.nc_cat = s.nc_cat;
+          neighbors[nei].state.nc_cat = 0;
           int current_time = s.time + 1;
           Location temp_s(-1, -1), temp_s_p(-1, -1);
           for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
