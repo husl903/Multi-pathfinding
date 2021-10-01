@@ -319,6 +319,7 @@ class SIPP {
           Location temp_s(-1, -1), temp_s_p(-1, -1);
           for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
             if(m_cat[agent_id].states.empty()) continue;
+            if(m_env.getAgentId() == agent_id) continue;
             if (current_time < m_cat[agent_id].states.size()) {
               temp_s = m_cat[agent_id].states[current_time].first;
             }else{

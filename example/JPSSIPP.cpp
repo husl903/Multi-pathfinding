@@ -602,6 +602,10 @@ public:
 		m_goal = goal;
 	}
 
+	size_t getAgentId(){
+	 	return -1;
+	}
+
 	int getDimX() { return m_dimx; }
 	int getDimY() { return m_dimy; }
 

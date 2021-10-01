@@ -1420,6 +1420,66 @@ class Environment {
     else return false;
   }  
 
+ bool getAllConflicts(
+      const std::vector<PlanResult<Location, Action, int> >& solution,
+      std::queue<Conflict>& conflicts_all, int& num_conflict) {
+    int max_t = 0;
+    Conflict result;
+    for (const auto& sol : solution) {
+      max_t = std::max<int>(max_t, sol.states.size() - 1);
+    }
+
+    num_conflict = 0;
+    result.time = -1;
+    for (int t = 0; t < max_t; ++t) {
+      // check drive-drive vertex collisions
+      for (size_t i = 0; i < solution.size(); ++i) {
+        Location state1 = getState(i, solution, t);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          Location state2 = getState(j, solution, t);
+          if (state1 == state2) {
+//            if(result.time == -1){
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Vertex;
+            result.x1 = state1.x;
+            result.y1 = state1.y;
+//            }
+            conflicts_all.push(result);
+            num_conflict++;
+          }
+        }
+      }
+      // drive-drive edge (swap)
+      for (size_t i = 0; i < solution.size(); ++i) {
+        Location state1a = getState(i, solution, t);
+        Location state1b = getState(i, solution, t + 1);
+        for (size_t j = i + 1; j < solution.size(); ++j) {
+          Location state2a = getState(j, solution, t);
+          Location state2b = getState(j, solution, t + 1);
+          if (state1a == state2b &&
+              state1b == state2a) {
+            // if(result.time == -1){
+            result.time = t;
+            result.agent1 = i;
+            result.agent2 = j;
+            result.type = Conflict::Edge;
+            result.x1 = state1a.x;
+            result.y1 = state1a.y;
+            result.x2 = state1b.x;
+            result.y2 = state1b.y;
+            // }
+            conflicts_all.push(result);
+            num_conflict++;
+          }
+        }
+      }
+    }
+    if(num_conflict > 0) return true;
+    else return false;
+  }  
+
 
   void createConstraintsFromConflict(
       const Conflict& conflict, std::map<size_t, Constraints>& constraints) {
@@ -2133,7 +2193,10 @@ int main(int argc, char* argv[]) {
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
-      else std::cout << " Planning NOT successful! time, " << timer_t2.elapsedSeconds() << ", " << inputFile <<  std::endl;
+      else {
+        std::cout << " Planning NOT successful! time, " << timer_t2.elapsedSeconds() << ", " << inputFile <<  std::endl;
+        break;
+      }
     }
 
     if(solver == solver_astar){
