@@ -266,10 +266,15 @@ class CBSAstar {
       Conflict conflict;
 //      if (!m_env.getFirstConflict(P.solution, conflict, P.num_conflict)) {
       if(P.conflicts_all.size() == 0){
-        std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " 
-        << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-        solution = P.solution;
-        return true;
+        if(!m_env.getFirstConflict(P.solution, conflict)){
+          std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " 
+          << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+          solution = P.solution;
+          return true;
+        }else{
+          std::cout << " Final resulsts is not correct\n";
+          return false; 
+        }
       }
 
       bool foundBypass = true;
@@ -296,20 +301,24 @@ class CBSAstar {
         foundBypass = false;
         for(const auto& c : constraints){
           size_t i = c.first;
-          NewChild[child_id] = P;
+          // NewChild[child_id] = P;
+          NewChild[child_id].solution = P.solution;
+          NewChild[child_id].constraints = P.constraints;
+          NewChild[child_id].cost = P.cost;
+
+          // NewChild[child_id].solution = P.solution;
+          
           NewChild[child_id].id = id;
+          // if(NewChild[child_id].constraints[i].overlap(c.second)){
+          //   std::cout << " \n";
+          //   for(auto &ct : NewChild[child_id].constraints[i].vertexConstraints){
+          //     std::cout << ct << std::endl;
+          //   }
 
-          if(NewChild[child_id].constraints[i].overlap(c.second)){
-            std::cout << " \n";
-            for(auto &ct : NewChild[child_id].constraints[i].vertexConstraints){
-              std::cout << ct << std::endl;
-            }
-
-            for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
-              std::cout << constraint << std::endl;
-            }
-          }
-
+          //   for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
+          //     std::cout << constraint << std::endl;
+          //   }
+          // }
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
 
           NewChild[child_id].constraints[i].add(c.second);
@@ -960,6 +969,8 @@ class CBSAstar {
           State temp_s(-1, -1, -1), temp_s_p(-1, -1, -1);
           for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
             if(m_cat[agent_id].states.empty()) continue;
+            if(agent_id == m_env.getAgentId()) continue;
+            if(m_env.getAgentId() == agent_id) continue;
             if (current_time < m_cat[agent_id].states.size()) {
               temp_s = m_cat[agent_id].states[current_time].first;
             }else{

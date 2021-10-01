@@ -1297,7 +1297,7 @@ class Environment {
 
   bool getAllConflicts(
       const std::vector<PlanResult<State, Action, int> >& solution,
-      std::priority_queue<Conflict>& all_conflicts, int& num_conflict) {
+      std::queue<Conflict>& all_conflicts, int& num_conflict) {
     int max_t = 0;
     num_conflict = 0;
     Conflict result;
@@ -1694,6 +1694,10 @@ Location  setGoal(int agentId){
   }
   void setIsSegPlanning(bool isSeg_t){
 	  isSeg = isSeg_t;
+  }
+
+  size_t getAgentId(){
+    return m_agentIdx;
   }
 
 
@@ -2111,7 +2115,7 @@ int main(int argc, char* argv[]) {
   {
 
     startStates_temp.push_back(startStates[num_agent_iter]);
-
+  
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-c-BP, " << num_agent_iter << ", ";
@@ -2135,11 +2139,11 @@ int main(int argc, char* argv[]) {
     if(solver == solver_astar){
       Timer timer_t3;
       mapf.setBP(true);
-      std::cout << "AstarCAT-1BP, "<< num_agent_iter << ", ";
+      std::cout << "AstarCAT-newBP, "<< num_agent_iter << ", ";
       successA = cbs_astar.search(startStates_temp, solution_astar);
       timer_t3.stop();
       if(successA) std::cout << " Planning successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile <<  std::endl;
-      else std::cout << " Planning NOT successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile << std::endl;
+      else {std::cout << " Planning NOT successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile << std::endl; break;}
     }
 
     if(solver == solver_castar){
@@ -2213,7 +2217,7 @@ int main(int argc, char* argv[]) {
     // sleep(5);
     std::cout.flush();
     num_agent_iter++;
-    if(num_agent_iter > startStates.size() - 1 || num_agent_iter > agent_limit) break;
+    if(num_agent_iter > startStates.size() - 1 || num_agent_iter > 100) break;
   } 
 
   return 0;
