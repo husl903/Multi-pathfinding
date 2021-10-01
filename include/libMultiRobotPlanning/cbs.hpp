@@ -341,7 +341,7 @@ class CBS {
 		// 						<< "(cost: " << PJps.solution[jj].actions[ii].second << ")" << std::endl;
     //     		}
     //     		std::cout << PJps.solution[jj].states.back().second << ": " <<
-    //     		  		   PJps.solution[jj].states.back().first << std::endl;
+    //     		  		   PJps.solution[jj].states.back().first << std::endl;+
     //     }
     // std::cout << "***************************************************************************\n";
 

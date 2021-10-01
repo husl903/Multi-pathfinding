@@ -285,7 +285,7 @@ class CBSAstar {
         // while(!P.conflicts_all.empty()) P.conflicts_all.pop();
         // m_env.getAllConflicts(P.solution, P.conflicts_all, P.num_conflict);
 
-        Conflict conflict_temp = P.conflicts_all.top();
+        Conflict conflict_temp = P.conflicts_all.front();
         P.conflicts_all.pop();
 
         HighLevelNode NewChild[2];
@@ -839,7 +839,7 @@ class CBSAstar {
 
     int num_conflict = 0;
 
-    std::priority_queue<Conflict> conflicts_all;
+    std::queue<Conflict> conflicts_all;
 
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >::handle_type
