@@ -447,6 +447,7 @@ class CBSSIPP {
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
 
+          gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
             // std::cout << "Here \n";
@@ -459,7 +460,6 @@ class CBSSIPP {
           }
           NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
           child_id++;
-          gen_node++;
         }
 
         if(!foundBypass){

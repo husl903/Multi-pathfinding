@@ -148,7 +148,7 @@ class CBS {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
-        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";
+        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
       
@@ -156,7 +156,7 @@ class CBS {
         getrusage(RUSAGE_SELF, &r_usage);
         // std::cout << r_usage.ru_maxrss << " memory \n"; 
         if(r_usage.ru_maxrss > 15204352){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", ";          
+          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";     
           return false;
         }
       }      
@@ -269,7 +269,7 @@ class CBS {
 
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
-
+          gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
             foundBypass = true;
@@ -281,7 +281,6 @@ class CBS {
           }
           NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
           child_id++;
-          gen_node++;
         }
 
         if(!foundBypass){
