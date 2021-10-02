@@ -304,7 +304,7 @@ class CBSSIPP {
    	getrusage(RUSAGE_SELF, &r_usage);
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
-        openJps;    
+        openJps;
     while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     m_env.getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
 
@@ -358,9 +358,15 @@ class CBSSIPP {
       while(foundBypass){
         // std::cout << "Bypass \n";
         if(PJps.conflicts_all.size() == 0){
-          std::cout << ", done, " << PJps.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-          solution = PJps.solution;
-          return true;
+
+          int return_value = m_env.getFirstConflict(PJps.solution, conflict, true, PJps.num_conflict);
+          if(return_value == 0){
+            std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+            return true;
+          }else{
+            std::cout << "Final results is not correct\n";
+            return false;
+          }
         }
 
         Conflict conflict_temp = PJps.conflicts_all.front();
@@ -374,10 +380,10 @@ class CBSSIPP {
         foundBypass = false;
         for(const auto& c : constraints){
           size_t i = c.first;
-          // NewChild[child_id].solution = PJps.solution;
-          // NewChild[child_id].constraints = PJps.constraints;
-          // NewChild[child_id].cost = PJps.cost;
-          NewChild[child_id] = PJps;
+          NewChild[child_id].solution = PJps.solution;
+          NewChild[child_id].constraints = PJps.constraints;
+          NewChild[child_id].cost = PJps.cost;
+//           NewChild[child_id] = PJps;
           NewChild[child_id].id = id;
 
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
