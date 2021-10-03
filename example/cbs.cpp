@@ -2699,7 +2699,7 @@ int main(int argc, char* argv[]) {
   
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-J-c-BP, " << num_agent_iter << ", ";
+      std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";
       mapf.setBP(true);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
@@ -2713,7 +2713,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_sipp){
       Timer timer_t2;
       mapf.setBP(true);
-      std::cout << "SIPPCAT-BP, " << num_agent_iter << ", ";
+      std::cout << "SIPPCAT-newBP, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
@@ -2751,7 +2751,7 @@ int main(int argc, char* argv[]) {
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
       if(successJpstA) std::cout << " Planning successful! time, " << timer_t8.elapsedSeconds() << ", "<< inputFile << std::endl;
-      else std::cout << " Planning NOT successful! time, " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;
+      else {std::cout << " Planning NOT successful! time, " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;break;}
     }
 
     // mapf.setBP(false);

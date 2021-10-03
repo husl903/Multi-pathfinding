@@ -128,7 +128,7 @@ class CBS {
                                      boost::heap::mutable_<true> >
         openJps;
     while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
-    getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
+    m_env.getAllConflictsLP(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -268,7 +268,7 @@ class CBS {
           if(!is_solved[child_id]) continue;
 
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
-          getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
+          m_env.getAllConflictsLP(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
