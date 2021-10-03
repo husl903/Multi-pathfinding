@@ -2746,7 +2746,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_jpsta){
       Timer timer_t8;
       mapf.setCAT(false);
-      std::cout << "JpstAstarNoCAT, " << num_agent_iter << ", ";
+      std::cout << "JpstAstar-True, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
