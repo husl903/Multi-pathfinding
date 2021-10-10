@@ -344,8 +344,8 @@ class CBSSIPP {
       // int return_value = m_env.getFirstConflict(PJps.solution, conflict, true, PJps.num_conflict);
       if(PJps.conflicts_all.size() == 0){
         solution = PJps.solution;
-        int return_value = m_env.getFirstConflict(PJps.solution, conflict, true, PJps.num_conflict);
-        if(return_value == 0){
+        m_env.getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
+        if(PJps.num_conflict == 0){
           std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
           return true;
         }else{
@@ -356,11 +356,9 @@ class CBSSIPP {
 
       bool foundBypass = true;
       while(foundBypass){
-        // std::cout << "Bypass \n";
         if(PJps.conflicts_all.size() == 0){
-
-          int return_value = m_env.getFirstConflict(PJps.solution, conflict, true, PJps.num_conflict);
-          if(return_value == 0){
+          m_env.getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
+          if(PJps.num_conflict == 0){
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }else{
@@ -383,7 +381,7 @@ class CBSSIPP {
           NewChild[child_id].solution = PJps.solution;
           NewChild[child_id].constraints = PJps.constraints;
           NewChild[child_id].cost = PJps.cost;
-//           NewChild[child_id] = PJps;
+
           NewChild[child_id].id = id;
 
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
@@ -443,14 +441,11 @@ class CBSSIPP {
           int GenSipp = m_env.num_generation;
           
           if(!is_solved[child_id]) continue;
-
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
-
           gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
-            // std::cout << "Here \n";
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
