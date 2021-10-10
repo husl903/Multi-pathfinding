@@ -1688,8 +1688,6 @@ class Environment {
       }
     }
 
-    // jump_id = jump_id_conf;
-
     num_conflict = conflicts_all.size();
     if(result.time != std::numeric_limits<int>::max()) {
       if(isprint) std::cout << " conflict " << result.x1 << ", " << result.y1  << ", time, " << result.time << ", agent, " << result.agent1  << ", " << result.agent2 << ", " << result.type<< " !!!!!!\n";
@@ -1834,7 +1832,6 @@ class Environment {
         for (size_t j = i + 1; j < solution.size(); ++j) {
           State state2 = getState(j, solution, t);
           if (state1.equalExceptTime(state2)) {
-            //if(result.time == -1){
               result.time = t;
               result.agent1 = i;
               result.agent2 = j;
@@ -1842,9 +1839,8 @@ class Environment {
               result.x1 = state1.x;
               result.y1 = state1.y;
               all_conflicts.push(result);
-//            }
-             num_conflict++;
-    //        if(!isBP) return true;
+              num_conflict++;
+             if(!isBP) return true;
           }
         }
       }
@@ -1857,7 +1853,6 @@ class Environment {
           State state2b = getState(j, solution, t + 1);
           if (state1a.equalExceptTime(state2b) &&
               state1b.equalExceptTime(state2a)) {
-//            if(result.time == -1){
               result.time = t;
               result.agent1 = i;
               result.agent2 = j;
@@ -1867,14 +1862,12 @@ class Environment {
               result.x2 = state1b.x;
               result.y2 = state1b.y;
               all_conflicts.push(result);
-//            }
               num_conflict++;
-    //        if(!isBP) return true;
+            if(!isBP) return true;
           }
         }
       }
     }
-
     if(num_conflict > 0) return true;
     else return false;
   }    
@@ -2735,7 +2728,8 @@ int main(int argc, char* argv[]) {
 
     if(solver == solver_castar){
       Timer timer_t4;
-      mapf.setBP(true);
+      mapf.setBP(false);
+      mapf.setCAT(true);
       std::cout << "CAstarCAT-BP, " << num_agent_iter << ", ";
       successCA= cbs_castar.search(startStates_temp, solution_castar);
       timer_t4.stop();
@@ -2746,7 +2740,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_jpsta){
       Timer timer_t8;
       mapf.setCAT(false);
-      std::cout << "JpstAstar-True, " << num_agent_iter << ", ";
+      std::cout << "JpstAstar-NoHelp, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();

@@ -256,93 +256,93 @@ class CBSCAstar {
       open.pop();
 
       Conflict conflict;
-      if (!m_env.getFirstConflict(P.solution, conflict, P.num_conflict)) {
+      if (!m_env.getFirstConflict(P.solution, conflict)) {
         std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
         solution = P.solution;
         return true;
       }
 
-      P.first_conflict = conflict;
-      bool foundBypass = true;
-      while(foundBypass){
-        // std::cout << "Bypass \n";
-        if(P.num_conflict == 0){
-          std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-          solution = P.solution;
-          return true;
-        }
+      // P.first_conflict = conflict;
+      // bool foundBypass = true;
+      // while(foundBypass){
+      //   // std::cout << "Bypass \n";
+      //   if(P.num_conflict == 0){
+      //     std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+      //     solution = P.solution;
+      //     return true;
+      //   }
 
-        Conflict conflict_temp = P.first_conflict;
-        HighLevelNode NewChild[2];
-        bool is_solved[2] = {false, false};
-        std::map<size_t, Constraints> constraints;
-        m_env.createConstraintsFromConflict(conflict_temp, constraints);
-        int child_id = 0;
-        foundBypass = false;
-        for(const auto& c : constraints){
-          // std::cout << "Constraint 111\n";
+      //   Conflict conflict_temp = P.first_conflict;
+      //   HighLevelNode NewChild[2];
+      //   bool is_solved[2] = {false, false};
+      //   std::map<size_t, Constraints> constraints;
+      //   m_env.createConstraintsFromConflict(conflict_temp, constraints);
+      //   int child_id = 0;
+      //   foundBypass = false;
+      //   for(const auto& c : constraints){
+      //     // std::cout << "Constraint 111\n";
 
-          size_t i = c.first;
-          NewChild[child_id] = P;
-          NewChild[child_id].id = id;
-          assert(!NewChild[child_id].constraints[i].overlap(c.second));
-          NewChild[child_id].constraints[i].add(c.second);
-          NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
-          m_env.resetTemporalObstacle();
-          for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
-        	  Location location(constraint.x, constraint.y);
-        	  m_env.setTemporalObstacle(location, constraint.time);
-          }
+      //     size_t i = c.first;
+      //     NewChild[child_id] = P;
+      //     NewChild[child_id].id = id;
+      //     assert(!NewChild[child_id].constraints[i].overlap(c.second));
+      //     NewChild[child_id].constraints[i].add(c.second);
+      //     NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
+      //     m_env.resetTemporalObstacle();
+      //     for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
+      //   	  Location location(constraint.x, constraint.y);
+      //   	  m_env.setTemporalObstacle(location, constraint.time);
+      //     }
 
-          for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
-        	  Location loc(constraint.x2, constraint.y2);
-        	  m_env.setTemporalEdgeConstraint(loc, constraint.time);
-          }
-          m_env.Reset();
-          m_env.setExactHeuristTrue();
+      //     for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
+      //   	  Location loc(constraint.x2, constraint.y2);
+      //   	  m_env.setTemporalEdgeConstraint(loc, constraint.time);
+      //     }
+      //     m_env.Reset();
+      //     m_env.setExactHeuristTrue();
 
         
-          m_env.setLowLevelContext(i, &NewChild[child_id].constraints[i]);        
-          canonical_astar can_astar(m_env, NewChild[child_id].solution);
-          Timer timerCAstar;
-          timerCAstar.reset();
-          is_solved[child_id] = can_astar.search(initialStates[i], NewChild[child_id].solution[i]);
-          timerCAstar.stop();
-          double tCAstar = timerCAstar.elapsedSeconds();
+      //     m_env.setLowLevelContext(i, &NewChild[child_id].constraints[i]);        
+      //     canonical_astar can_astar(m_env, NewChild[child_id].solution);
+      //     Timer timerCAstar;
+      //     timerCAstar.reset();
+      //     is_solved[child_id] = can_astar.search(initialStates[i], NewChild[child_id].solution[i]);
+      //     timerCAstar.stop();
+      //     double tCAstar = timerCAstar.elapsedSeconds();
 
-          if(!is_solved[child_id]) continue;
+      //     if(!is_solved[child_id]) continue;
 
-          Conflict sub_conflict;
-          m_env.getFirstConflict(NewChild[child_id].solution, sub_conflict, NewChild[child_id].num_conflict);
+      //     Conflict sub_conflict;
+      //     m_env.getFirstConflict(NewChild[child_id].solution, sub_conflict, NewChild[child_id].num_conflict);
 
-          NewChild[child_id].first_conflict = sub_conflict;
-          if(m_env.isBP && NewChild[child_id].solution[i].cost == P.solution[i].cost 
-             && NewChild[child_id].num_conflict < P.num_conflict){
-            // std::cout << "Here \n";
-            foundBypass = true;
-            P.solution[i] = NewChild[child_id].solution[i];
-            P.num_conflict = NewChild[child_id].num_conflict;
-          }
-          NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
+      //     NewChild[child_id].first_conflict = sub_conflict;
+      //     if(m_env.isBP && NewChild[child_id].solution[i].cost == P.solution[i].cost 
+      //        && NewChild[child_id].num_conflict < P.num_conflict){
+      //       // std::cout << "Here \n";
+      //       foundBypass = true;
+      //       P.solution[i] = NewChild[child_id].solution[i];
+      //       P.num_conflict = NewChild[child_id].num_conflict;
+      //     }
+      //     NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
 
-          child_id++;
-          gen_node++;
+      //     child_id++;
+      //     gen_node++;
           
-        }
+      //   }
 
-        if(!foundBypass){
-          for(int ii = 0; ii < 2; ii++){
-            if(is_solved[ii]){
-              NewChild[ii].id = id;
-              auto handle = open.push(NewChild[ii]);
-              (*handle).handle = handle;
-              id++;
-            }
-          }
-        }
+      //   if(!foundBypass){
+      //     for(int ii = 0; ii < 2; ii++){
+      //       if(is_solved[ii]){
+      //         NewChild[ii].id = id;
+      //         auto handle = open.push(NewChild[ii]);
+      //         (*handle).handle = handle;
+      //         id++;
+      //       }
+      //     }
+      //   }
 
-      }
-      continue;  
+      // }
+      // continue;  
 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
