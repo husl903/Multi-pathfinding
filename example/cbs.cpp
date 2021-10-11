@@ -114,10 +114,10 @@ struct Conflict {
   friend std::ostream& operator<<(std::ostream& os, const Conflict& c) {
     switch (c.type) {
       case Vertex:
-        return os << c.time << ": Vertex(" << c.x1 << "," << c.y1 << ")";
+        return os << c.time << ": Vertex(" << c.x1 << "," << c.y1 << ")" << c.agent1 << ", " << c.agent2;
       case Edge:
         return os << c.time << ": Edge(" << c.x1 << "," << c.y1 << "," << c.x2
-                  << "," << c.y2 << ")";
+                  << "," << c.y2 << ")" << c.agent1 << ", " << c.agent2;
     }
     return os;
   }
@@ -601,6 +601,7 @@ class Environment {
         for (size_t j = i + 1; j < solution_path.size(); ++j) {
           Location state2 = getState(j, solution_path, t);
           if (state1 == state2) {
+            std::cout << "agent12 " << i << ", " << j << " xy " << state1.x << ", " << state1.y << " 11\n";
             return false;
             result.time = t;
             result.agent1 = i;
@@ -620,6 +621,7 @@ class Environment {
           Location state2a = getState(j, solution_path, t);
           Location state2b = getState(j, solution_path, t + 1);
           if (state1a == state2b && state1b == state2a) {
+            std::cout << "agent12 " << i << ", " << j << " xy " << state1a.x << ", " << state1a.y << " 22\n";
             return false;
             result.time = t;
             result.agent1 = i;
@@ -629,7 +631,6 @@ class Environment {
             result.y1 = state1a.y;
             result.x2 = state1b.x;
             result.y2 = state1b.y;
-            
           }
         }
       }
@@ -1285,7 +1286,7 @@ class Environment {
           pool_k[jj] = current_p;
           continue;
         }
-        if(pool_k[jj].init_t > result.time) continue;
+//        if(pool_k[jj].init_t > result.time) continue;
 
         int time_diff = current_p.init_t - pool_k[jj].init_t;
         if(pool_k[jj].ac == Action::Down){
@@ -2689,7 +2690,9 @@ int main(int argc, char* argv[]) {
   {
 
     startStates_temp.push_back(startStates[num_agent_iter]);
-  
+  //  num_agent_iter++;
+  //  if(num_agent_iter < 53) continue;
+    // if(num_agent_iter > 54) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";
