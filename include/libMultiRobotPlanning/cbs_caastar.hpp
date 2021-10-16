@@ -258,14 +258,14 @@ class CBSCAstar {
       open.pop();
       Conflict conflict;
       if(P.conflicts_all.size() == 0){
-        m_env.getAllConflicts(start.solution, start.conflicts_all, start.num_conflict);     
-        if(start.num_conflict == 0){
+        m_env.getAllConflicts(P.solution, P.conflicts_all, P.num_conflict);     
+        if(P.num_conflict == 0){
           std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " 
           << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
           solution = P.solution;
           return true;
         }else{
-          std::cout << " Final resulsts is not correct\n";
+          std::cout << " Final resulsts is not correct 1111\n";
           return false; 
         }
       }
@@ -273,9 +273,19 @@ class CBSCAstar {
       bool foundBypass = true;
       while(foundBypass){
         if(P.conflicts_all.size() == 0){
-          std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-          solution = P.solution;
-          return true;
+          m_env.getAllConflicts(P.solution, P.conflicts_all, P.num_conflict);     
+          if(P.num_conflict == 0){
+            std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " 
+            << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+            solution = P.solution;
+            return true;
+          }else{
+            std::cout << " Final resulsts is not correct 2222\n";
+            return false;
+          }
+          // std::cout << ", done, " << P.cost << ", " << " num_node, " << num_node << ", " << "gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+          // solution = P.solution;
+          // return true;
         }
 
         Conflict conflict_temp = P.conflicts_all.front();
