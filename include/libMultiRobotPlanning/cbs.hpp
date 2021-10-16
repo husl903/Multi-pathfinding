@@ -128,7 +128,7 @@ class CBS {
                                      boost::heap::mutable_<true> >
         openJps;
     while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
-    m_env.getAllConflictsLP(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
+    getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -178,6 +178,7 @@ class CBS {
       }
 
       bool foundBypass = true;
+      std::cout << "Herererere ***********************************************************************\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
           if(!m_env.CheckValid(PJps.solution)){
@@ -192,7 +193,9 @@ class CBS {
         PJps.conflicts_all.pop();
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-
+        std::cout << "Conflict ----------------------------------------------------------\n";
+        std::cout << conflict_temp << std::endl;
+        std::cout << "----------------------------------------------------------\n";
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict_temp, constraints);
         int child_id = 0;
@@ -268,10 +271,12 @@ class CBS {
           if(!is_solved[child_id]) continue;
 
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
-          m_env.getAllConflictsLP(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
+          getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
+          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
+            // std::cout << "Hereln\n";
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;

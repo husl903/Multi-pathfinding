@@ -1287,7 +1287,6 @@ class Environment {
           continue;
         }
 //        if(pool_k[jj].init_t > result.time) continue;
-
         int time_diff = current_p.init_t - pool_k[jj].init_t;
         if(pool_k[jj].ac == Action::Down){
           pool_k[jj].init_t = current_p.init_t;
@@ -2618,6 +2617,7 @@ int main(int argc, char* argv[]) {
     
     if(solver == solver_jpsta){
       Timer timer_t8;
+      mapf.setBP(true);
       mapf.setCAT(false);
       std::cout << "JpstAstar-NoHelp, " << num_agent_iter << ", ";
       solution_jpsta.clear();
