@@ -108,21 +108,19 @@ class CBS {
     m_env.resetTemporalObstacle();
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-
-        jpst_bit jps1(m_env);
-        jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
-        Location goal = m_env.setGoal(i);
-        Location startNode(-1, -1);
-        startNode.x = initialStates[i].x;
-        startNode.y = initialStates[i].y;       
-        bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0);
-        if(!isJpsSucc){
-          return false;
-        }
-        startJps.cost += startJps.solution[i].cost;
+      jpst_bit jpst_b(m_env);
+      jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
+      Location goal = m_env.setGoal(i);
+      Location startNode(-1, -1);
+      startNode.x = initialStates[i].x;
+      startNode.y = initialStates[i].y;       
+      bool isJpsSucc = jpst_b.search(startNode, Action::Wait, startJps.solution[i], 0);
+      if(!isJpsSucc){
+        return false;
+      }
+      startJps.cost += startJps.solution[i].cost;
     }
     solution = startJps.solution;
- 
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
@@ -134,7 +132,7 @@ class CBS {
     (*handleJps).handle = handleJps;
 
     solution.clear();
-    int id = 1;    
+    int id = 1;
     Timer timer;
     timer.reset();
     int num_node = 0;
@@ -147,7 +145,7 @@ class CBS {
       // if(num_node > 50) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 300){
+      if(duration1 > 500){
         std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
@@ -162,23 +160,24 @@ class CBS {
       }      
 
       HighLevelNodeJps PJps = openJps.top();
+      int parent_id = PJps.id;
       m_env.onExpandHighLevelNode(PJps.cost);
       openJps.pop();
 
       int jump_id_clf = -1;
-      if(PJps.conflicts_all.size() == 0){
-        solution = PJps.solution;
-        if(m_env.CheckValid(PJps.solution)){
-          std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-          return true;
-        }else{
-          std::cout << "Final results is not correct\n";
-          return false;
-        }
-      }
+      // if(PJps.conflicts_all.size() == 0){
+      //   solution = PJps.solution;
+      //   if(m_env.CheckValid(PJps.solution)){
+      //     std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+      //     return true;
+      //   }else{
+      //     std::cout << "Final results is not correct\n";
+      //     return false;
+      //   }
+      // }
 
       bool foundBypass = true;
-      std::cout << "Herererere ***********************************************************************\n";
+      // std::cout << "cost " << PJps.cost << " conflict " << PJps.conflicts_all.size() << " cd, " << PJps.id << ", pd " << PJps.parent_id << " Herererere ***********************************************************************\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
           if(!m_env.CheckValid(PJps.solution)){
@@ -189,17 +188,17 @@ class CBS {
             return true;
           }
         }
-        Conflict conflict_temp = PJps.conflicts_all.top();
+        Conflict conflict_temp = PJps.conflicts_all.front();
+
         PJps.conflicts_all.pop();
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-        std::cout << "Conflict ----------------------------------------------------------\n";
-        std::cout << conflict_temp << std::endl;
-        std::cout << "----------------------------------------------------------\n";
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict_temp, constraints);
         int child_id = 0;
         foundBypass = false;
+        
+        // std::cout << conflict_temp << " herehere \n";
         for(const auto& c : constraints){
           size_t i = c.first;
           NewChild[child_id].solution = PJps.solution;
@@ -253,8 +252,7 @@ class CBS {
           jpstbit.sortCollisionVertex();
           jpstbit.sortCollisionEdgeConstraint();
           PlanResult<Location, Action, int> solutiontempJps;
-          Location goal = m_env.setGoal(i);
-          m_env.Reset();
+          m_env.setGoal(i);
           Location startNode(-1, -1);
           startNode.x = initialStates[i].x;
           startNode.y = initialStates[i].y;
@@ -265,18 +263,14 @@ class CBS {
           is_solved[child_id] = jpstbit.search(startNode, Action::Wait, NewChild[child_id].solution[i], 0);
           timerJpstbit.stop();
           double tJpstbit = timerJpstbit.elapsedSeconds();
-          int ExpJps1 = m_env.num_expansion;
-          int GenJps1 = m_env.num_generation;
           
           if(!is_solved[child_id]) continue;
-
           while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
-          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
+//          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
-            // std::cout << "Hereln\n";
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
@@ -292,6 +286,7 @@ class CBS {
           for(int ii = 0; ii < 2; ii++){
             if(is_solved[ii]){
               NewChild[ii].id = id;
+              NewChild[ii].parent_id = parent_id;
               auto handle = openJps.push(NewChild[ii]);
               (*handle).handle = handle;
               id++;
@@ -313,7 +308,8 @@ private:
     Cost cost;
     int id;
     int agent_id = -1;
-    std::priority_queue<Conflict> conflicts_all;
+    int parent_id = -1;
+    std::queue<Conflict> conflicts_all;
     int num_conflict = 0;
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
@@ -1002,7 +998,7 @@ private:
 
  bool  getAllConflicts(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::priority_queue<Conflict>& conflicts_all, int& num_cft){
+      std::queue<Conflict>& conflicts_all, int& num_cft){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());

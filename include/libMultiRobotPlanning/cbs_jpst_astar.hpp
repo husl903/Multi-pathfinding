@@ -145,8 +145,13 @@ class CBSJPSTAstar {
       num_node++;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
+      HighLevelNodeJps PJps = openJps.top();
+      m_env.onExpandHighLevelNode(PJps.cost);
+      openJps.pop();
+
       if(duration1 > 300){
-        std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open " << id << ",";
+        solution = PJps.solution;
+        std::cout << " ,done, time-out fail" << PJps.cost  << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open " << id << ",";
     	  return false;
       }
       
@@ -154,14 +159,11 @@ class CBSJPSTAstar {
         getrusage(RUSAGE_SELF, &r_usage);
         // std::cout << r_usage.ru_maxrss << " memory \n"; 
         if(r_usage.ru_maxrss > 15204352){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", "<< " num_open " << id << ",";          
+          std::cout << " ,done, memory-out fail" << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", "<< " num_open " << id << ",";          
           return false;
         }
       }      
 
-      HighLevelNodeJps PJps = openJps.top();
-      m_env.onExpandHighLevelNode(PJps.cost);
-      openJps.pop();
 
       Conflict conflict;
       int jump_id_clf = -1;
@@ -178,10 +180,12 @@ class CBSJPSTAstar {
         std::cout << " ,done, cost, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open " << id << ",";
         return true;
       }
-
+      
+      // std::cout << "Foundbypass -----------------------------------------------------------------111111111111111\n";
       bool foundBypass = true;
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
+          solution = PJps.solution;
           if(!m_env.CheckValid(PJps.solution)){
             getFirstConflict(PJps.solution, PJps.conflicts_all, PJps, gen_node, true);
             // if(PJps.conflicts_all.size)())
@@ -192,13 +196,12 @@ class CBSJPSTAstar {
             return true;
           }
         }
-        Conflict conflict_temp = PJps.conflicts_all.top();
+        Conflict conflict_temp = PJps.conflicts_all.front();
         PJps.conflicts_all.pop();
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-        // std::cout << "Conflict ----------------------------------------------------------\n";
-        // std::cout << conflict_temp << std::endl;
-        // std::cout << "----------------------------------------------------------\n";
+        // std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict_temp << "   ------- " << std::endl;
+
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict_temp, constraints);
         int child_id = 0;
@@ -280,6 +283,7 @@ class CBSJPSTAstar {
           // std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
+            // std::cout << "successe " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " ";
             foundBypass = true;
             PJps.solution = NewChild[child_id].solution;
             PJps.num_conflict = NewChild[child_id].num_conflict;
@@ -303,8 +307,10 @@ class CBSJPSTAstar {
         }           
 
       }
+      // std::cout << "Foundbypass -----------------------------------------------------------------2222222222222222\n";
+
       continue;
-      conflict = PJps.conflicts_all.top();
+      conflict = PJps.conflicts_all.front();
       PJps.conflicts_all.pop(); 
       std::map<size_t, Constraints> constraints;
       m_env.createConstraintsFromConflict(conflict, constraints);
@@ -411,7 +417,7 @@ private:
 
     int id;
     int agent_id = -1;
-    std::priority_queue<Conflict> conflicts_all;
+    std::queue<Conflict> conflicts_all;
     int num_conflict = 0;
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
@@ -771,7 +777,7 @@ private:
 
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::priority_queue<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node){
+      std::queue<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
@@ -1178,7 +1184,7 @@ private:
 
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::priority_queue<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node, bool is_jpst){
+      std::queue<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node, bool is_jpst){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
@@ -1370,7 +1376,7 @@ private:
                   }
                   jjj++;
                 }
-                // if(num_new > 0) continue;
+                if(num_new > 0) continue;
                 // if(num_old <= num_new) continue;
                 
                 jjj = 0;
@@ -1516,7 +1522,7 @@ private:
                   jjj++;
                 }
                 // if(num_old <= num_new) continue;
-                // if(num_new >  0) continue;
+                if(num_new >  0) continue;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
                   solution_path[i].states[iii].first.x = segmentPath2.states[jjj].first.x;

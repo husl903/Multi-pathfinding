@@ -357,6 +357,7 @@ class CBSSIPP {
       bool foundBypass = true;
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
+          solution = PJps.solution;
           m_env.getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
           if(PJps.num_conflict == 0){
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
@@ -367,9 +368,11 @@ class CBSSIPP {
           }
         }
 
+      
         Conflict conflict_temp = PJps.conflicts_all.front();
         PJps.conflicts_all.pop();
 
+        // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
         std::map<size_t, Constraints> constraints;
