@@ -148,7 +148,7 @@ class CBS {
       // if(num_node > 50) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 500){
+      if(duration1 > 300){
         std::cout << " ,done, time-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
@@ -281,7 +281,7 @@ class CBS {
           if(!is_solved[child_id]) continue;
           // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           NewChild[child_id].conflicts_all.swap(empty_1);
-          NewChild[child_id].conflicts_all.swap(empty_1);
+          if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
 //          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
@@ -290,10 +290,11 @@ class CBS {
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
+            PJps.conflicts_all.clear();
             PJps.conflicts_all.swap(empty_1);
             // std::cout << PJps.conflicts_all.size() << " conflict size \n";
             // while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
-            PJps.conflicts_all.swap(empty_1);
+            // PJps.conflicts_all.swap(empty_1);
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }
