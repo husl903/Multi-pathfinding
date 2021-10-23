@@ -98,7 +98,8 @@ class CBS {
 
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
-                
+
+    srand((int)time(0));                
     HighLevelNodeJps startJps;
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
@@ -122,10 +123,12 @@ class CBS {
     }
     solution = startJps.solution;
 
+    std::vector<Conflict> empty_1;
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
+    // while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
+    startJps.conflicts_all.swap(empty_1);
     getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
 
     auto handleJps = openJps.push(startJps);
@@ -188,9 +191,20 @@ class CBS {
             return true;
           }
         }
-        Conflict conflict_temp = PJps.conflicts_all.front();
-
-        PJps.conflicts_all.pop();
+        // Conflict conflict_temp = PJps.conflicts_all.front();
+        // PJps.conflicts_all.pop();
+        // PJps.conflicts_all.clear();
+        // getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
+        // std::cout << "------------------------------------------------------------\n";
+        // for(int ccc = 0; ccc < PJps.conflicts_all.size(); ccc++){
+        //   std::cout << " index " << ccc << ", " << PJps.conflicts_all[ccc] << std::endl;
+        // }
+        
+        if(PJps.conflicts_all.size() == 0) return true;
+        int random_index = rand()%PJps.conflicts_all.size();
+        Conflict conflict_temp = PJps.conflicts_all[random_index];
+        // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
+        // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
         std::map<size_t, Constraints> constraints;
@@ -265,7 +279,9 @@ class CBS {
           double tJpstbit = timerJpstbit.elapsedSeconds();
           
           if(!is_solved[child_id]) continue;
-          while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
+          // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
+          NewChild[child_id].conflicts_all.swap(empty_1);
+          NewChild[child_id].conflicts_all.swap(empty_1);
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
 //          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
@@ -274,7 +290,10 @@ class CBS {
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
-            while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
+            PJps.conflicts_all.swap(empty_1);
+            // std::cout << PJps.conflicts_all.size() << " conflict size \n";
+            // while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
+            PJps.conflicts_all.swap(empty_1);
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }
@@ -309,7 +328,7 @@ private:
     int id;
     int agent_id = -1;
     int parent_id = -1;
-    std::queue<Conflict> conflicts_all;
+    std::vector<Conflict> conflicts_all;
     int num_conflict = 0;
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
@@ -998,7 +1017,7 @@ private:
 
  bool  getAllConflicts(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::queue<Conflict>& conflicts_all, int& num_cft){
+      std::vector<Conflict>& conflicts_all, int& num_cft){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
@@ -1072,6 +1091,19 @@ private:
       }
     }
 
+    // for (size_t a = 0; a < solution_path.size(); ++a) {
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t i = 0; i < solution_path[a].actions.size(); ++i) {
+    //     std::cout << solution_path[a].states[i].second << ": " <<
+    //     solution_path[a].states[i].first << "->" << solution_path[a].actions[i].first
+    //     << "(cost: " << solution_path[a].actions[i].second << ")" << std::endl;
+    //   }
+    //   std::cout << solution_path[a].states.back().second << ": " <<
+    //   solution_path[a].states.back().first << std::endl;
+      
+    // }
+
+
     bool is_restart = false;
     std::vector<std::unordered_set<int>> jump_point(solution.size());
     for (int t = 0; t < max_t; ++t) {
@@ -1088,7 +1120,7 @@ private:
             result.type = Conflict::Vertex;
             result.x1 = state1.x;
             result.y1 = state1.y;
-            conflicts_all.push(result);
+            conflicts_all.push_back(result);
             num_cft++;
             // if(t >= point_id[i].size()) jump_id = -1;
             // else jump_id = point_id[i][t];
@@ -1115,7 +1147,7 @@ private:
             num_cft++;
             // if(t >= point_id[i].size()) jump_id = -1;
             // else jump_id = point_id[i][t];
-            conflicts_all.push(result);
+            conflicts_all.push_back(result);
           }
         }
       }
