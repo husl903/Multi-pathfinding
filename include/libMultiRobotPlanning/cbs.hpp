@@ -99,7 +99,6 @@ class CBS {
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
 
-    srand((int)time(0));                
     HighLevelNodeJps startJps;
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
@@ -203,7 +202,7 @@ class CBS {
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
         Conflict conflict_temp = PJps.conflicts_all[random_index];
-        PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
+        // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
         // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};

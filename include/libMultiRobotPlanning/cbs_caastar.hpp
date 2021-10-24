@@ -220,7 +220,9 @@ class CBSCAstar {
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         open;
-    while(!start.conflicts_all.empty()) start.conflicts_all.pop();
+    // while(!start.conflicts_all.empty()) start.conflicts_all.pop();
+    std::vector<Conflict> empty_1;
+    start.conflicts_all.swap(empty_1);
     m_env.getAllConflicts(start.solution, start.conflicts_all, start.num_conflict);
 
     auto handle = open.push(start);
@@ -288,8 +290,11 @@ class CBSCAstar {
           // return true;
         }
 
-        Conflict conflict_temp = P.conflicts_all.front();
-        P.conflicts_all.pop();
+        // Conflict conflict_temp = P.conflicts_all.front();
+        // P.conflicts_all.pop();
+        if(P.conflicts_all.size() == 0) return true;
+        int random_index = rand()%P.conflicts_all.size();
+        Conflict conflict_temp = P.conflicts_all[random_index];
 
         HighLevelNode NewChild[2];
         bool is_solved[2] = {false, false};
@@ -328,7 +333,11 @@ class CBSCAstar {
           double tCAstar = timerCAstar.elapsedSeconds();
 
           if(!is_solved[child_id]) continue;
-          while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();
+          // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();
+          if(!NewChild[child_id].conflicts_all.empty()) {
+            NewChild[child_id].conflicts_all.clear();
+            NewChild[child_id].conflicts_all.swap(empty_1);
+          }
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == P.solution[i].cost 
@@ -336,7 +345,9 @@ class CBSCAstar {
             foundBypass = true;
             P.solution[i] = NewChild[child_id].solution[i];
             P.num_conflict = NewChild[child_id].num_conflict;
-            while(!P.conflicts_all.empty()) P.conflicts_all.pop();
+            // while(!P.conflicts_all.empty()) P.conflicts_all.pop();
+            P.conflicts_all.clear();
+            P.conflicts_all.swap(empty_1);
             P.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }
@@ -437,7 +448,7 @@ class CBSCAstar {
 
     int agent_id = -1;
     int num_conflict = 0;
-    std::queue<Conflict> conflicts_all;
+    std::vector<Conflict> conflicts_all;
     // Conflict first_conflict;    
 
     typename boost::heap::d_ary_heap<HighLevelNode, boost::heap::arity<2>,

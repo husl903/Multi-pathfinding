@@ -305,7 +305,9 @@ class CBSSIPP {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
+    std::vector<Conflict> empty_1;
+    startJps.conflicts_all.swap(empty_1);
+//    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     m_env.getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
 
     auto handleJps = openJps.push(startJps);
@@ -369,9 +371,11 @@ class CBSSIPP {
         }
 
       
-        Conflict conflict_temp = PJps.conflicts_all.front();
-        PJps.conflicts_all.pop();
-
+        // Conflict conflict_temp = PJps.conflicts_all.front();
+        // PJps.conflicts_all.pop();
+        if(PJps.conflicts_all.size() == 0) return true;
+        int random_index = rand()%PJps.conflicts_all.size();
+        Conflict conflict_temp = PJps.conflicts_all[random_index];
         // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
@@ -444,7 +448,11 @@ class CBSSIPP {
           int GenSipp = m_env.num_generation;
           
           if(!is_solved[child_id]) continue;
-          while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
+          // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
+          if(!NewChild[child_id].conflicts_all.empty()) {
+            NewChild[child_id].conflicts_all.clear();
+            NewChild[child_id].conflicts_all.swap(empty_1);
+          }
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
@@ -452,7 +460,8 @@ class CBSSIPP {
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
-            while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
+            PJps.conflicts_all.clear();
+            PJps.conflicts_all.swap(empty_1);
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }
@@ -802,7 +811,7 @@ private:
     int id;
     int agent_id = -1;
     int num_conflict = 0;
-    std::queue<Conflict> conflicts_all;
+    std::vector<Conflict> conflicts_all;
     Conflict first_conflict;
 
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
