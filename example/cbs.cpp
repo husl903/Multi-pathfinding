@@ -555,7 +555,7 @@ class Environment {
         else{flag_x = -1; ac_c = Action::Left;}
         for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){// from 1 insure the last location is not added
           Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           if(isObstacle(temp_loc)){
             return false;
@@ -581,7 +581,7 @@ class Environment {
           // }
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed +temp_w));
             solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
             tt++;
           }

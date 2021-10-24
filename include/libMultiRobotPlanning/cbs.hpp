@@ -203,7 +203,7 @@ class CBS {
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
         Conflict conflict_temp = PJps.conflicts_all[random_index];
-        // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
+        PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
         // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
@@ -280,7 +280,7 @@ class CBS {
           
           if(!is_solved[child_id]) continue;
           // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
-          NewChild[child_id].conflicts_all.swap(empty_1);
+          NewChild[child_id].conflicts_all.clear();
           if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
@@ -1067,7 +1067,7 @@ private:
         else{flag_x = -1; ac_c = Action::Left;}
         for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
           Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
           tt++;
@@ -1079,7 +1079,7 @@ private:
           if(a.x == b.x && a.y == b.y) temp_loc = a;
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed + temp_w));
             solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
             point_id[i].push_back(jump_point_id);
             tt++;
@@ -1091,6 +1091,19 @@ private:
         return false;
       }
     }
+
+
+
+    // for (size_t a = 0; a < solution.size(); ++a) {
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+    //     std::cout << solution[a].states[i].second << ": " <<
+    //     solution[a].states[i].first << "->" << solution[a].actions[i].first
+    //     << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+    //   }
+    //   std::cout << solution[a].states.back().second << ": " <<
+    //   solution[a].states.back().first << std::endl;
+    // }
 
     // for (size_t a = 0; a < solution_path.size(); ++a) {
     //   std::cout << "Solution for: " << a << std::endl;
@@ -1137,6 +1150,7 @@ private:
           Location state2a = getState(j, solution_path, t);
           Location state2b = getState(j, solution_path, t + 1);
           if (state1a == state2b && state1b == state2a) {
+            if(state1a.x == state1b.x && state1a.y == state1b.y) continue;
             result.time = t;
             result.agent1 = i;
             result.agent2 = j;

@@ -199,8 +199,9 @@ class CBSJPSTAstar {
         }
 
         int random_index = rand()%PJps.conflicts_all.size();
+        // random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
-        PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
+//        PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
 
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
@@ -280,7 +281,8 @@ class CBSJPSTAstar {
           
           if(!is_solved[child_id]) continue;
 
-          if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.swap(empty_1);
+//          if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
+          NewChild[child_id].conflicts_all.clear();
           getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node, true);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
@@ -292,7 +294,7 @@ class CBSJPSTAstar {
             PJps.solution = NewChild[child_id].solution;
             PJps.num_conflict = NewChild[child_id].num_conflict;
             PJps.conflicts_all.clear();
-            PJps.conflicts_all.swap(empty_1);
+           PJps.conflicts_all.swap(empty_1);
             // PJps.conflicts_all.swap(empty_1);
             // std::cout << PJps.conflicts_all.size() << std::endl;
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
@@ -1590,6 +1592,7 @@ private:
           Location state2a = getState(j, solution_path, t);
           Location state2b = getState(j, solution_path, t + 1);
           if (state1a == state2b && state1b == state2a) {
+            if(state1a.x == state1b.x && state1a.y == state1b.y) continue;
             result.time = t;
             result.agent1 = i;
             result.agent2 = j;
