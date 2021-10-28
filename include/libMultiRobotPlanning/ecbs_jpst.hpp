@@ -3,7 +3,7 @@
 #include <map>
 
 #include "a_star_epsilon.hpp"
-#include "JPSSIPP_BITCBS.hpp"
+#include "JPSSIPP_BITECBS.hpp"
 #include "timer.hpp"
 
 namespace libMultiRobotPlanning {
@@ -135,7 +135,7 @@ class ECBSJPST {
         if (!success) {
           return false;
         }
-        jpst_bit jps1(m_env);
+        jpst_bit jps1(m_env, temp_jps, m_w);
         jps1.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
         Location goal = m_env.setGoal(i);
         Location startNode(-1, -1);
@@ -436,7 +436,7 @@ class ECBSJPST {
   float m_w;
   typedef AStarEpsilon<State, Action, Cost, LowLevelEnvironment>
       LowLevelSearch_t;
-  typedef JPSSIPP_BITCBS<Location, Location, Action, int, Environment> jpst_bit;
+  typedef JPSSIPP_BITECBS<Location, Location, Action, int, Environment> jpst_bit;
 
 };
 
