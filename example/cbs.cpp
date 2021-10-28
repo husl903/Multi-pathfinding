@@ -379,7 +379,7 @@ class Environment {
   bool isSolution(const State& s) {
     if(!isSeg) return s.x == m_goal.x && s.y == m_goal.y && s.time > m_lastGoalConstraint;
     if(isSeg) return s.x == m_goal.x && s.y == m_goal.y;
-  }  
+  }
   bool isSolution(const Location& s) {
 //	  std::cout << " Goals " << m_goal.x << " -- " << m_goal.y << "\n";
 	  return s == m_goal;
@@ -2425,7 +2425,7 @@ Location  setGoal(int agentId){
 		return getNodeId(m_goal);
 	}
 
-	int getNodeId(const Location &s)
+	uint32_t getNodeId(const Location &s)
 	{
 		return (s.y * m_dimx + s.x);
 	}
