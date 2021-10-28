@@ -309,7 +309,11 @@ class CBSSIPP {
     startJps.conflicts_all.swap(empty_1);
 //    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     m_env.getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
-
+    std::cout <<" Num conflict " << startJps.conflicts_all.size() << std::endl;
+    for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
+      std::cout << startJps.conflicts_all[iiii] << std::endl;    
+    solution = startJps.solution;
+    return true;
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
 
@@ -375,6 +379,7 @@ class CBSSIPP {
         // PJps.conflicts_all.pop();
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
+        // random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];

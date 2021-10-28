@@ -139,6 +139,12 @@ class CBSJPSTAstar {
     // while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     // getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
     getFirstConflict(startJps.solution, startJps.conflicts_all, startJps, gen_node, true);
+    
+    std::cout <<" Num conflict " << startJps.conflicts_all.size() << std::endl;
+    for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
+      std::cout << startJps.conflicts_all[iiii] << std::endl;
+    solution = startJps.solution;
+    return true;
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
 
@@ -205,7 +211,7 @@ class CBSJPSTAstar {
 
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-        // std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict_temp << "   ------- " << std::endl;
+        // std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict_temp << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
 
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict_temp, constraints);
@@ -1385,7 +1391,7 @@ private:
                   }
                   jjj++;
                 }
-                if(num_new > 0) continue;
+                // if(num_new > 0) continue;
                 // if(num_old <= num_new) continue;
                 
                 jjj = 0;
@@ -1531,7 +1537,7 @@ private:
                   jjj++;
                 }
                 // if(num_old <= num_new) continue;
-                if(num_new >  0) continue;
+                // if(num_new >  0) continue;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
                   solution_path[i].states[iii].first.x = segmentPath2.states[jjj].first.x;

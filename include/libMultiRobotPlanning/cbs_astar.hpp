@@ -231,6 +231,12 @@ class CBSAstar {
     // while(!start.conflicts_all.empty()) start.conflicts_all.pop();
     m_env.getAllConflicts(start.solution, start.conflicts_all, start.num_conflict);
 
+    std::cout <<" Num conflict " << start.conflicts_all.size() << std::endl;
+    for(int iiii = 0; iiii < start.conflicts_all.size(); iiii++)
+      std::cout << start.conflicts_all[iiii] << std::endl;
+    solution = start.solution;
+    return true;
+
     auto handle = open.push(start);
     (*handle).handle = handle;
 

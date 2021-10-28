@@ -681,7 +681,7 @@ class Environment {
 
         for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from 0 insure the first location is added
           Location temp_loc(a.x, a.y+flag_y*temp_y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           if(isObstacle(temp_loc)){
             return false;
@@ -690,7 +690,7 @@ class Environment {
         }
         if(a.x != b.x){
           Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           if(isObstacle(temp_loc)){
             return false;
@@ -702,7 +702,7 @@ class Environment {
         else{flag_x = -1; ac_c = Action::Left;}
         for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){// from 1 insure the last location is not added
           Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           if(isObstacle(temp_loc)){
             return false;
@@ -728,7 +728,7 @@ class Environment {
           // }
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
             solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
             tt++;
           }
@@ -2635,7 +2635,7 @@ int main(int argc, char* argv[]) {
   std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
   std::vector<double> preTime;
   int agent_limit = numAgent;
-  numAgent = 100;
+  numAgent = 200;
   preTime.resize(numAgent+1);
   Timer t;
   for (const auto& node : config["agents"]) {
@@ -2718,7 +2718,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
-    // if(num_agent_iter == 7) break;
+    if(num_agent_iter == 69) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";
@@ -2735,6 +2735,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_sipp){
       Timer timer_t2;
       mapf.setBP(true);
+      mapf.setCAT(true);
       std::cout << "SIPPCAT-newBP , " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
@@ -2835,7 +2836,7 @@ int main(int argc, char* argv[]) {
     // sleep(5);
     std::cout.flush();
     num_agent_iter++;
-    if(num_agent_iter > startStates.size() - 1 || num_agent_iter > 100) break;
+    if(num_agent_iter > startStates.size() - 1 || num_agent_iter > 200) break;
   } 
 
   // return 0;
@@ -2858,7 +2859,7 @@ int main(int argc, char* argv[]) {
   // std::cout << "castar " << ", ";
   // bool successCA= cbs_castar.search(startStates, solution_castar);
 
-
+  // std::cout << "----------------------------\n";
   if (successSipp) {
 
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
@@ -2878,19 +2879,18 @@ int main(int argc, char* argv[]) {
     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     out << "schedule:" << std::endl;
     for (size_t a = 0; a < solution_sipp.size(); ++a) {
-      std::cout << "Solution for: " << a << std::endl;
-      for (size_t i = 0; i < solution_sipp[a].actions.size(); ++i) {
-        std::cout << solution_sipp[a].states[i].second << ": " <<
-        solution_sipp[a].states[i].first << "->" << solution_sipp[a].actions[i].first
-        << "(cost: " << solution_sipp[a].actions[i].second << ")" << std::endl;
-      }
-      std::cout << solution_sipp[a].states.back().second << ": " <<
-      solution_sipp[a].states.back().first << std::endl;
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t i = 0; i < solution_sipp[a].actions.size(); ++i) {
+    //     std::cout << solution_sipp[a].states[i].second << ": " <<
+    //     solution_sipp[a].states[i].first << "->" << solution_sipp[a].actions[i].first
+    //     << "(cost: " << solution_sipp[a].actions[i].second << ")" << std::endl;
+    //   }
+    //   std::cout << solution_sipp[a].states.back().second << ": " <<
+    //   solution_sipp[a].states.back().first << std::endl;
       
       std::cout << "Agent " << a << " : solution " << std::endl; 
       out << "  agent" << a << ":" << std::endl;
       for (const auto& state : solution_sipp[a].states) {
-        std::cout << "cout " << state.first.x << ", " << state.first.y << std::endl;
         out << "    - x: " << state.first.x << std::endl
             << "      y: " << state.first.y << std::endl
             << "      t: " << state.second << std::endl;
@@ -2899,7 +2899,45 @@ int main(int argc, char* argv[]) {
   } else {
     std::cout << inputFile << " Planning NOT successful!" << std::endl;
   }
+//  if (successA) {
 
+//     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
+//     int cost = 0;
+//     int makespan = 0;
+//     for (const auto& s : solution_astar) {
+//       cost += s.cost;
+//       makespan = std::max<int>(makespan, s.cost);
+//     }
+
+//     std::ofstream out(outputFile);
+//     out << "statistics:" << std::endl;
+//     out << "  cost: " << cost << std::endl;
+//     out << "  makespan: " << makespan << std::endl;
+//     out << "  runtime: " << timer.elapsedSeconds() << std::endl;
+//     out << "  highLevelExpanded: " << mapf.highLevelExpanded() << std::endl;
+//     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
+//     out << "schedule:" << std::endl;
+//     for (size_t a = 0; a < solution_astar.size(); ++a) {
+//       std::cout << "Solution for: " << a << std::endl;
+//       for (size_t i = 0; i < solution_astar[a].actions.size(); ++i) {
+//         std::cout << solution_astar[a].states[i].second << ": " <<
+//         solution_astar[a].states[i].first << "->" << solution_astar[a].actions[i].first
+//         << "(cost: " << solution_astar[a].actions[i].second << ")" << std::endl;
+//       }
+//       std::cout << solution_astar[a].states.back().second << ": " <<
+//       solution_astar[a].states.back().first << std::endl;
+      
+//       std::cout << "Agent " << a << " : solution " << std::endl; 
+//       out << "  agent" << a << ":" << std::endl;
+//       for (const auto& state : solution_astar[a].states) {
+//         out << "    - x: " << state.first.x << std::endl
+//             << "      y: " << state.first.y << std::endl
+//             << "      t: " << state.second << std::endl;
+//       }
+//     }
+//   } else {
+//     std::cout << inputFile << " Planning NOT successful!" << std::endl;
+//   }
   // if (successJpstA || true) {
   //   std::vector<PlanResult<Location, Action, int> > solution_jpsta_path;
   //   mapf.recoverConcretePath(solution_jpsta, solution_jpsta_path);
@@ -2920,14 +2958,14 @@ int main(int argc, char* argv[]) {
   //   out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
   //   out << "schedule:" << std::endl;
   //   for (size_t a = 0; a < solution_jpsta_path.size(); ++a) {
-  //     std::cout << "Solution for: " << a << std::endl;
-  //     for (size_t i = 0; i < solution_jpsta_path[a].actions.size(); ++i) {
-  //       std::cout << solution_jpsta_path[a].states[i].second << ": " <<
-  //       solution_jpsta_path[a].states[i].first << "->" << solution_jpsta_path[a].actions[i].first
-  //       << "(cost: " << solution_jpsta_path[a].actions[i].second << ")" << std::endl;
-  //     }
-  //     std::cout << solution_jpsta_path[a].states.back().second << ": " <<
-  //     solution_jpsta_path[a].states.back().first << std::endl;
+  //     // std::cout << "Solution for: " << a << std::endl;
+  //     // for (size_t i = 0; i < solution_jpsta_path[a].actions.size(); ++i) {
+  //     //   std::cout << solution_jpsta_path[a].states[i].second << ": " <<
+  //     //   solution_jpsta_path[a].states[i].first << "->" << solution_jpsta_path[a].actions[i].first
+  //     //   << "(cost: " << solution_jpsta_path[a].actions[i].second << ")" << std::endl;
+  //     // }
+  //     // std::cout << solution_jpsta_path[a].states.back().second << ": " <<
+  //     // solution_jpsta_path[a].states.back().first << std::endl;
 
   //     out << "  agent" << a << ":" << std::endl;
   //     for (const auto& state : solution_jpsta_path[a].states) {
