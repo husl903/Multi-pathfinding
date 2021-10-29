@@ -109,40 +109,39 @@ class ECBSJPST {
   ECBSJPST(Environment& environment, float w) : m_env(environment), m_w(w) {}
 
   bool search(const std::vector<State>& initialStates,
-              std::vector<PlanResult<State, Action, Cost> >& solution) {
+              std::vector<PlanResult<Location, Action, Cost> >& solution) {
     HighLevelNode start;
     start.solution.resize(initialStates.size());
     start.constraints.resize(initialStates.size());
     start.cost = 0;
     start.LB = 0;
     start.id = 0;
-
-    std::vector<PlanResult<Location, Action, Cost>> temp_jps;
-    temp_jps.resize(initialStates.size());
+    int num_node = 0;
     for (size_t i = 0; i < initialStates.size(); ++i) {
       if (i < solution.size() && solution[i].states.size() > 1) {
         std::cout << initialStates[i] << " " << solution[i].states.front().first
                   << std::endl;
-        assert(initialStates[i] == solution[i].states.front().first);
+        // assert(initialStates[i] == solution[i].states.front().first);
         start.solution[i] = solution[i];
         std::cout << "use existing solution for agent: " << i << std::endl;
       } else {
-        LowLevelEnvironment llenv(m_env, i, start.constraints[i],
-                                  start.solution);
-        LowLevelSearch_t lowLevel(llenv, m_w);
-        bool success = lowLevel.search(initialStates[i], start.solution[i]);
-        std::cout << "Cost astar " << start.solution[i].cost;
-        if (!success) {
-          return false;
-        }
-        jpst_bit jps1(m_env, temp_jps, m_w);
+//        LowLevelEnvironment llenv(m_env, i, start.constraints[i],
+//                                  start.solution);
+//        LowLevelSearch_t lowLevel(llenv, m_w);
+//        bool success = lowLevel.search(initialStates[i], start.solution[i]);
+        // std::cout << "Cost astar " << start.solution[i].cost;
+        // if (!success) {
+        //   return false;
+        // }
+        jpst_bit jps1(m_env, start.solution, m_w);
+        std::cout << "m_w " << m_w << std::endl;
         jps1.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
         Location goal = m_env.setGoal(i);
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;       
-        bool isJpsSucc = jps1.search(startNode, Action::Wait, temp_jps[i], 0);
-        std::cout << " jpst, " << temp_jps[i].cost << std::endl;
+        bool isJpsSucc = jps1.search(startNode, Action::Wait, start.solution[i], 0);
+        std::cout << " jpst, " << start.solution[i].cost << std::endl;
         if(!isJpsSucc){
           return false;
         }
@@ -150,8 +149,12 @@ class ECBSJPST {
       start.cost += start.solution[i].cost;
       start.LB += start.solution[i].fmin;
     }
-    start.focalHeuristic = m_env.focalHeuristic(start.solution);
+    start.focalHeuristic = start.conflicts_all.size();
+    std::vector<Conflict> empty_1;
+    start.conflicts_all.swap(empty_1);
+    m_env.getAllConflicts(start.solution, start.conflicts_all);
 
+    std::cout << "Initial cost " << start.cost << " \n";
     // std::priority_queue<HighLevelNode> open;
     openSet_t open;
     focalSet_t focal;
@@ -165,6 +168,7 @@ class ECBSJPST {
     solution.clear();
     int id = 1;
     while (!open.empty()) {
+      num_node++;
 // update focal list
 #ifdef REBUILT_FOCAL_LIST
       focal.clear();
@@ -248,13 +252,114 @@ class ECBSJPST {
       focal.pop();
       open.erase(h);
 
+      // bool foundBypass = true;
+      // while(foundBypass){
+      //   if(P.conflicts_all.size() == 0){
+      //     if(!m_env.CheckValid(P.solution)){
+      //       std::cout << "Check solution fails\n";
+      //       return false;
+      //     }else{
+      //       std::cout << " ,done " << P.cost << ", ";
+      //       // std::cout << " ,done, " << P.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+      //       return true;
+      //     }
+      //   }
+
+      //   if(P.conflicts_all.size() == 0) return true;
+      //   int random_index = 0;
+      //   Conflict conflict_temp = P.conflicts_all[random_index];
+      //   HighLevelNode NewChild[2];
+      //   bool is_solved[2] = {false, false};
+      //   std::map<size_t, Constraints> constraints;
+      //   m_env.createConstraintsFromConflict(conflict_temp, constraints);
+      //   int child_id = 0;
+      //   foundBypass = false;
+
+      //   for(const auto& c : constraints){
+      //     size_t i = c.first;
+      //     NewChild[child_id].solution = P.solution;
+      //     NewChild[child_id].constraints = P.constraints;
+      //     NewChild[child_id].cost = P.cost;
+      //     NewChild[child_id].id = id;
+      //     assert(!NewChild[child_id].constraints[i].overlap(c.second));
+      //     NewChild[child_id].constraints[i].add(c.second);
+      //     NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
+
+      //     m_env.resetTemporalObstacle();
+      //     bool is_first_constraint_v = true;
+      //     bool is_first_constraint_e = true;
+          
+      //     jpst_bit jpstbit(m_env, NewChild[child_id].solution, m_w);
+      //     jpstbit.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());
+      //     for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
+      //   	  Location location(constraint.x, constraint.y);
+      //   	  m_env.setTemporalObstacle(location, constraint.time);
+      //   	  if(is_first_constraint_v){
+      //   		  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
+      //   		  is_first_constraint_v = false;
+      //   	  }else{
+      //   		  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
+      //   	  }
+      //     }
+       
+      //     for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
+      //   	  Location location(constraint.x2, constraint.y2);
+      //   	  m_env.setTemporalEdgeConstraint(location, constraint.time);
+      //   	  if(constraint.x1 == constraint.x2){
+      //   		  if(constraint.y1 == constraint.y2 - 1){
+      //   			  jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
+      //   		  }else if(constraint.y1 == constraint.y2 + 1){
+      //   			  jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
+      //   		  }
+      //   	  }else{
+      //   		  if(constraint.x1 == constraint.x2 - 1){
+      //   			  jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
+      //   		  }else if(constraint.x1 == constraint.x2 + 1){
+      //   			  jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
+      //   		  }
+      //   	  }
+      //   	  if(is_first_constraint_e){
+      //   		  is_first_constraint_e = false;
+      //   	  }
+      //     }
+      //     jpstbit.sortCollisionVertex();
+      //     jpstbit.sortCollisionEdgeConstraint();
+      //     m_env.setGoal(i);
+      //     Location startNode(-1, -1);
+      //     startNode.x = initialStates[i].x;
+      //     startNode.y = initialStates[i].y;
+      //     is_solved[child_id] = jpstbit.search(startNode, Action::Wait, NewChild[child_id].solution[i], 0);
+      //     if(!is_solved[child_id]) continue;
+      //     // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
+      //     NewChild[child_id].conflicts_all.clear();
+      //     if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
+      //     m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all);
+      //     // gen_node++;
+      //     if(m_env.isBP && NewChild[child_id].solution[i].cost == P.solution[i].cost 
+      //        && NewChild[child_id].conflicts_all.size() < P.conflicts_all.size()){
+      //       foundBypass = true;
+      //       PJps.solution[i] = NewChild[child_id].solution[i];
+      //       PJps.num_conflict = NewChild[child_id].num_conflict;
+      //       PJps.conflicts_all.clear();
+      //       PJps.conflicts_all.swap(empty_1);
+      //       // std::cout << PJps.conflicts_all.size() << " conflict size \n";
+      //       // while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
+      //       // PJps.conflicts_all.swap(empty_1);
+      //       PJps.conflicts_all = NewChild[child_id].conflicts_all;
+      //       break;
+      //     }
+      //     NewChild[child_id].cost += NewChild[child_id].solution[i].cost;
+      //     child_id++;
+      //   }
+      // }
       Conflict conflict;
-      if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << std::endl;
+      if (P.conflicts_all.size() == 0) {
+        std::cout << "done; cost: " << P.cost << "," << num_node << std::endl;
         solution = P.solution;
         return true;
       }
 
+      conflict = P.conflicts_all[0];
       // create additional nodes to resolve conflict
       std::cout << "Found conflict: " << conflict << std::endl;
       // std::cout << "Found conflict at t=" << conflict.time << " type: " <<
@@ -278,14 +383,63 @@ class ECBSJPST {
         newNode.cost -= newNode.solution[i].cost;
         newNode.LB -= newNode.solution[i].fmin;
 
-        LowLevelEnvironment llenv(m_env, i, newNode.constraints[i],
-                                  newNode.solution);
-        LowLevelSearch_t lowLevel(llenv, m_w);
-        bool success = lowLevel.search(initialStates[i], newNode.solution[i]);
+        // LowLevelEnvironment llenv(m_env, i, newNode.constraints[i],
+        //                           newNode.solution);
+        // LowLevelSearch_t lowLevel(llenv, m_w);
+        // bool success = lowLevel.search(initialStates[i], newNode.solution[i]);
+        bool success = true;
+        m_env.resetTemporalObstacle();
+        bool is_first_constraint_v = true;
+        bool is_first_constraint_e = true;
+
+        jpst_bit jpstbit(m_env, newNode.solution, m_w);
+        jpstbit.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());
+        for(auto & constraint : newNode.constraints[i].vertexConstraints){
+          Location location(constraint.x, constraint.y);
+          m_env.setTemporalObstacle(location, constraint.time);
+        	if(is_first_constraint_v){
+        	  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
+        		is_first_constraint_v = false;
+        	}else{
+        	  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
+        	}
+        }
+        for(auto & constraint : newNode.constraints[i].edgeConstraints){
+          Location location(constraint.x2, constraint.y2);
+        	m_env.setTemporalEdgeConstraint(location, constraint.time);
+        	if(constraint.x1 == constraint.x2){
+        	  if(constraint.y1 == constraint.y2 - 1){
+        	    jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
+        		}else if(constraint.y1 == constraint.y2 + 1){
+        		  jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
+        		}
+        	}else{
+        	  if(constraint.x1 == constraint.x2 - 1){
+        		  jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
+        	  }else if(constraint.x1 == constraint.x2 + 1){
+        		  jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
+        	  }
+        	}
+        	if(is_first_constraint_e){
+        	  is_first_constraint_e = false;
+        	}
+        }
+        jpstbit.sortCollisionVertex();
+        jpstbit.sortCollisionEdgeConstraint();
+        PlanResult<Location, Action, int> solutiontempJps;
+        m_env.setGoal(i);
+        Location startNode(-1, -1);
+        startNode.x = initialStates[i].x;
+        startNode.y = initialStates[i].y;
+        success = jpstbit.search(startNode, Action::Wait, newNode.solution[i], 0);
+        newNode.conflicts_all.clear();
+        if(newNode.conflicts_all.empty()) newNode.conflicts_all.swap(empty_1);
+        m_env.getAllConflicts(newNode.solution, newNode.conflicts_all);
+
 
         newNode.cost += newNode.solution[i].cost;
         newNode.LB += newNode.solution[i].fmin;
-        newNode.focalHeuristic = m_env.focalHeuristic(newNode.solution);
+        newNode.focalHeuristic = newNode.conflicts_all.size();
 
         if (success) {
           std::cout << "  success. cost: " << newNode.cost << std::endl;
@@ -322,14 +476,14 @@ class ECBSJPST {
 #endif
 
   struct HighLevelNode {
-    std::vector<PlanResult<State, Action, Cost> > solution;
+    std::vector<PlanResult<Location, Action, Cost> > solution;
     std::vector<Constraints> constraints;
 
     Cost cost;
     Cost LB;  // sum of fmin of solution
 
     Cost focalHeuristic;
-
+    std::vector<Conflict> conflicts_all;
     int id;
 
     handle_t handle;

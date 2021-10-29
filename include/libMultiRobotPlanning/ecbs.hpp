@@ -115,6 +115,7 @@ class ECBS {
     start.cost = 0;
     start.LB = 0;
     start.id = 0;
+    int num_node = 0;
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
       if (i < solution.size() && solution[i].states.size() > 1) {
@@ -150,6 +151,7 @@ class ECBS {
     solution.clear();
     int id = 1;
     while (!open.empty()) {
+      num_node++;
 // update focal list
 #ifdef REBUILT_FOCAL_LIST
       focal.clear();
@@ -235,7 +237,7 @@ class ECBS {
 
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << std::endl;
+        std::cout << "done; cost: " << P.cost << ", " << num_node << std::endl;
         solution = P.solution;
         return true;
       }

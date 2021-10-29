@@ -277,10 +277,11 @@ public:
       return m_env.focalStateHeuristic(temp_loc, gScore, m_solution);
     }
 
-    Cost focalTransitionHeuristic(const State& s1, const State& s2,
+    Cost focalTransitionHeuristic(const JPSSIPPState& s1, const JPSSIPPState& s2,
                                   Cost gScoreS1, Cost gScoreS2) {
-      return m_env.focalTransitionHeuristic(s1, s2, gScoreS1, gScoreS2,
-                                            m_solution);
+	  return 0;
+    //   return m_env.focalTransitionHeuristic(s1, s2, gScoreS1, gScoreS2,
+                                            // m_solution);
     }
 
     bool mightHaveSolution(const State& goal) {

@@ -285,7 +285,10 @@ class CBSJPSTAstar {
           int ExpJps1 = m_env.num_expansion;
           int GenJps1 = m_env.num_generation;
           
-          if(!is_solved[child_id]) continue;
+          if(!is_solved[child_id]){
+            child_id++;
+            continue;
+          }
 
 //          if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
           NewChild[child_id].conflicts_all.clear();
