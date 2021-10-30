@@ -274,7 +274,7 @@ public:
 
     Cost focalStateHeuristic(const JPSSIPPState& s, Cost gScore) {
         Location temp_loc(s.state.x, s.state.y);
-      return m_env.focalStateHeuristic(temp_loc, gScore, m_solution);
+      return m_env.focalStateHeuristic(temp_loc, gScore, m_solution, true);
     }
 
     Cost focalTransitionHeuristic(const JPSSIPPState& s1, const JPSSIPPState& s2,

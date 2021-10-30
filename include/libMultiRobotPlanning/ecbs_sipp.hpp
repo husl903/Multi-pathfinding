@@ -3,7 +3,7 @@
 #include <map>
 
 #include "a_star_epsilon.hpp"
-#include "JPSSIPP_BITECBS.hpp"
+#include "sipp_ecbs.hpp"
 #include "timer.hpp"
 
 namespace libMultiRobotPlanning {
@@ -104,9 +104,9 @@ statistical purposes.
 */
 template <typename State, typename Location, typename Action, typename Cost, typename Conflict,
           typename Constraints, typename Environment>
-class ECBSJPST {
+class ECBSSIPP {
  public:
-  ECBSJPST(Environment& environment, float w) : m_env(environment), m_w(w) {}
+  ECBSSIPP(Environment& environment, float w) : m_env(environment), m_w(w) {}
 
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
@@ -133,16 +133,15 @@ class ECBSJPST {
         // if (!success) {
         //   return false;
         // }
-        jpst_bit jps1(m_env, start.solution, m_w);
+        sipp_t sipp(m_env, start.solution, m_w);
         std::cout << "m_w " << m_w << std::endl;
-        jps1.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
-        Location goal = m_env.setGoal(i);
-        Location startNode(-1, -1);
-        startNode.x = initialStates[i].x;
-        startNode.y = initialStates[i].y;       
-        bool isJpsSucc = jps1.search(startNode, Action::Wait, start.solution[i], 0);
+        sipp.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
+        m_env.setGoal(i);
+        Location startNode(initialStates[i].x, initialStates[i].y);
+
+        bool success = sipp.search(startNode, Action::Wait, start.solution[i], 0);
         std::cout << " jpst, " << start.solution[i].cost << std::endl;
-        if(!isJpsSucc){
+        if(!success){
           return false;
         }
       }
@@ -289,7 +288,7 @@ class ECBSJPST {
           bool is_first_constraint_v = true;
           bool is_first_constraint_e = true;
           
-          jpst_bit jpstbit(m_env, NewChild[child_id].solution, m_w);
+          sipp_t jpstbit(m_env, NewChild[child_id].solution, m_w);
           jpstbit.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
         	  Location location(constraint.x, constraint.y);
@@ -402,7 +401,7 @@ class ECBSJPST {
         bool is_first_constraint_v = true;
         bool is_first_constraint_e = true;
 
-        jpst_bit jpstbit(m_env, newNode.solution, m_w);
+        sipp_t jpstbit(m_env, newNode.solution, m_w);
         jpstbit.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());
         for(auto & constraint : newNode.constraints[i].vertexConstraints){
           Location location(constraint.x, constraint.y);
@@ -598,9 +597,10 @@ class ECBSJPST {
  private:
   Environment& m_env;
   float m_w;
-  typedef AStarEpsilon<State, Action, Cost, LowLevelEnvironment>
-      LowLevelSearch_t;
-  typedef JPSSIPP_BITECBS<Location, Location, Action, int, Environment> jpst_bit;
+//   typedef AStarEpsilon<State, Action, Cost, LowLevelEnvironment>
+//       LowLevelSearch_t;
+//   typedef JPSSIPP_BITECBS<Location, Location, Action, int, Environment> jpst_bit;
+  typedef SIPP<Location, Location, Action, int, Environment> sipp_t;
 
 };
 

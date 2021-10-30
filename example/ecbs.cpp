@@ -8,6 +8,7 @@
 
 #include <libMultiRobotPlanning/ecbs.hpp>
 #include <libMultiRobotPlanning/ecbs_jpst.hpp>
+#include <libMultiRobotPlanning/ecbs_sipp.hpp>
 #include <libMultiRobotPlanning/gridmap.hpp>
 #include <libMultiRobotPlanning/jpst_gridmap.hpp>
 
@@ -15,6 +16,7 @@
 
 using libMultiRobotPlanning::ECBS;
 using libMultiRobotPlanning::ECBSJPST;
+using libMultiRobotPlanning::ECBSSIPP;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
 using libMultiRobotPlanning::gridmap;
@@ -362,20 +364,47 @@ class Environment {
 
   int focalStateHeuristic(
       const Location& s, int gScore,
+      const std::vector<PlanResult<Location, Action, int> >& solution, bool is_jpst) {
+    int numConflicts = 0;
+    if(is_jpst){
+      for (size_t i = 0; i < solution.size(); ++i) {
+        if (i != m_agentIdx && !solution[i].states.empty()) {
+          for(size_t location_t = 0; location_t < solution[i].states.size(); location_t++){
+            if(solution[i].states[location_t].second > gScore) break;
+            if(solution[i].states[location_t].first == s
+               && solution[i].states[location_t].second == gScore
+               ) numConflicts++;          
+          }
+        }
+      }
+    }else{
+      for (size_t i = 0; i < solution.size(); ++i) {
+        if (i != m_agentIdx && !solution[i].states.empty()) {
+          Location state2 = getState(i, solution, gScore);
+          if (s == state2) {
+            ++numConflicts;
+          }
+        }
+      }      
+    }
+    return numConflicts;
+  }
+
+  int focalTransitionHeuristic(
+      const Location& s1a, const Location& s1b, int gScoreS1a, int gScoreS1b,
       const std::vector<PlanResult<Location, Action, int> >& solution) {
     int numConflicts = 0;
     for (size_t i = 0; i < solution.size(); ++i) {
       if (i != m_agentIdx && !solution[i].states.empty()) {
-        for(size_t location_t = 0; location_t < solution[i].states.size(); location_t++){
-          if(solution[i].states[location_t].second > gScore) break;
-          if(solution[i].states[location_t].first == s
-             && solution[i].states[location_t].second == gScore
-             ) numConflicts++;          
+        Location s2a = getState(i, solution, gScoreS1a);
+        Location s2b = getState(i, solution, gScoreS1b);
+        if (s1a == s2b && s1b == s2a) {
+          ++numConflicts;
         }
       }
     }
     return numConflicts;
-  }
+  }  
   // Count all conflicts
   int focalHeuristic(
       const std::vector<PlanResult<State, Action, int> >& solution) {
@@ -873,6 +902,8 @@ class Environment {
                             int /*gScore*/) {
     m_lowLevelExpanded++;
   }
+  Location getLocation(const Location& s) { return s; }
+  size_t getAgentId(){ return m_agentIdx;}
 
   int highLevelExpanded() { return m_highLevelExpanded; }
 
@@ -897,7 +928,6 @@ class Environment {
 	}
 
   Location  setGoal(int agentId){
-	  // m_goal = m_goals[agentId];
 	  m_agentIdx = agentId;
     m_goal = m_goals[agentId];
     goalID = getNodeId(m_goal);
@@ -1156,7 +1186,7 @@ class Environment {
 
   bool isDebug = false;
   bool isSeg = false;
-  bool isBP = true;
+  bool isBP = false;
   bool isCAT = true;
   bool is_jps = true;
 
@@ -1327,12 +1357,20 @@ int main(int argc, char* argv[]) {
   // Environment mapf(dimx, dimy, obstacles, goals);
   ECBS<State, Action, int, Conflict, Constraints, Environment> cbs(mapf, w);
   
-  ECBSJPST<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpst(mapf, w);
+  // ECBSJPST<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpst(mapf, w);
+  ECBSSIPP<State, Location, Action, int, Conflict, Constraints, Environment> cbs_sipp(mapf, w);
+  
+
   std::vector<PlanResult<State, Action, int> > solution;
   std::vector<PlanResult<Location, Action, int> > solution_jpst;
+  std::vector<PlanResult<Location, Action, int> > solution_sipp;
+
   Timer timer1;
-  bool success = cbs_jpst.search(startStates, solution_jpst);
+  // bool success = cbs_jpst.search(startStates, solution_jpst);
   timer1.stop();
+std::cout << "----\n";
+bool success = cbs_sipp.search(startStates, solution_sipp);
+ std::cout << "Hererre\n";
 
   std::cout << "cbs_jpst time1 " << timer1.elapsedSeconds() << "----------------------------------------------------------\n";
   Timer timer;

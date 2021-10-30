@@ -277,7 +277,10 @@ class CBS {
           timerJpstbit.stop();
           double tJpstbit = timerJpstbit.elapsedSeconds();
           
-          if(!is_solved[child_id]) continue;
+          if(!is_solved[child_id]) {
+            child_id++;
+            continue;
+          }
           // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
           NewChild[child_id].conflicts_all.clear();
           if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
