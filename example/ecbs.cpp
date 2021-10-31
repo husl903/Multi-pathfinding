@@ -1186,8 +1186,8 @@ class Environment {
 
   bool isDebug = false;
   bool isSeg = false;
-  bool isBP = false;
-  bool isCAT = true;
+  bool isBP = true;
+  bool isCAT = false;
   bool is_jps = true;
 
 };
@@ -1323,7 +1323,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  int num_agent = 53;
+  int num_agent = 100;
   int index_agent = 0;
   std::unordered_map<Location, std::vector<std::vector<int>>> eHeuristic;
   std::vector<double> preTime;
@@ -1357,7 +1357,7 @@ int main(int argc, char* argv[]) {
   // Environment mapf(dimx, dimy, obstacles, goals);
   ECBS<State, Action, int, Conflict, Constraints, Environment> cbs(mapf, w);
   
-  // ECBSJPST<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpst(mapf, w);
+  ECBSJPST<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpst(mapf, w);
   ECBSSIPP<State, Location, Action, int, Conflict, Constraints, Environment> cbs_sipp(mapf, w);
   
 
@@ -1366,13 +1366,15 @@ int main(int argc, char* argv[]) {
   std::vector<PlanResult<Location, Action, int> > solution_sipp;
 
   Timer timer1;
-  // bool success = cbs_jpst.search(startStates, solution_jpst);
+  bool success = cbs_jpst.search(startStates, solution_jpst);
   timer1.stop();
-std::cout << "----\n";
-bool success = cbs_sipp.search(startStates, solution_sipp);
- std::cout << "Hererre\n";
-
   std::cout << "cbs_jpst time1 " << timer1.elapsedSeconds() << "----------------------------------------------------------\n";
+
+  Timer timer2;
+  success = cbs_sipp.search(startStates, solution_sipp);
+  timer2.stop();
+  std::cout << "cbs_sipp time1 " << timer2.elapsedSeconds() << "----------------------------------------------------------\n";
+
   Timer timer;
   success = cbs.search(startStates, solution);
   timer.stop();

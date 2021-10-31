@@ -133,6 +133,7 @@ class ECBSSIPP {
         // if (!success) {
         //   return false;
         // }
+        m_env.resetTemporalObstacle();
         sipp_t sipp(m_env, start.solution, m_w);
         std::cout << "m_w " << m_w << std::endl;
         sipp.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
@@ -258,7 +259,7 @@ class ECBSSIPP {
             std::cout << "Check solution fails\n";
             return false;
           }else{
-            std::cout << " ,done " << P.cost << ", ";
+            std::cout << " ,done " << P.cost << ", num_node," << num_node << ", num_open," << id;
             // std::cout << " ,done, " << P.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }

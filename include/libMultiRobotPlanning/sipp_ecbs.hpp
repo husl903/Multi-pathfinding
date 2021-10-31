@@ -234,13 +234,14 @@ class SIPP {
     }
 
     Cost focalStateHeuristic(const SIPPState& s, Cost gScore) {
+      // return 0;
         Location temp_loc(s.state.x, s.state.y);
         return m_env.focalStateHeuristic(temp_loc, gScore, m_cat, false);
     }
 
     Cost focalTransitionHeuristic(const SIPPState& s1, const SIPPState& s2,
                                   Cost gScoreS1, Cost gScoreS2) {
-	  // return 0;
+  	  // return 0;
       Location s1a(s1.state.x, s1.state.y);
       Location s1b(s2.state.x, s2.state.y);
       return m_env.focalTransitionHeuristic(s1a, s1b, gScoreS1, gScoreS2,

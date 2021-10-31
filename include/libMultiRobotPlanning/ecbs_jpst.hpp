@@ -259,7 +259,7 @@ class ECBSJPST {
             std::cout << "Check solution fails\n";
             return false;
           }else{
-            std::cout << " ,done " << P.cost << ", ";
+            std::cout << " ,done " << P.cost << ", num_node " << num_node << ",num_open " << id << ", ";
             // std::cout << " ,done, " << P.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }
