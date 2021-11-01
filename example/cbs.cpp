@@ -740,6 +740,7 @@ class Environment {
       }
     }
 
+    //check whether the solution is valid
     Conflict result;
     std::vector<std::unordered_set<int>> jump_point(solution.size());
     for (int t = 0; t < max_t; ++t) {
@@ -2718,7 +2719,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
-    if(num_agent_iter == 69) break;
+    // if(num_agent_iter == 69) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";
@@ -2774,7 +2775,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_jpsta){
       Timer timer_t8;
       mapf.setBP(true);
-      mapf.setCAT(false);
+      mapf.setCAT(true);
       std::cout << "JpstAstar-NoHelp, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);

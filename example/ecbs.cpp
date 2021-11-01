@@ -1052,9 +1052,9 @@ class Environment {
 		jump_point_map[s.x][s.y] = true;
   }
 
-  void setCAT(bool isCAT_tt){
-    isCAT = isCAT_tt;
-  }
+  // void setCAT(bool isCAT_tt){
+  //   isCAT = isCAT_tt;
+  // }
   
   void setBP(bool isBP_tt){
     isBP = isBP_tt;
@@ -1160,16 +1160,6 @@ class Environment {
   int m_dimy;
   std::unordered_set<Location> m_obstacles;
   std::vector<Location> m_goals;
-  size_t m_agentIdx;
-  const Constraints* m_constraints;
-  int m_lastGoalConstraint;
-  int m_highLevelExpanded;
-  int m_lowLevelExpanded;
-  bool isPerfectH = false;
-  bool isFI = true;
-
-  Location m_goal;
-  uint32_t goalID;
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
   std::vector<std::vector<int>> m_temporal_edge_constraint;
@@ -1177,19 +1167,27 @@ class Environment {
   std::vector<std::vector<int>> m_last_ob_g;
   std::vector<std::vector<int>> m_nei_ob_g;
   std::unordered_map<Location, std::vector<std::vector<int>>> m_eHeuristic;
-
+  size_t m_agentIdx;
+  const Constraints* m_constraints;
+  int m_lastGoalConstraint;
+  int m_highLevelExpanded;
+  int m_lowLevelExpanded;
  public:
   jpst_gridmap *jpst_gm_;
+ private:
+  Location m_goal;
+  uint32_t goalID;
+ public:
   int num_generation = 0;
   int num_expansion = 0;
   int limit_jump = 32;
-
   bool isDebug = false;
   bool isSeg = false;
   bool isBP = true;
-  bool isCAT = false;
+  // bool isCAT = true;
   bool is_jps = true;
-
+  bool isPerfectH = true;
+  bool isFI = true;
 };
 
 void getExactHeuristic(std::vector<std::vector<int>>& eHeuristic, std::vector<std::vector<bool>>map_obstacle, Location goal, int dimx, int dimy){
