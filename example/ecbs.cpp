@@ -1186,7 +1186,7 @@ class Environment {
   bool isBP = true;
   // bool isCAT = true;
   bool is_jps = true;
-  bool isPerfectH = true;
+  bool isPerfectH = false;
   bool isFI = true;
 };
 

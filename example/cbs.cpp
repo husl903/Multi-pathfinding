@@ -652,7 +652,7 @@ class Environment {
 
  bool recoverConcretePath(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::vector<PlanResult<Location, Action, int> >& solution_path){
+      std::vector<PlanResult<Location, Action, int> >& solution_path, bool isCheck){
 
     solution_path.resize(solution.size());
     
@@ -740,6 +740,7 @@ class Environment {
       }
     }
 
+    if(!isCheck) return false;
     //check whether the solution is valid
     Conflict result;
     std::vector<std::unordered_set<int>> jump_point(solution.size());
@@ -2719,7 +2720,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
-    // if(num_agent_iter == 69) break;
+    if(num_agent_iter == 128) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";

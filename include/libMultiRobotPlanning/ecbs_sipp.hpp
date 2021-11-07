@@ -135,13 +135,13 @@ class ECBSSIPP {
         // }
         m_env.resetTemporalObstacle();
         sipp_t sipp(m_env, start.solution, m_w);
-        std::cout << "m_w " << m_w << std::endl;
+        // std::cout << "m_w " << m_w << std::endl;
         sipp.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
         m_env.setGoal(i);
         Location startNode(initialStates[i].x, initialStates[i].y);
 
         bool success = sipp.search(startNode, Action::Wait, start.solution[i], 0);
-        std::cout << " jpst, " << start.solution[i].cost << std::endl;
+        // std::cout << " jpst, " << start.solution[i].cost << std::endl;
         if(!success){
           return false;
         }
@@ -154,7 +154,7 @@ class ECBSSIPP {
     start.conflicts_all.swap(empty_1);
     m_env.getAllConflicts(start.solution, start.conflicts_all);
 
-    std::cout << "Initial cost " << start.cost << " \n";
+    std::cout << "Initial cost " << start.cost << ", " << start.conflicts_all.size() << "\n";
     // std::priority_queue<HighLevelNode> open;
     openSet_t open;
     focalSet_t focal;
@@ -259,7 +259,7 @@ class ECBSSIPP {
             std::cout << "Check solution fails\n";
             return false;
           }else{
-            std::cout << " ,done " << P.cost << ", num_node," << num_node << ", num_open," << id;
+            std::cout << " ,done " << P.cost << ", num_node," << num_node << ", num_open," << id << ",";
             // std::cout << " ,done, " << P.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }

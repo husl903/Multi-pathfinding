@@ -309,10 +309,10 @@ class CBSSIPP {
     startJps.conflicts_all.swap(empty_1);
 //    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     m_env.getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
-    std::cout <<" Num conflict " << startJps.conflicts_all.size() << std::endl;
-    for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
-      std::cout << startJps.conflicts_all[iiii] << std::endl;    
-    solution = startJps.solution;
+    std::cout <<" Num conflict, " << startJps.conflicts_all.size() << ", ";
+    // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
+    //   std::cout << startJps.conflicts_all[iiii] << std::endl;    
+    // solution = startJps.solution;
     return true;
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;

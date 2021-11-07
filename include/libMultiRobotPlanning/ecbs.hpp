@@ -237,7 +237,7 @@ class ECBS {
 
       Conflict conflict;
       if (!m_env.getFirstConflict(P.solution, conflict)) {
-        std::cout << "done; cost: " << P.cost << ", " << num_node << std::endl;
+        std::cout << "done; cost:: " << P.cost << ", " << num_node << std::endl;
         solution = P.solution;
         return true;
       }

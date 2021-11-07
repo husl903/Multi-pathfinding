@@ -1690,18 +1690,18 @@ public:
             	           	break ;
             	        }
 
-            	        if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0 || flag_is_solution){
-           	            // if(step >= m_env.limit_jump){
+            	        // if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0 || flag_is_solution){
+           	            if(step >= m_env.limit_jump || flag_is_solution){
             	            if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
             	            else current_successor.dir = 0x07;
-            	            if(m_env.isFCheck()){
+            	            /*if(m_env.isFCheck()){
             	            	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	            	if(succ_f > par_f){
 									current_successor.dir_p = 0x04;
             	             		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             		break ;
             	             	}
-            	            }else {
+            	            }else */{
 								current_successor.dir_p = 0x04;
             	            	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
             	             	break ;
@@ -1854,18 +1854,18 @@ public:
             	        }
 
 
-            	        if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0 || flag_is_solution){
-           	            // if(step >= m_env.limit_jump){
+            	        // if(current_successor.state.x % m_env.limit_jump == 0 || current_successor.state.y % m_env.limit_jump == 0 || flag_is_solution){
+           	            if(step >= m_env.limit_jump || flag_is_solution){
     	             		if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
     	             		else current_successor.dir = 0x0b;
 							current_successor.dir_p = 0x08;
-            	            if(m_env.isFCheck()){
+            	            /*if(m_env.isFCheck()){
             	             	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
             	             	if(succ_f > par_f){
             	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
             	           			break ;
             	             	}
-            	            }else{
+            	            }else*/{
         	           			jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
         	           			break ;
             	            }

@@ -134,14 +134,14 @@ class ECBSJPST {
         //   return false;
         // }
         jpst_bit jps1(m_env, start.solution, m_w);
-        std::cout << "m_w " << m_w << std::endl;
+        // std::cout << "m_w " << m_w << std::endl;
         jps1.setEdgeCollisionSize(m_env.getDimX(), m_env.getDimY());      
         Location goal = m_env.setGoal(i);
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;       
         bool isJpsSucc = jps1.search(startNode, Action::Wait, start.solution[i], 0);
-        std::cout << " jpst, " << start.solution[i].cost << std::endl;
+        // std::cout << " jpst, " << start.solution[i].cost << std::endl;
         if(!isJpsSucc){
           return false;
         }
@@ -154,7 +154,7 @@ class ECBSJPST {
     start.conflicts_all.swap(empty_1);
     m_env.getAllConflicts(start.solution, start.conflicts_all);
 
-    std::cout << "Initial cost " << start.cost << " \n";
+    std::cout << "Initial cost " << start.cost << ", " << start.conflicts_all.size() << " \n";
     // std::priority_queue<HighLevelNode> open;
     openSet_t open;
     focalSet_t focal;
@@ -167,8 +167,17 @@ class ECBSJPST {
 
     solution.clear();
     int id = 1;
+    Timer timer;
+    timer.reset();    
     while (!open.empty()) {
       num_node++;
+      timer.stop();
+      double duration1 = timer.elapsedSeconds();
+      if(duration1 > 100){
+        std::cout << " ,done, time-out fail " << ", num_node, " << num_node << ", " << " num_open, " << id << ", ";
+    	  return false;
+      }
+
 // update focal list
 #ifdef REBUILT_FOCAL_LIST
       focal.clear();
