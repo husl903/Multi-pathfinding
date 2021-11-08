@@ -133,13 +133,13 @@ class CBSJPSTAstar {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    getFirstConflictJPST(startJps.solution, startJps.conflicts_all, startJps, gen_node);
+    getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     
     std::cout <<" Num conflict " << startJps.conflicts_all.size();
-    for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
-      std::cout << startJps.conflicts_all[iiii] << std::endl;
-    solution = startJps.solution;
-    return true;
+    // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
+    //   std::cout << startJps.conflicts_all[iiii] << std::endl;
+    // solution = startJps.solution;
+    // return true;
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -184,8 +184,8 @@ class CBSJPSTAstar {
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
           int num_sipp = 0;
-          for(int iii = 0; iii < num_replan.size(); iii++) if(num_replan[iii] == -1) num_sipp++;
-          std::cout << "sipp " << num_sipp << ", ";
+          // for(int iii = 0; iii < num_replan.size(); iii++) if(num_replan[iii] == -1) num_sipp++;
+          // std::cout << "sipp " << num_sipp << ", ";
           solution = PJps.solution;
           if(!m_env.CheckValid(PJps.solution)){
             std::cout << PJps.conflicts_all.size() <<  "Check solution fails 2222\n";
@@ -197,7 +197,8 @@ class CBSJPSTAstar {
         }
 
         int random_index = rand()%PJps.conflicts_all.size();
-        // random_index = 0;
+        // random_index = PJps.conflicts_all.size() - 1;
+        random_index = 0;
         conflict = PJps.conflicts_all[random_index];
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
@@ -226,7 +227,7 @@ class CBSJPSTAstar {
           Location startNode(initialStates[i].x, initialStates[i].y);        
           bool is_first_constraint_v = true;
           bool is_first_constraint_e = true;
-          if(num_replan[i] > 10 || num_replan[i] == -1){
+/*          if(num_replan[i] > 10 || num_replan[i] == -1){
             // std::cout << i << " here \n";
             num_replan[i] = -1;
             solution_cat.clear();
@@ -261,7 +262,7 @@ class CBSJPSTAstar {
             sipp.sortCollisionEdgeConstraint();
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
-          }else{
+          }else*/{
           jpst_bit jpstbit(m_env);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
@@ -299,8 +300,9 @@ class CBSJPSTAstar {
 
           if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
           PJps.conflicts_all.swap(empty_1);
-          getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
+          getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
+          // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << " child\n";
           gen_node++;
           // std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
@@ -447,9 +449,9 @@ private:
         handle;
 
     bool operator<(const HighLevelNodeJps& n) const {
-      // if (cost != n.cost)
+      if (cost != n.cost)
       return cost > n.cost;
-      // return id > n.id;
+      else return conflicts_all.size() > n.conflicts_all.size();
     }
 
     friend std::ostream& operator<<(std::ostream& os, const HighLevelNodeJps& c) {
@@ -897,24 +899,31 @@ private:
               if(ct == 1) i = j;
               if(t > point_id[i].size() - 1) continue;
               int JumpPointId = point_id[i][t];
-              int PreJumpPointId = -1;
-              int AftJumpPointID = -1;
+              int PreJumpPointId = JumpPointId;
+              int AftJumpPointID = JumpPointId + 1;
               if(t - 1 >= 0){
-                if(point_id[i][t - 1] != JumpPointId) continue;
+                if(point_id[i][t - 1] != JumpPointId){
+                  // continue;
+                  PreJumpPointId = point_id[i][t- 1];
+                }
               }
-              if(t + 1 < solution_path.size()){
-                if(point_id[i][t + 1] != JumpPointId) continue;
-              }
+              // if(t + 1 < solution_path.size()){
+              //   if(point_id[i][t + 1] != JumpPointId){
+                  
+              //   }
+              // }
               if(JumpPointId + 1 > solution[i].states.size()-1) continue;
+//              if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
+              AftJumpPointID = solution[i].states.size() - 1;
 
-              Location goalLoc = solution[i].states[JumpPointId+1].first;
-              int time_a = solution[i].states[JumpPointId].second;
-              int time_b = solution[i].states[JumpPointId + 1].second;
+              Location goalLoc = solution[i].states[AftJumpPointID].first;
+              int time_a = solution[i].states[PreJumpPointId].second;
+              int time_b = solution[i].states[AftJumpPointID].second;
               int cost_t = time_b - time_a;
             
-              State initialState(-1, -1, time_a);
-              initialState.x = solution[i].states[JumpPointId].first.x;
-              initialState.y = solution[i].states[JumpPointId].first.y;
+              State initialState(-1, -1, -1);
+              initialState.x = solution[i].states[PreJumpPointId].first.x;
+              initialState.y = solution[i].states[PreJumpPointId].first.y;
               initialState.time = time_a;
               if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) continue;
               if(initialState.x == goalLoc.x || initialState.y == goalLoc.y //stright line
@@ -935,7 +944,7 @@ private:
         	      m_env.setTemporalEdgeConstraint(location, constraint.time);
               }
 
-              if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
+              if(AftJumpPointID == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
               else m_env.setIsSegPlanning(true);
               LowLevelEnvironment llenv(m_env, solution_path, i, goalLoc, CurNode.constraints[i]);
               LowLevelSearch_t lowLevel(llenv);            
@@ -963,8 +972,9 @@ private:
                   }
                   jjj++;
                 }
+                // std::cout << "old num " <<  num_old << " new_num " << num_new << " cost_t " << cost_t << " agent " << i << " ----------------------------\n";
                 // if(num_new > 0) continue;
-                // if(num_old <= num_new) continue;
+                if(num_old <= num_new) continue;
                 is_update = true;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
@@ -972,15 +982,35 @@ private:
                   solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                   solution_path[i].states[iii].second = iii;
                   solution_path[i].actions[iii] = segmentPath.actions[jjj];
+                  // std::cout << "time " << iii << "(x,y) " << solution_path[i].states[iii].first.x << ", " << 
+                  // solution_path[i].states[iii].first.y << std::endl;
                   jjj++;
                 }
 
                 auto it = solution[i].states.begin();
                 auto it_ac = solution[i].actions.begin();
-                solution[i].states.insert(it + JumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+                // std::cout << "goal " << goalLoc.x << ", " << goalLoc.y << " \n";
+                // std::cout << (it+PreJumpPointId)->first.x << "," << (it+PreJumpPointId)->first.y << ", xy "<< std::endl;
+                // std::cout << (it+JumpPointId)->first.x << "," << (it+JumpPointId)->first.y << ", xy "<< std::endl;
+                // std::cout << (it+JumpPointId+1)->first.x << "," << (it+JumpPointId+1)->first.y << ", xy "<< std::endl;
+
+                // if(PreJumpPointId != JumpPointId){
+                //   std::cout << "Here \n";
+                //   solution[i].states.erase(it + JumpPointId);
+                //   solution[i].actions.erase(it_ac + JumpPointId);
+                // }
+                // std::cout << PreJumpPointId << ", jpd " << JumpPointId << AftJumpPointID << std::endl; 
+                if(AftJumpPointID != PreJumpPointId + 1){
+                  solution[i].states.erase(it + PreJumpPointId + 1, it + AftJumpPointID);
+                  solution[i].actions.erase(it_ac + PreJumpPointId + 1, it_ac + AftJumpPointID);
+                }
+
+                // std::cout << (it+PreJumpPointId)->first.x << "," << (it+PreJumpPointId)->first.y << ", xy "<< std::endl;
+
+                solution[i].states.insert(it + PreJumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
                 solution_path[i].states.begin() + time_b);
 
-                solution[i].actions.insert(it_ac + JumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+                solution[i].actions.insert(it_ac + PreJumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
                 solution_path[i].actions.begin() + time_b);              
 
                 is_restart = true;
@@ -1072,8 +1102,8 @@ private:
                   }
                   jjj++;
                 }
-                // if(num_old <= num_new) continue;
                 // if(num_new > 0) continue;
+                if(num_old <= num_new) continue;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
                   solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
@@ -2167,7 +2197,7 @@ private:
             }
             if(temp_s.x == neighbors[nei].state.x && temp_s.y == neighbors[nei].state.y){
               neighbors[nei].state.nc_cat++;
-              // std::cout << "Here \n";
+              // std::cout << "Here vertex\n";
             }
             if(current_time - 1 >= 0){
               if(current_time - 1 < m_cat[agent_id].states.size()){
@@ -2175,6 +2205,7 @@ private:
                 if(temp_s_p.x == neighbors[nei].state.x && temp_s_p.y == neighbors[nei].state.y
                   && temp_s.x == s.x && temp_s.y == s.y){
                   neighbors[nei].state.nc_cat++;
+                  // std::cout << "Here edge\n";
                 }
               }
             }

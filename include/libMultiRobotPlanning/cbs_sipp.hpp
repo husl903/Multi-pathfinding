@@ -313,7 +313,7 @@ class CBSSIPP {
     // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
     //   std::cout << startJps.conflicts_all[iiii] << std::endl;    
     // solution = startJps.solution;
-    return true;
+    // return true;
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
 

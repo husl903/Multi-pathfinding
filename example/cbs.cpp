@@ -588,6 +588,31 @@ class Environment {
         }
       }
       if(tt - 1 != solution[i].cost){
+          std::cout << tt << ", " << solution[i].cost << " \n";
+    // for (size_t a = 0; a < solution_path.size(); ++a) {
+      size_t a = i;
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution_path[a].actions.size(); ++i) {
+        std::cout << solution_path[a].states[i].second << ": " <<
+        solution_path[a].states[i].first << "->" << solution_path[a].actions[i].first
+        << "(cost: " << solution_path[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution_path[a].states.back().second << ": " <<
+      solution_path[a].states.back().first << std::endl;
+    // }    
+
+
+    // for (size_t a = 0; a < solution.size(); ++a) {
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+        std::cout << solution[a].states[i].second << ": " <<
+        solution[a].states[i].first << "->" << solution[a].actions[i].first
+        << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution[a].states.back().second << ": " <<
+      solution[a].states.back().first << std::endl;
+    // }   
+
            std::cout << "recover path is not correct\n";
         return false;
       }

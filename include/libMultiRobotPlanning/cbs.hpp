@@ -111,9 +111,7 @@ class CBS {
       jpst_bit jpst_b(m_env);
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
-      Location startNode(-1, -1);
-      startNode.x = initialStates[i].x;
-      startNode.y = initialStates[i].y;       
+      Location startNode(initialStates[i].x, initialStates[i].y);
       bool isJpsSucc = jpst_b.search(startNode, Action::Wait, startJps.solution[i], 0);
       if(!isJpsSucc){
         return false;
@@ -144,7 +142,6 @@ class CBS {
     int num_try_bypss = 0;
     while(!openJps.empty()){
       num_node++;
-      // if(num_node > 50) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
       if(duration1 > 300){
@@ -152,14 +149,14 @@ class CBS {
     	  return false;
       }
       
-      if(num_node % 100 == 0){
-        getrusage(RUSAGE_SELF, &r_usage);
-        // std::cout << r_usage.ru_maxrss << " memory \n"; 
-        if(r_usage.ru_maxrss > 15204352){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";     
-          return false;
-        }
-      }      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   // std::cout << r_usage.ru_maxrss << " memory \n"; 
+      //   if(r_usage.ru_maxrss > 15204352){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";     
+      //     return false;
+      //   }
+      // }      
 
       HighLevelNodeJps PJps = openJps.top();
       int parent_id = PJps.id;
@@ -201,6 +198,7 @@ class CBS {
         
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
+        random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
         // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
@@ -264,11 +262,8 @@ class CBS {
 
           jpstbit.sortCollisionVertex();
           jpstbit.sortCollisionEdgeConstraint();
-          PlanResult<Location, Action, int> solutiontempJps;
           m_env.setGoal(i);
-          Location startNode(-1, -1);
-          startNode.x = initialStates[i].x;
-          startNode.y = initialStates[i].y;
+          Location startNode(initialStates[i].x, initialStates[i].y);
         
           Timer timerJpstbit;
           timerJpstbit.reset();
@@ -1052,14 +1047,14 @@ private:
         point_st[i].push_back(tt);
         for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
           Location temp_loc(a.x, a.y+flag_y*temp_y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
           tt++;
         }
         if(a.x != b.x){
           Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id); 
           tt++;        
@@ -1069,7 +1064,7 @@ private:
         else{flag_x = -1; ac_c = Action::Left;}
         for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
           Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x));
+          solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           point_id[i].push_back(jump_point_id);
           tt++;
@@ -1081,7 +1076,7 @@ private:
           if(a.x == b.x && a.y == b.y) temp_loc = a;
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed + temp_w));
+            solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
             solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
             point_id[i].push_back(jump_point_id);
             tt++;
