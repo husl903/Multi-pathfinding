@@ -19,15 +19,14 @@
 namespace libMultiRobotPlanning {
 
 /*!
-  \example sipp.cpp Simple example using a 2D grid world and
+  \example JPST_BITCBS.cpp Simple example using a 2D grid world and
   up/down/left/right
   actions
 */
 
-/*! \brief JPSSIPP Algorithm to find the shortest path with dynamic obstacles using the jump point search.
-This class implements the SIPP algorithm. SIPP is an informed search algorithm
-that finds the shortest path for a given map and dynamic a-priori known
-obstacles.
+/*! \brief JPST_BITCBS Algorithm to find the shortest path with dynamic obstacles 
+using the jump point search. It also including the fast scanning with bit map.
+This class implements the JPST algorithm, which can break time and spatical symmetries
 It can use a heuristic that needs to be admissible.
 Details of the algorithm can be found in the following paper:\n
 Mike Phillips and Maxim Likhachev:\n
@@ -55,8 +54,6 @@ purposes.
     This function is called on every node discovery and can be used for
    statistical purposes.
 */
-
-
 
 
 template <typename State, typename Location, typename Action, typename Cost,
@@ -113,12 +110,6 @@ public:
 
   void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
 	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
-	//   m_env.jpst_gm_->add_obstacle(location.x, location.y)
-  }
-
-  void setCollisionVertex(const Location& location, int startTime, int EndTime, bool& is_first, bool&	 isV){
-	  m_env.setCollisionVertex(location, startTime, EndTime, is_first, isV);
-	//   m_env.jpst_gm_->add_obstacle(location.x, location.y)
   }
 
   void clearObstacle(const Location& location){
@@ -2564,21 +2555,6 @@ public:
 		m_env.jpst_gm_->add_obstacle(location.x, location.y);
     }
 
-   void setCollisionVertex(const Location& location, int& startTime, int& endTime, bool& is_first, bool& isV){
-    	int index = m_env.getIndex(location);
-	   	// std::cout << "  " << location.x << "  --- " << location.y <<  " time: " << startTime << " , " << endTime << "\n";
-    	if(is_first){
-    		m_safeIntervals_t[index].clear();
-    	}
-		if(isV){
-			for(size_t num = 0; num < m_safeIntervals_t[index].size(); num++){
-				if(m_safeIntervals_t[index][num].start == startTime) return;
-			}
-		}
-		m_safeIntervals_t[index].push_back({startTime, endTime});
-
-		m_env.jpst_gm_->add_obstacle(location.x, location.y);
-    }
 
 	void clearObstacle(const Location& location){
 		m_env.jpst_gm_->clear_obstacles(location.x, location.y);

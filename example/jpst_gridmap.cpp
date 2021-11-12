@@ -8,6 +8,7 @@ libMultiRobotPlanning::jpst_gridmap::jpst_gridmap(gridmap* gm)
 
     // one copy of the map for jumping E<->W; one copy for jumping N<->S
     t_gm_ = new libMultiRobotPlanning::gridmap(gm_->header_height(), gm_->header_width());
+    p_gm_ = new libMultiRobotPlanning::gridmap(gm_->header_height(), gm_->header_width());
 }
 
 libMultiRobotPlanning::jpst_gridmap::~jpst_gridmap()

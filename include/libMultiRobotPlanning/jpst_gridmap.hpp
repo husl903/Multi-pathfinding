@@ -128,8 +128,8 @@ class jpst_gridmap
         // track which xy locations have temporal obstacles
         libMultiRobotPlanning::gridmap* t_gm_;
 
-        // track when temporal obstacles appear and disappear
-        // warthog::sipp_gridmap* sipp_map_;
+        // track which xy locations with CAT
+        libMultiRobotPlanning::gridmap* p_gm_;
 
 
 };
