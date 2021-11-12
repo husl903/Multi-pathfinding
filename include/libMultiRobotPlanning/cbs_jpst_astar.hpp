@@ -191,6 +191,15 @@ class CBSJPSTAstar {
             std::cout << PJps.conflicts_all.size() <<  "Check solution fails 2222\n";
             return false;
           }else{
+            for(auto & constraint : PJps.constraints[0].vertexConstraints){
+              std::cout << "0 vc " <<  constraint << std::endl;
+            }
+            if(PJps.solution.size() > 1){
+            for(auto & constraint : PJps.constraints[1].vertexConstraints){
+              std::cout << "1 VC " <<  constraint << std::endl;
+            }
+            }
+
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }
@@ -202,7 +211,7 @@ class CBSJPSTAstar {
         conflict = PJps.conflicts_all[random_index];
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-        // std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
+        std::cout << "Current cost!!!! " << PJps.cost  << ", id " << PJps.id << ", " << conflict << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
 
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict, constraints);
@@ -302,7 +311,7 @@ class CBSJPSTAstar {
           PJps.conflicts_all.swap(empty_1);
           getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
-          // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << " child\n";
+          std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " child\n";
           gen_node++;
           // std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 

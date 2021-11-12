@@ -176,6 +176,7 @@ class CBS {
       // }
 
       bool foundBypass = true;
+      std::cout << "-----------------------------------------------------------\n";
       // std::cout << "cost " << PJps.cost << " conflict " << PJps.conflicts_all.size() << " cd, " << PJps.id << ", pd " << PJps.parent_id << " Herererere ***********************************************************************\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
@@ -183,7 +184,17 @@ class CBS {
             std::cout << "Check solution fails \n";
             return false;
           }else{
-            std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
+            for(auto & constraint : PJps.constraints[0].vertexConstraints){
+              std::cout << "0 vc " <<  constraint << std::endl;
+            }
+            if(PJps.solution.size() > 1){
+            for(auto & constraint : PJps.constraints[1].vertexConstraints){
+              std::cout << "1 VC " <<  constraint << std::endl;
+            }
+            }
+            getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
+
+            std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", current " << PJps.id << ", ";
             return true;
           }
         }
@@ -202,6 +213,8 @@ class CBS {
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
         // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
+        std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict_temp << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
+        
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
         std::map<size_t, Constraints> constraints;
@@ -281,7 +294,7 @@ class CBS {
           if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
-//          std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
+         std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
             foundBypass = true;
@@ -334,8 +347,9 @@ private:
         handle;
 
     bool operator<(const HighLevelNodeJps& n) const {
-      // if (cost != n.cost)
+      if (cost != n.cost)
       return cost > n.cost;
+      else conflicts_all.size() > n.conflicts_all.size();
       // return id > n.id;
     }
 
@@ -1091,16 +1105,16 @@ private:
 
 
 
-    // for (size_t a = 0; a < solution.size(); ++a) {
-    //   std::cout << "Solution for: " << a << std::endl;
-    //   for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-    //     std::cout << solution[a].states[i].second << ": " <<
-    //     solution[a].states[i].first << "->" << solution[a].actions[i].first
-    //     << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-    //   }
-    //   std::cout << solution[a].states.back().second << ": " <<
-    //   solution[a].states.back().first << std::endl;
-    // }
+    for (size_t a = 0; a < solution.size(); ++a) {
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+        std::cout << solution[a].states[i].second << ": " <<
+        solution[a].states[i].first << "->" << solution[a].actions[i].first
+        << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution[a].states.back().second << ": " <<
+      solution[a].states.back().first << std::endl;
+    }
 
     // for (size_t a = 0; a < solution_path.size(); ++a) {
     //   std::cout << "Solution for: " << a << std::endl;

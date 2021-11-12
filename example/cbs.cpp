@@ -2906,14 +2906,14 @@ int main(int argc, char* argv[]) {
     out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
     out << "schedule:" << std::endl;
     for (size_t a = 0; a < solution_sipp.size(); ++a) {
-    //   std::cout << "Solution for: " << a << std::endl;
-    //   for (size_t i = 0; i < solution_sipp[a].actions.size(); ++i) {
-    //     std::cout << solution_sipp[a].states[i].second << ": " <<
-    //     solution_sipp[a].states[i].first << "->" << solution_sipp[a].actions[i].first
-    //     << "(cost: " << solution_sipp[a].actions[i].second << ")" << std::endl;
-    //   }
-    //   std::cout << solution_sipp[a].states.back().second << ": " <<
-    //   solution_sipp[a].states.back().first << std::endl;
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution_sipp[a].actions.size(); ++i) {
+        std::cout << solution_sipp[a].states[i].second << ": " <<
+        solution_sipp[a].states[i].first << "->" << solution_sipp[a].actions[i].first
+        << "(cost: " << solution_sipp[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution_sipp[a].states.back().second << ": " <<
+      solution_sipp[a].states.back().first << std::endl;
       
       std::cout << "Agent " << a << " : solution " << std::endl; 
       out << "  agent" << a << ":" << std::endl;
@@ -2926,6 +2926,48 @@ int main(int argc, char* argv[]) {
   } else {
     std::cout << inputFile << " Planning NOT successful!" << std::endl;
   }
+
+  if (successJpstA) {
+
+    std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
+    int cost = 0;
+    int makespan = 0;
+    for (const auto& s : solution_jpsta) {
+      cost += s.cost;
+      makespan = std::max<int>(makespan, s.cost);
+    }
+
+    std::ofstream out(outputFile);
+    out << "statistics:" << std::endl;
+    out << "  cost: " << cost << std::endl;
+    out << "  makespan: " << makespan << std::endl;
+    out << "  runtime: " << timer.elapsedSeconds() << std::endl;
+    out << "  highLevelExpanded: " << mapf.highLevelExpanded() << std::endl;
+    out << "  lowLevelExpanded: " << mapf.lowLevelExpanded() << std::endl;
+    out << "schedule:" << std::endl;
+    for (size_t a = 0; a < solution_jpsta.size(); ++a) {
+      std::cout << "Solution for: " << a << std::endl;
+      for (size_t i = 0; i < solution_jpsta[a].actions.size(); ++i) {
+        std::cout << solution_jpsta[a].states[i].second << ": " <<
+        solution_jpsta[a].states[i].first << "->" << solution_jpsta[a].actions[i].first
+        << "(cost: " << solution_jpsta[a].actions[i].second << ")" << std::endl;
+      }
+      std::cout << solution_jpsta[a].states.back().second << ": " <<
+      solution_jpsta[a].states.back().first << std::endl;
+      
+      std::cout << "Agent " << a << " : solution " << std::endl; 
+      // out << "  agent" << a << ":" << std::endl;
+      // for (const auto& state : solution_sipp[a].states) {
+      //   out << "    - x: " << state.first.x << std::endl
+      //       << "      y: " << state.first.y << std::endl
+      //       << "      t: " << state.second << std::endl;
+      // }
+    }
+  } else {
+    std::cout << inputFile << " Planning NOT successful!" << std::endl;
+  }
+
+
 //  if (successA) {
 
 //     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;

@@ -642,6 +642,7 @@ public:
           }
        }
 
+	//find the jump points consider the permanent obstacles
 	void JumpLeft(uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, Cost& jumpcost, unsigned int& dir, bool& deadend){
 		deadend = false;
 		uint32_t neis[3] = {0, 0, 0};
@@ -714,6 +715,7 @@ public:
 		jumpcost = num_steps ;
 	}	
 	
+	//find the jump points consider the permanent obstacles
 	void JumpRight(uint32_t node_id, uint32_t goal_id, uint32_t& jumpnode_id, Cost& jumpcost, unsigned int& dir, bool& deadend){
 		jumpnode_id = node_id;
 		uint32_t neis[3] = {0, 0, 0};
@@ -1242,6 +1244,7 @@ public:
 
 			// read in tiles from 3 adjacent rows. the curent node 
 			// is in the low byte of the middle row
+			// the jump points considering the temporal obstacles
 			m_env.jpst_gm_->t_gm_->get_neighbours_32bit(jumpnode_id, neis);
 
 			// uint32_t xx2, yy2;
