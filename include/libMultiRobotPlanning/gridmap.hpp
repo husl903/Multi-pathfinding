@@ -326,6 +326,9 @@ class gridmap
 		void
 		printdb(std::ostream& out);
 
+	    void 
+		clear_all();
+
 		size_t 
 		mem()
 		{

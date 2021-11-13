@@ -308,16 +308,16 @@ class CBSSIPP {
     std::vector<Conflict> empty_1;
     startJps.conflicts_all.swap(empty_1);
 
-    for (size_t a = 0; a < startJps.solution.size(); ++a) {
-      std::cout << "Solution for: " << a << std::endl;
-      for (size_t i = 0; i < startJps.solution[a].actions.size(); ++i) {
-        std::cout << startJps.solution[a].states[i].second << ": " <<
-        startJps.solution[a].states[i].first << "->" << startJps.solution[a].actions[i].first
-        << "(cost: " << startJps.solution[a].actions[i].second << ")" << std::endl;
-      }
-      std::cout << startJps.solution[a].states.back().second << ": " <<
-      startJps.solution[a].states.back().first << std::endl;     
-    }
+    // for (size_t a = 0; a < startJps.solution.size(); ++a) {
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t i = 0; i < startJps.solution[a].actions.size(); ++i) {
+    //     std::cout << startJps.solution[a].states[i].second << ": " <<
+    //     startJps.solution[a].states[i].first << "->" << startJps.solution[a].actions[i].first
+    //     << "(cost: " << startJps.solution[a].actions[i].second << ")" << std::endl;
+    //   }
+    //   std::cout << startJps.solution[a].states.back().second << ": " <<
+    //   startJps.solution[a].states.back().first << std::endl;     
+    // }
 
 
 //    while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
@@ -374,24 +374,24 @@ class CBSSIPP {
       // }
 
       bool foundBypass = true;
-      std::cout << "hererere\n";
+      // std::cout << "hererere\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
           solution = PJps.solution;
           m_env.getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
-          for(auto & constraint : PJps.constraints[0].vertexConstraints){
-            std::cout << "0vc " << constraint << std::endl;
-          }
-          for(auto & constraint : PJps.constraints[1].vertexConstraints){
-            std::cout << "1vc " << constraint << std::endl;
-          }
+          // for(auto & constraint : PJps.constraints[0].vertexConstraints){
+          //   std::cout << "0vc " << constraint << std::endl;
+          // }
+          // for(auto & constraint : PJps.constraints[1].vertexConstraints){
+          //   std::cout << "1vc " << constraint << std::endl;
+          // }
 
-          for(auto & constraint : PJps.constraints[0].edgeConstraints){
-            std::cout << "0ec  " << constraint << std::endl;
-          }
-          for(auto & constraint : PJps.constraints[1].edgeConstraints){
-            std::cout << "1ec " << constraint << std::endl;
-          }
+          // for(auto & constraint : PJps.constraints[0].edgeConstraints){
+          //   std::cout << "0ec  " << constraint << std::endl;
+          // }
+          // for(auto & constraint : PJps.constraints[1].edgeConstraints){
+          //   std::cout << "1ec " << constraint << std::endl;
+          // }
 
           if(PJps.num_conflict == 0){
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
@@ -409,7 +409,7 @@ class CBSSIPP {
         int random_index = rand()%PJps.conflicts_all.size();
         random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
-        std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
+        // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
         std::map<size_t, Constraints> constraints;
@@ -417,7 +417,7 @@ class CBSSIPP {
         int child_id = 0;
         foundBypass = false;
         for(const auto& c : constraints){
-          std::cout << c.second << " agent "<<c.first << std::endl;
+          // std::cout << c.second << " agent "<<c.first << std::endl;
           size_t i = c.first;
           NewChild[child_id].solution = PJps.solution;
           NewChild[child_id].constraints = PJps.constraints;
@@ -440,7 +440,7 @@ class CBSSIPP {
           sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           m_env.resetTemporalObstacle();
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
-            std::cout << "Berfore vc " << constraint << std::endl;
+            // std::cout << "Berfore vc " << constraint << std::endl;
         	  Location location(constraint.x, constraint.y);
             m_env.setTemporalObstacle(location, constraint.time);
         	  if(is_first_constraint_v){
@@ -451,7 +451,7 @@ class CBSSIPP {
           	}
           }
           for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
-            std::cout << "befoe ec " << constraint << std::endl;
+            // std::cout << "befoe ec " << constraint << std::endl;
         	  Location loc(constraint.x2, constraint.y2);
             m_env.setTemporalEdgeConstraint(loc, constraint.time);
         	  if(constraint.x1 == constraint.x2){
@@ -483,18 +483,18 @@ class CBSSIPP {
           int ExpSipp = m_env.num_expansion;
           int GenSipp = m_env.num_generation;
 
-          std::cout <<"Cost " << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << std::endl;
+          // std::cout <<"Cost " << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << std::endl;
 
-    for (size_t a = 0; a < NewChild[child_id].solution.size(); ++a) {
-      std::cout << "Solution for: " << a << std::endl;
-      for (size_t ii = 0; ii < startJps.solution[a].actions.size(); ++ii) {
-        std::cout << NewChild[child_id].solution[a].states[ii].second << ": " <<
-        NewChild[child_id].solution[a].states[ii].first << "->" << NewChild[child_id].solution[a].actions[ii].first
-        << "(cost: " << NewChild[child_id].solution[a].actions[ii].second << ")" << std::endl;
-      }
-      std::cout << NewChild[child_id].solution[a].states.back().second << ": " <<
-      NewChild[child_id].solution[a].states.back().first << std::endl;     
-    }
+    // for (size_t a = 0; a < NewChild[child_id].solution.size(); ++a) {
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t ii = 0; ii < startJps.solution[a].actions.size(); ++ii) {
+    //     std::cout << NewChild[child_id].solution[a].states[ii].second << ": " <<
+    //     NewChild[child_id].solution[a].states[ii].first << "->" << NewChild[child_id].solution[a].actions[ii].first
+    //     << "(cost: " << NewChild[child_id].solution[a].actions[ii].second << ")" << std::endl;
+    //   }
+    //   std::cout << NewChild[child_id].solution[a].states.back().second << ": " <<
+    //   NewChild[child_id].solution[a].states.back().first << std::endl;     
+    // }
 
           if(!is_solved[child_id]) continue;
           // while(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.pop();          
@@ -504,7 +504,7 @@ class CBSSIPP {
           }
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
-          std::cout << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " num\n";
+          // std::cout << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " num\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].conflicts_all.size() < PJps.conflicts_all.size()){
             foundBypass = true;

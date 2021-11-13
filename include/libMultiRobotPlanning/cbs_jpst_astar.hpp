@@ -99,9 +99,12 @@ class CBSJPSTAstar {
 
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
-                
+
+
     HighLevelNodeJps startJps;
     std::vector<PlanResult<Location, Action, Cost>> solution_cat(initialStates.size());
+    std::vector<std::list<size_t> > cat_path;
+
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
     startJps.cost = 0;
@@ -111,7 +114,8 @@ class CBSJPSTAstar {
     std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      jpst_bit jps1(m_env);
+      buildCAT(startJps.solution, cat_path, i);
+      jpst_bit jps1(m_env, cat_path);
       jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
@@ -272,7 +276,8 @@ class CBSJPSTAstar {
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
           }else*/{
-          jpst_bit jpstbit(m_env);
+          buildCAT(NewChild[child_id].solution, cat_path, i);
+          jpst_bit jpstbit(m_env, cat_path);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
         	  Location location(constraint.x, constraint.y);
@@ -340,100 +345,7 @@ class CBSJPSTAstar {
           }
         }           
 
-      }
-
-      continue;
-      // conflict = PJps.conflicts_all.front();
-      // PJps.conflicts_all.pop(); 
-      std::map<size_t, Constraints> constraints;
-      m_env.createConstraintsFromConflict(conflict, constraints);
-      for (const auto& c : constraints) {
-        size_t i = c.first;
-        HighLevelNodeJps newNodeJps = PJps;
-        newNodeJps.id = id;
-        newNodeJps.agent_id = i;
-        
-        bool is_debug_print = false;
-
-        assert(!newNodeJps.constraints[i].overlap(c.second));
-        newNodeJps.constraints[i].add(c.second);
-        newNodeJps.cost -= newNodeJps.solution[i].cost;
-
-        m_env.resetTemporalObstacle();
-        bool is_first_constraint_v = true;
-        bool is_first_constraint_e = true;
-
-       jpst_bit jpstbit(m_env);
-       jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-
-        for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
-        	Location location(constraint.x, constraint.y);
-        	m_env.setTemporalObstacle(location, constraint.time);
-        	if(is_first_constraint_v){
-        		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
-        		is_first_constraint_v = false;
-        	}else{
-        		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
-        	}
-        }
-        
-        for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
-            Location location(constraint.x2, constraint.y2);
-        	m_env.setTemporalEdgeConstraint(location, constraint.time);
-        	if(constraint.x1 == constraint.x2){
-        		if(constraint.y1 == constraint.y2 - 1){
-        			jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
-        		}else if(constraint.y1 == constraint.y2 + 1){
-        			jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
-        		}
-        	}else{
-        		if(constraint.x1 == constraint.x2 - 1){
-        			jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
-        		}else if(constraint.x1 == constraint.x2 + 1){
-        			jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
-        		}
-        	}
-        	if(is_first_constraint_e){
-        		is_first_constraint_e = false;
-        	}
-        }
-
-        jpstbit.sortCollisionVertex();
-        jpstbit.sortCollisionEdgeConstraint();
-        PlanResult<Location, Action, int> solutiontempJps;
-        Location goal = m_env.setGoal(i);
-        m_env.Reset();
-        Location startNode(-1, -1);
-        startNode.x = initialStates[i].x;
-        startNode.y = initialStates[i].y;
-        
-        Timer timerJpstbit;
-        timerJpstbit.reset();
-        m_env.setExactHeuristTrue();
-        bool isJpstbit = jpstbit.search(startNode, Action::Wait, newNodeJps.solution[i], 0);
-        // newNodeJps.solution[i] = solutiontempJps;
-        timerJpstbit.stop();
-        double tJpstbit = timerJpstbit.elapsedSeconds();
-        int ExpJps1 = m_env.num_expansion;
-        int GenJps1 = m_env.num_generation;
-
-  
-        newNodeJps.cost += newNodeJps.solution[i].cost;
-        if (isJpstbit) {
-          auto handle = openJps.push(newNodeJps);
-          (*handle).handle = handle;
-          newNodeJps.agent_id = i;
-          // if(newNodeJps.solution[i].cost != solutionSipp.cost) {
-          //   std::cout << "Sipp is not equal to jpst\n";
-          //   return false;
-          // }
-          // std::cout << newNodeJps;
-          // std::cout << newNodeJps.solution[i].cost  << ", jpst " << solutiontempJps.cost << " i " << newNodeJps.agent_id << std::endl;
-          ++id;        
-        }
-        gen_node++;
-
-      }     
+      } 
     }
 
     return false;
@@ -478,6 +390,38 @@ private:
       return os;
     }
   };
+
+  void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
+               std::vector<std::list<size_t>>cat_path, size_t agent_now){
+    std::vector<PlanResult<Location, Action, int>> solution_path;
+    m_env.recoverConcretePath(solution, solution_path, false);
+    int max_t = 0;
+    for (const auto& sol : solution_path) {
+      max_t = std::max<int>(max_t, sol.states.size());
+    }
+    cat_path.resize(max_t);
+
+    std::cout << " max_t " << max_t << ", " << cat_path.size() << std::endl;
+    for(size_t ag = 0; ag < solution_path.size(); ag++){
+      if(ag == agent_now) continue;
+      int prev = m_env.getIndex(solution_path[ag].states[0].first);
+      int curr;
+      for(size_t timestep = 1; timestep < solution_path[ag].states.size(); timestep++){
+        curr = m_env.getIndex(solution_path[ag].states[timestep].first);
+        cat_path[timestep].push_back(curr);
+        cat_path[timestep].push_back(m_env.getEdgeIndex(curr, prev));
+        prev = curr;
+        if(timestep + 1 >= solution_path[ag].states.size())std::cout << "timestep " << timestep << " \n";
+      }
+      int goalId = m_env.getIndex(solution_path[ag].states.back().first);
+      // std::cout << "start ------------------ ";
+      for(size_t timestep = solution_path[ag].states.size(); timestep < cat_path.size(); timestep++){
+        cat_path[timestep].push_back(goalId);
+        // std::cout << timestep << " stt \n";
+      }
+    }
+  }
+
 
   bool getFirstConflict(
       std::vector<PlanResult<Location, Action, int> >& solution,

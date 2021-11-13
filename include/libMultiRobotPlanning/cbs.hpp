@@ -98,8 +98,9 @@ class CBS {
 
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
-
-    HighLevelNodeJps startJps;
+    
+    std::vector<std::list<size_t> > cat_path;
+    HighLevelNodeJps startJps, PJps;
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
     startJps.cost = 0;
@@ -108,7 +109,8 @@ class CBS {
     m_env.resetTemporalObstacle();
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      jpst_bit jpst_b(m_env);
+      buildCAT(startJps.solution, cat_path, i);
+      jpst_bit jpst_b(m_env, cat_path);
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
@@ -149,34 +151,13 @@ class CBS {
     	  return false;
       }
       
-      // if(num_node % 100 == 0){
-      //   getrusage(RUSAGE_SELF, &r_usage);
-      //   // std::cout << r_usage.ru_maxrss << " memory \n"; 
-      //   if(r_usage.ru_maxrss > 15204352){
-      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";     
-      //     return false;
-      //   }
-      // }      
-
-      HighLevelNodeJps PJps = openJps.top();
+      PJps = openJps.top();
       int parent_id = PJps.id;
       m_env.onExpandHighLevelNode(PJps.cost);
       openJps.pop();
 
-      int jump_id_clf = -1;
-      // if(PJps.conflicts_all.size() == 0){
-      //   solution = PJps.solution;
-      //   if(m_env.CheckValid(PJps.solution)){
-      //     std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
-      //     return true;
-      //   }else{
-      //     std::cout << "Final results is not correct\n";
-      //     return false;
-      //   }
-      // }
-
       bool foundBypass = true;
-      std::cout << "-----------------------------------------------------------\n";
+      // std::cout << "-----------------------------------------------------------\n";
       // std::cout << "cost " << PJps.cost << " conflict " << PJps.conflicts_all.size() << " cd, " << PJps.id << ", pd " << PJps.parent_id << " Herererere ***********************************************************************\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
@@ -184,37 +165,16 @@ class CBS {
             std::cout << "Check solution fails \n";
             return false;
           }else{
-            for(auto & constraint : PJps.constraints[0].vertexConstraints){
-              std::cout << "0 vc " <<  constraint << std::endl;
-            }
-            if(PJps.solution.size() > 1){
-            for(auto & constraint : PJps.constraints[1].vertexConstraints){
-              std::cout << "1 VC " <<  constraint << std::endl;
-            }
-            }
-            getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
-
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", current " << PJps.id << ", ";
             return true;
           }
         }
-        // Conflict conflict_temp = PJps.conflicts_all.front();
-        // PJps.conflicts_all.pop();
-        // PJps.conflicts_all.clear();
-        // getAllConflicts(PJps.solution, PJps.conflicts_all, PJps.num_conflict);
-        // std::cout << "------------------------------------------------------------\n";
-        // for(int ccc = 0; ccc < PJps.conflicts_all.size(); ccc++){
-        //   std::cout << " index " << ccc << ", " << PJps.conflicts_all[ccc] << std::endl;
-        // }
         
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
         random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
-        // PJps.conflicts_all.erase(PJps.conflicts_all.begin() + random_index);
-        // std::cout << random_index << ", " << conflict_temp << " -------------------------------------\n";
-        std::cout << "Current cost " << PJps.cost  << ", id " << PJps.id << ", " << conflict_temp << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
-        
+
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
         std::map<size_t, Constraints> constraints;
@@ -229,7 +189,6 @@ class CBS {
           NewChild[child_id].constraints = PJps.constraints;
           NewChild[child_id].cost = PJps.cost;
           NewChild[child_id].id = id;
-
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
           NewChild[child_id].constraints[i].add(c.second);
           NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
@@ -238,7 +197,8 @@ class CBS {
           bool is_first_constraint_v = true;
           bool is_first_constraint_e = true;
 
-          jpst_bit jpstbit(m_env);
+          buildCAT(NewChild[child_id].solution, cat_path, i);
+          jpst_bit jpstbit(m_env, cat_path);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
@@ -294,7 +254,7 @@ class CBS {
           if(!NewChild[child_id].conflicts_all.empty()) NewChild[child_id].conflicts_all.swap(empty_1);
           getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
-         std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
+          // std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
             foundBypass = true;
@@ -894,138 +854,36 @@ private:
     return false;    
   }
 
-  int  getFirstConflict(
-      std::vector<PlanResult<Location, Action, int> >& solution,
-      Conflict& result, int& jump_id, int& num_conflict){
-    std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
-    std::vector<std::vector<int>> point_id(solution.size());
-    std::vector<std::vector<int>> point_st(solution.size());
-           
+  void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
+               std::vector<std::list<size_t>>cat_path, size_t agent_now){
+    std::vector<PlanResult<Location, Action, int>> solution_path;
+    m_env.recoverConcretePath(solution, solution_path, false);
     int max_t = 0;
-    num_conflict = 0;
-    for(size_t i = 0; i < solution.size(); i++){
-      int tt = 0;
-      Location a(-1, -1), b(-1, -1); 
-      int time_a, time_b;
-      for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
-        if(jump_point_id == solution[i].states.size() - 1){
-          solution_path[i].states.push_back(solution[i].states[jump_point_id]);
-          point_id[i].push_back(jump_point_id);         
-          tt++;
-         if(tt > max_t) max_t = tt;          
-          continue;
-        }
-        a = solution[i].states[jump_point_id].first;
-        b = solution[i].states[jump_point_id + 1].first;
-        time_a = solution[i].states[jump_point_id].second;
-        time_b = solution[i].states[jump_point_id + 1].second;
-        int delta_t = time_b - time_a;
-        int flag_y = 1;
-        Action ac_c;
-        if(a.y > b.y) { flag_y = -1; ac_c = Action::Down;}
-        else { flag_y = 1; ac_c = Action::Up;}
+    for (const auto& sol : solution_path) {
+      max_t = std::max<int>(max_t, sol.states.size());
+    }
+    cat_path.resize(max_t);
 
-        point_st[i].push_back(tt);
-        for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){
-          Location temp_loc(a.x, a.y+flag_y*temp_y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + temp_y));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id);
-          tt++;
-        }
-        if(a.x != b.x){
-          Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id); 
-          tt++;        
-        }
-        int flag_x = 1;
-        if(a.x <= b.x){flag_x = 1; ac_c = Action::Right;}
-        else{flag_x = -1; ac_c = Action::Left;}
-        for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){
-          Location temp_loc(a.x + flag_x*temp_x, b.y);
-          solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + abs(a.y - b.y)+temp_x-1));
-          solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
-          point_id[i].push_back(jump_point_id);
-          tt++;
-        } 
-        if(delta_t != abs(a.x - b.x) + abs(a.y - b.y)){
-          Location temp_loc(-1, -1);
-          if(a.x == b.x){ temp_loc.x = a.x, temp_loc.y = b.y - flag_y;}
-          else{temp_loc.x = b.x - flag_x; temp_loc.y = b.y;}
-          if(a.x == b.x && a.y == b.y) temp_loc = a;
-          int timed = abs(a.x - b.x) + abs(a.y - b.y);
-          for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            solution_path[i].states.push_back(std::make_pair<>(temp_loc, time_a + timed - 1 +temp_w));
-            solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
-            point_id[i].push_back(jump_point_id);
-            tt++;
-          }
-        }
+    // std::cout << " max_t " << max_t << ", " << cat_path.size() << std::endl;
+    for(size_t ag = 0; ag < solution_path.size(); ag++){
+      if(ag == agent_now) continue;
+      if(solution_path[ag].states.size() == 0) continue;
+      int prev = m_env.getIndex(solution_path[ag].states[0].first);
+      int curr;
+      for(size_t timestep = 1; timestep < solution_path[ag].states.size(); timestep++){
+        m_env.add_cat_obstacles(solution_path[ag].states[timestep].first);
+        curr = m_env.getIndex(solution_path[ag].states[timestep].first);
+        cat_path[timestep].push_back(curr);
+        cat_path[timestep].push_back(m_env.getEdgeIndex(curr, prev));
+        prev = curr;
+        // if(timestep + 1 >= solution_path[ag].states.size())std::cout << "timestep " << timestep << " \n";
       }
-      if(tt - 1 != solution[i].cost){
-        // std::cout <<"Agent " <<  i << "recover path is not correct " << tt - 1 << solution[i].cost << std::endl;
-        return false;
+      int goalId = m_env.getIndex(solution_path[ag].states.back().first);
+      for(size_t timestep = solution_path[ag].states.size(); timestep < cat_path.size(); timestep++){
+        cat_path[timestep].push_back(goalId);
       }
     }
-
-    bool is_restart = false;
-    std::vector<std::unordered_set<int>> jump_point(solution.size());
-    result.time = -1;
-    for (int t = 0; t < max_t; ++t) {
-      is_restart = false;
-      // check drive-drive vertex collisions
-      for (size_t i = 0; i < solution_path.size(); ++i) {
-        Location state1 = getState(i, solution_path, t);
-        for (size_t j = i + 1; j < solution_path.size(); ++j) {
-          Location state2 = getState(j, solution_path, t);
-          if (state1 == state2) {
-            if(result.time == -1){
-            result.time = t;
-            result.agent1 = i;
-            result.agent2 = j;
-            result.type = Conflict::Vertex;
-            result.x1 = state1.x;
-            result.y1 = state1.y;
-            if(t >= point_id[i].size()) jump_id = -1;
-            else jump_id = point_id[i][t];
-            }
-            num_conflict++;
-          }
-        }
-      }
-      // if(is_restart) continue;
-      // drive-drive edge (swap)
-      for (size_t i = 0; i < solution_path.size(); ++i) {
-        Location state1a = getState(i, solution_path, t);
-        Location state1b = getState(i, solution_path, t + 1);
-        for (size_t j = i + 1; j < solution_path.size(); ++j) {
-          Location state2a = getState(j, solution_path, t);
-          Location state2b = getState(j, solution_path, t + 1);
-          if (state1a == state2b && state1b == state2a) {
-            if(result.time == -1){
-            result.time = t;
-            result.agent1 = i;
-            result.agent2 = j;
-            result.type = Conflict::Edge;
-            result.x1 = state1a.x;
-            result.y1 = state1a.y;
-            result.x2 = state1b.x;
-            result.y2 = state1b.y;
-            if(t >= point_id[i].size()) jump_id = -1;
-            else jump_id = point_id[i][t];            
-            }
-            num_conflict++;
-          }
-        }
-      }
-    }
-
-    if(result.time == -1) return 0;
-    else return 1;    
   }
-
 
  bool  getAllConflicts(
       std::vector<PlanResult<Location, Action, int> >& solution,
@@ -1105,16 +963,16 @@ private:
 
 
 
-    for (size_t a = 0; a < solution.size(); ++a) {
-      std::cout << "Solution for: " << a << std::endl;
-      for (size_t i = 0; i < solution[a].actions.size(); ++i) {
-        std::cout << solution[a].states[i].second << ": " <<
-        solution[a].states[i].first << "->" << solution[a].actions[i].first
-        << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
-      }
-      std::cout << solution[a].states.back().second << ": " <<
-      solution[a].states.back().first << std::endl;
-    }
+    // for (size_t a = 0; a < solution.size(); ++a) {
+    //   std::cout << "Solution for: " << a << std::endl;
+    //   for (size_t i = 0; i < solution[a].actions.size(); ++i) {
+    //     std::cout << solution[a].states[i].second << ": " <<
+    //     solution[a].states[i].first << "->" << solution[a].actions[i].first
+    //     << "(cost: " << solution[a].actions[i].second << ")" << std::endl;
+    //   }
+    //   std::cout << solution[a].states.back().second << ": " <<
+    //   solution[a].states.back().first << std::endl;
+    // }
 
     // for (size_t a = 0; a < solution_path.size(); ++a) {
     //   std::cout << "Solution for: " << a << std::endl;

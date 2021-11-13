@@ -106,7 +106,7 @@ public:
 
 
  public:
-  JPSSIPP_BITCBS(Environment& environment) : m_env(environment), m_astar(m_env) {}
+  JPSSIPP_BITCBS(Environment& environment, std::vector<std::list<size_t>>& cat) : m_env(environment, cat), m_astar(m_env) {}
 
   void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
 	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
@@ -252,7 +252,7 @@ public:
 
   // private:
   struct JPSSIPPEnvironment {
-    JPSSIPPEnvironment(Environment& env) : m_env(env) {}
+    JPSSIPPEnvironment(Environment& env, std::vector<std::list<size_t>>& cat) : m_env(env), m_cat(cat) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
 //    	return m_env.admissibleHeuristic(s.state, s.dir, s.g_cost);
@@ -2826,6 +2826,7 @@ public:
 
    private:
     Environment& m_env;
+    std::vector<std::list<size_t> >& m_cat;	
     Cost m_lastGScore;
     std::vector<std::vector<interval>> m_safeIntervals_t;
     std::vector<std::vector<edgeCollision>> m_edgeCollision_t;

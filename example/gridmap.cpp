@@ -98,5 +98,12 @@ namespace libMultiRobotPlanning {
 			out << std::endl;
 		}	
 	}
+	
+	void gridmap::clear_all(){
+		for(unsigned int i=0; i < db_size_; i++)
+		{
+			db_[i] = 0;
+		}		
+	}	
 }
 
