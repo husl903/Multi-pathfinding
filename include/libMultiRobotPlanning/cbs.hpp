@@ -110,6 +110,7 @@ class CBS {
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
       buildCAT(startJps.solution, cat_path, i);
+      std::cout<< "cat " << cat_path.size() << std::endl; 
       jpst_bit jpst_b(m_env, cat_path);
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -855,7 +856,7 @@ private:
   }
 
   void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
-               std::vector<std::list<size_t>>cat_path, size_t agent_now){
+               std::vector<std::list<size_t>>&cat_path, size_t agent_now){
     std::vector<PlanResult<Location, Action, int>> solution_path;
     m_env.recoverConcretePath(solution, solution_path, false);
     int max_t = 0;
