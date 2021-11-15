@@ -106,7 +106,7 @@ public:
 
 
  public:
-  JPSSIPP_BITCBS(Environment& environment, std::vector<std::list<size_t>>& cat) : m_env(environment, cat), m_astar(m_env) {}
+  JPSSIPP_BITCBS(Environment& environment, std::vector<PlanResult<Location, Action, int>>& cat) : m_env(environment, cat), m_astar(m_env) {}
 
   void setCollisionVertex(const Location& location, int startTime, int EndTime, bool is_first){
 	  m_env.setCollisionVertex(location, startTime, EndTime, is_first);
@@ -158,6 +158,7 @@ public:
     if (!m_env.findSafeInterval(startState, startTime, interval)) {
       return false;
     }
+	// std::cout << "interval " << interval << " \n";
     bool success = m_astar.search(JPSSIPPState(startState, interval, 0xf, 0, false), astarsolution, startTime);
 
     solution.cost = astarsolution.cost - startTime;
@@ -252,7 +253,7 @@ public:
 
   // private:
   struct JPSSIPPEnvironment {
-    JPSSIPPEnvironment(Environment& env, std::vector<std::list<size_t>>& cat) : m_env(env), m_cat(cat) {}
+    JPSSIPPEnvironment(Environment& env, std::vector<PlanResult<Location, Action, int>>& cat) : m_env(env), m_cat(cat) {}
 
     Cost admissibleHeuristic(const JPSSIPPState& s) {
 //    	return m_env.admissibleHeuristic(s.state, s.dir, s.g_cost);
@@ -786,6 +787,7 @@ public:
 	}
 
 	void getJPSLeft(JPSSIPPState s, unsigned int dir, unsigned int dir_p, Cost current_cost, Cost& jumpcost){
+		// std::cout << " Left " << s.state.x << ", " << s.state.y << " ---------\n";
 		if(isSolution(s)){
 			flag_is_solution = true;
 			s.dir_p = dir_p;
@@ -853,6 +855,8 @@ public:
 		bool is_found = false;
 		bool isSafeNext;
 		uint32_t num = 0; //number of reading neighbours
+		// m_env.jpst_gm_->t_gm_->print(std::cout);
+		// m_env.jpst_gm_->p_gm_->print(std::cout);		
 		while(jumpnode_id >= min_id)
 		{
 			// read in tiles from 3 adjacent rows. the curent node 
@@ -863,71 +867,91 @@ public:
 			// stop if we try to jump over nodes with temporal events
 			// or which have neighbours with temporal events.
 			// such nodes may be jump points
-			uint32_t stop_bits = neis[0] | neis[1] | neis[2];
-
+			uint32_t stop_bits_temp = neis[0] | neis[1] | neis[2];
 			//restart direction because of the CAT
 			uint32_t stop_bits_cat = neis_cat[0] | neis_cat[2];
+			uint32_t stop_bits_all = stop_bits_temp | stop_bits_cat;
 
-			if(stop_bits || stop_bits_cat)
+			if(stop_bits_all)
 			{
-				uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits); // returns idx+1
+				uint32_t stop_pos = (uint32_t)__builtin_clz(stop_bits_all); // returns idx+1
+				uint32_t stop_pos_temp = (uint32_t)__builtin_clz(stop_bits_temp);
 				uint32_t stop_pos_cat = (uint32_t)__builtin_clz(stop_bits_cat);
 				uint32_t checked_id = jumpnode_id; // avoid check the same state
-				while(stop_bits){
+				while(stop_bits_all){
 					JPSSIPPState temp_s = s;
 					temp_s.state.y = s.state.y;
 					temp_s.state.x = s.state.x - stop_pos + 1 - num * 31;
+					if(temp_s.state.x < 0) break;
 					temp_s.dir = 0x00;
-					uint32_t current_jumpnode_id = jumpnode_id - stop_pos;					
-					if(current_jumpnode_id + 1 < min_id) break;
-					if(current_jumpnode_id + 1 != current_id
-						&& current_jumpnode_id + 1 < checked_id
-						&& m_env.stateValid(temp_s.state) && temp_s.state.x < s.state.x){
-						if(m_env.isDebug)std::cout << "Cost " << m_lastGScore + current_cost - 2 + stop_pos << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
+					uint32_t current_jumpnode_id = jumpnode_id - stop_pos;						
+					if(stop_pos == stop_pos_temp){
+						if(current_jumpnode_id + 1 < min_id) break;
+						if(current_jumpnode_id + 1 != current_id
+							&& current_jumpnode_id + 1 < checked_id
+							&& m_env.stateValid(temp_s.state) && temp_s.state.x < s.state.x){
+							if(m_env.isDebug) std::cout << "Cost " << m_lastGScore + current_cost - 2 + stop_pos << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
+				    		if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext) return;
+							checked_id = current_jumpnode_id + 1;
 						}
-						if(!isSafeNext) return;
-						checked_id = current_jumpnode_id + 1;
+						if(current_jumpnode_id  < min_id) break;
+						temp_s.state.x = s.state.x - stop_pos - num * 31;					
+						if(current_jumpnode_id != current_id
+							&& current_jumpnode_id < checked_id
+							&& m_env.stateValid(temp_s.state)){
+							if(m_env.isDebug) std::cout << m_lastGScore + current_cost + stop_pos -1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
+				    		if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos -1 + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext) return;
+							checked_id = current_jumpnode_id;
+						}
+						if(current_jumpnode_id - 1 < min_id) break;
+						temp_s.state.x = s.state.x - stop_pos - 1 - num * 31;
+						if(current_jumpnode_id -1 != current_id
+							&& current_jumpnode_id -1 < checked_id
+							&& m_env.stateValid(temp_s.state)){
+							if(m_env.isDebug) std::cout << m_lastGScore + current_cost + 1 + stop_pos - 1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
+				    		if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext) return;
+							checked_id = current_jumpnode_id -1;
+						}
+						stop_bits_temp =  stop_bits_temp & (~(0x80000000 >> stop_pos));
+						stop_pos_temp = (uint32_t)__builtin_clz(stop_bits_temp);
+				    }else if(current_jumpnode_id - 1 < checked_id && current_jumpnode_id - 1 != current_id ){
+						if(current_jumpnode_id - 1 < min_id) break;
+						temp_s.state.x = s.state.x - stop_pos - 1 - num * 31;
+						if(!(stop_pos_temp == stop_pos + 1 || stop_pos_temp == stop_pos + 2) 
+						     && m_env.stateValid(temp_s.state)
+							 && stop_pos != 31){
+							Cost curr_g = m_lastGScore + current_cost + stop_pos + num * 31 + 2;
+							bool isCatJpUp = isCatJumpPoint(Location(temp_s.state.x, temp_s.state.y + 1), 
+						  		Location(temp_s.state.x + 1, temp_s.state.y + 1), curr_g);
+							bool isCatJpDown = isCatJumpPoint(Location(temp_s.state.x, temp_s.state.y - 1), 
+						  		Location(temp_s.state.x + 1, temp_s.state.y - 1), curr_g);
+							unsigned int current_dir = 0x01;
+							if(isCatJpUp) current_dir |= 0x04;
+							if(isCatJpDown) current_dir |= 0x08;
+							if(isCatJpDown || isCatJpUp){
+								temp_s.dir = current_dir;
+								temp_s.interval = 0;
+    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(
+								   temp_s, Action::Left, curr_g -1 - m_lastGScore));
+								return;
+							}
+						}
 					}
 
-					if(current_jumpnode_id  < min_id) {
-						jumpnode_id = current_jumpnode_id;
-						break;
-					}
-					temp_s.state.x = s.state.x - stop_pos - num * 31;					
-					if(current_jumpnode_id != current_id
-						&& current_jumpnode_id < checked_id
-						&& m_env.stateValid(temp_s.state)){
-						if(m_env.isDebug) std::cout << m_lastGScore + current_cost + stop_pos -1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + stop_pos -1 + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
-						}
-						if(!isSafeNext) return;
-						checked_id = current_jumpnode_id;
-					}		
-
-					temp_s.state.x = s.state.x - stop_pos - 1 - num * 31;
-					if(current_jumpnode_id - 1 < min_id) {
-						jumpnode_id = current_jumpnode_id -1;
-						break;
-					}
-					if(current_jumpnode_id -1 != current_id
-						&& current_jumpnode_id -1 < checked_id
-						&& m_env.stateValid(temp_s.state)){
-						if(m_env.isDebug) std::cout << m_lastGScore + current_cost + 1 + stop_pos - 1 << " temp_s " << temp_s.state.x << " " << temp_s.state.y << " \n";
-				    	if(CheckJPSLeft(temp_s, m_lastGScore + current_cost + 1 + stop_pos -1 + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
-						}
-						if(!isSafeNext) return;
-						checked_id = current_jumpnode_id -1;
-					}
-
-					stop_bits =  stop_bits & (~(0x80000000 >> stop_pos));
-					stop_pos = (uint32_t)__builtin_clz(stop_bits); 
+					stop_bits_all =  stop_bits_all & (~(0x80000000 >> stop_pos));
+					stop_pos = (uint32_t)__builtin_clz(stop_bits_all);
 				}
 				if(is_found) break;
 			} 
@@ -1019,6 +1043,7 @@ public:
     	 		 up_start_t = -1; down_start_t = -1; right_start_t = -1;
 				 bool is_jp_cat_up = isCatJumpPoint(State(temp_s.state.x - 1, temp_s.state.y + 1), State(temp_s.state.x, temp_s.state.y + 1), current_g + current_cost_l + 2);
 				 bool is_jp_cat_down = isCatJumpPoint(State(temp_s.state.x - 1, temp_s.state.y - 1), State(temp_s.state.x, temp_s.state.y - 1), current_g + current_cost_l + 2);
+				//  std::cout << current_successor.state.x << ", " << current_successor.state.y << ", " << is_jp_cat_up << ", " << is_jp_cat_down << std::endl;
 				 if(m_env.isJumpPoint(current_successor.state, current_g + current_cost_l + 1)
 				    || is_jp_cat_up || is_jp_cat_down
                  ){
@@ -1211,6 +1236,7 @@ public:
 		int jumplimit = m_env.limit_jump;
 		uint32_t max_id = current_id + jumplimit;
 		uint32_t neis[3] = {0, 0, 0};
+		uint32_t neis_cat[3] = {0, 0, 0};
 		uint32_t jumpnode_id = current_id;
  		if(jump_id <= max_id){
 			max_id = jump_id;
@@ -1232,6 +1258,7 @@ public:
 			// is in the low byte of the middle row
 			// the jump points considering the temporal obstacles
 			m_env.jpst_gm_->t_gm_->get_neighbours_32bit(jumpnode_id, neis);
+			m_env.jpst_gm_->p_gm_->get_neighbours_32bit(jumpnode_id, neis_cat);
 
 			// uint32_t xx2, yy2;
 			// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id, xx2, yy2);
@@ -1240,23 +1267,20 @@ public:
 			// stop if we try to jump over nodes with temporal events
 			// or which have neighbours with temporal events.
 			// we treat such nodes as jump points
-			uint32_t stop_bits = neis[0] | neis[1] | neis[2];
-			if(stop_bits)
+			uint32_t stop_bits_temp = neis[0] | neis[1] | neis[2];
+			uint32_t stop_bits_cat = neis_cat[0] | neis_cat[2];
+			uint32_t stop_bits_all = stop_bits_temp | stop_bits_cat;
+			if(stop_bits_all)
 			{
-				uint32_t stop_pos = (uint32_t)__builtin_ffs((int)stop_bits) - 1; // returns idx+1				
+
+				uint32_t stop_pos_temp = (uint32_t)__builtin_ffs((int)stop_bits_temp) - 1; // returns idx+1				
+				uint32_t stop_pos_cat = (uint32_t)__builtin_ffs((int)stop_bits_cat) - 1; // returns idx+1				
+				uint32_t stop_pos = (uint32_t)__builtin_ffs((int)stop_bits_all) - 1; // returns idx+1				
 				// std::cout << "stop_pos " << stop_pos << " jumpnodeid " << jumpnode_id + stop_pos + 1 << " "  << jump_id << " \n";
 			    // if(m_env.isDebug) std::cout << " xx1, yy1 " << xx1 << " " << yy1 <<  " xx2, yy2 " << xx2 << " " << yy2 << " !!!!!!!!!\n";
 
 				uint32_t checked_id = jumpnode_id - 1;
-				while(stop_bits){
-
-					// if(jumpnode_id + stop_pos - 1 > max_id) {
-					// 	jumpnode_id = jumpnode_id + stop_pos - 1;
-					// 	break;
-					// }
-					// m_env.jpst_gm_->gm_->to_unpadded_xy(jumpnode_id + stop_pos, xx2, yy2);					
-					// if(m_env.isDebug) std::cout << temp_s.state.x << " " << temp_s.state.y << " Temp_s state 11111\n";
-					// if(m_env.isDebug) std::cout << "Right  -----------------------------11111\n";
+				while(stop_bits_all){
 
 					uint32_t current_jumpnode_id = jumpnode_id + stop_pos;
 					if(current_jumpnode_id - 1 > max_id) break;
@@ -1265,55 +1289,73 @@ public:
 					temp_s.state.y = s.state.y;
 					temp_s.state.x = s.state.x + stop_pos - 1 + num * 31;
 				    isSafeNext = false;
-					if(current_jumpnode_id -1 != current_id 
-						&& current_jumpnode_id - 1 > checked_id
-						&& m_env.stateValid(temp_s.state) && temp_s.state.x > s.state.x){
-	   					// if(m_env.isDebug) std::cout << checked_id << " " <<jumpnode_id + stop_pos - 1 <<  " " << temp_s.state.x << " " << temp_s.state.y << " G " << " Temp_s state 11111\n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
+					if(stop_pos == stop_pos_temp){
+						if(current_jumpnode_id -1 != current_id 
+							&& current_jumpnode_id - 1 > checked_id
+							&& m_env.stateValid(temp_s.state) && temp_s.state.x > s.state.x){
+							if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 2 + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext) return ;
+							checked_id = current_jumpnode_id - 1;
 						}
-						if(!isSafeNext) return ;
-						checked_id = current_jumpnode_id - 1;
+					
+						if(current_jumpnode_id > max_id) break;
+						temp_s.state.x = s.state.x + stop_pos + num * 31;
+					    isSafeNext = false;
+					    if(current_jumpnode_id != current_id 
+							&& current_jumpnode_id > checked_id
+							&& m_env.stateValid(temp_s.state)){
+							if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 1 + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext)	return;
+							checked_id = current_jumpnode_id;
+						}	
+						if(current_jumpnode_id + 1 > max_id) break;
+						temp_s.state.x = s.state.x + stop_pos + 1 + num * 31;
+						isSafeNext = false;					
+				    	if(current_jumpnode_id + 1 != current_id 
+							&& current_jumpnode_id + 1 > checked_id
+							&& m_env.stateValid(temp_s.state)){
+							if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos + num * 31, current_cost, isSafeNext, dir_p)) {
+								is_found = true;
+								return;
+							}
+							if(!isSafeNext) return;
+							checked_id = current_jumpnode_id + 1;
+						}										
+						if(is_found || !isSafeNext) break;
+						stop_bits_temp =  stop_bits_all & (~(0x1 << stop_pos_temp));
+						stop_pos_temp = (uint32_t)__builtin_ffs((int)stop_bits_temp) - 1; 
+					}else if(current_jumpnode_id + 1 > checked_id || current_jumpnode_id + 1 != current_id){
+						if(current_jumpnode_id + 1 > max_id) break;
+						temp_s.state.x = s.state.x + stop_pos + 1 + num * 31;
+						if(!(stop_pos_temp == stop_pos + 1 || stop_pos_temp == stop_pos + 2)
+						   && m_env.stateValid(temp_s.state)
+						   && stop_pos != 31){
+							Cost curr_g = m_lastGScore + current_cost + stop_pos + num * 31 + 2;
+							bool isCatJpUp = isCatJumpPoint(Location(temp_s.state.x, temp_s.state.y + 1), 
+						  		Location(temp_s.state.x + 1, temp_s.state.y + 1), curr_g);
+							bool isCatJpDown = isCatJumpPoint(Location(temp_s.state.x, temp_s.state.y - 1), 
+						  		Location(temp_s.state.x + 1, temp_s.state.y - 1), curr_g);
+							unsigned int current_dir = 0x01;
+							if(isCatJpUp) current_dir |= 0x04;
+							if(isCatJpDown) current_dir |= 0x08;
+							if(isCatJpDown || isCatJpUp){
+								temp_s.dir = current_dir;
+								temp_s.interval = 0;
+    	           				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(
+								   temp_s, Action::Left, curr_g -1 - m_lastGScore));
+								return;
+							}
+						}
 					}
 
-					
-					if(m_env.isDebug) std::cout << "Right  -----------------------------22222\n";
-					if(current_jumpnode_id > max_id) break;
-					temp_s.state.x = s.state.x + stop_pos + num * 31;
-				    isSafeNext = false;
-				    if(current_jumpnode_id != current_id 
-						&& current_jumpnode_id > checked_id
-						&& m_env.stateValid(temp_s.state)){
-					    if(m_env.isDebug) std::cout << checked_id << " " <<jumpnode_id + stop_pos <<  " " << temp_s.state.x << " " << temp_s.state.y << " Temp_s state 22222\n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos - 1 + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
-						}
-						if(!isSafeNext)	return;
-						checked_id = current_jumpnode_id;
-					}	
-
-					if(current_jumpnode_id + 1 > max_id) break;
-					temp_s.state.x = s.state.x + stop_pos + 1 + num * 31;
-					isSafeNext = false;					
-					if(m_env.isDebug)  std::cout << "Right  -----------------------------3333\n";
-				    if(current_jumpnode_id + 1 != current_id 
-						&& current_jumpnode_id + 1 > checked_id
-						&& m_env.stateValid(temp_s.state)){
-						if(m_env.isDebug) std::cout << temp_s.state.x << " " << temp_s.state.y << " Temp_s state 33333 \n";
-						if(m_env.isDebug)  std::cout <<"Gcost " << m_lastGScore << " " << " current " << current_cost <<  " Right node \n";
-						if(CheckJPSRight(temp_s, m_lastGScore + current_cost + stop_pos + num * 31, current_cost, isSafeNext, dir_p)) {
-							is_found = true;
-							return;
-						}
-						if(!isSafeNext) return;
-						checked_id = current_jumpnode_id + 1;
-					}										
-					if(is_found || !isSafeNext) break;
-
-					stop_bits =  stop_bits & (~(0x1 << stop_pos));
-					stop_pos = (uint32_t)__builtin_ffs((int)stop_bits) - 1; 
+					stop_bits_all =  stop_bits_all & (~(0x1 << stop_pos));
+					stop_pos = (uint32_t)__builtin_ffs((int)stop_bits_all) - 1; 
 				}
 				if(is_found) break;
 			} 
@@ -1350,7 +1392,7 @@ public:
 				temp_successor.dir_p = dir_p;
 				if(m_env.stateValid(temp_successor.state) && isSafe)
 				jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(temp_successor,
-		        		Action::Right, current_cost + steps));	
+		        		Action::Right, current_cost + steps));
 			}
 		}
 	}
@@ -1403,14 +1445,20 @@ public:
     			current_successor.interval = successor_interval;
     			current_successor.dir = 0x00;
     			up_start_t = -1; down_start_t = -1; right_start_t = -1;
-    			if(m_env.isJumpPoint(current_successor.state, current_g + current_cost_l + 1)){
+
+				bool is_jp_cat_up = isCatJumpPoint(State(temp_s.state.x, temp_s.state.y + 1), State(temp_s.state.x + 1, temp_s.state.y + 1), current_g + current_cost_l + 2);
+				bool is_jp_cat_down = isCatJumpPoint(State(temp_s.state.x, temp_s.state.y - 1), State(temp_s.state.x + 1, temp_s.state.y - 1), current_g + current_cost_l + 2);
+    			if(m_env.isJumpPoint(current_successor.state, current_g + current_cost_l + 1)
+					|| is_jp_cat_up || is_jp_cat_down){
 					// std::cout << "Maybe a jump point \n";
     				if(m_env.stateValid(State(temp_s.state.x + 1, temp_s.state.y + 1))){
     					if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y + 1))
     						|| IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y + 1),
             					edgeCollision(current_g + current_cost_l, Action::Down))
     						|| isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y + 1), current_g + current_cost_l + 1)
-							|| IsEdgeCollisionsAfterT(State(temp_s.state.x + 1, temp_s.state.y +1), Action::Left, current_g + current_cost_l + 1)){
+							|| IsEdgeCollisionsAfterT(State(temp_s.state.x + 1, temp_s.state.y +1), Action::Left, current_g + current_cost_l + 1)
+							|| is_jp_cat_up)
+						{
         					// if(!IsEdgeCollisions(State(temp_s.state.x + 1, temp_s.state.y + 1),
         					// 	edgeCollision(current_g + 1, Action::Down))){
         						up_start_t = current_g + current_cost_l + 1;
@@ -1432,7 +1480,9 @@ public:
     						|| IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y - 1),
             					edgeCollision(current_g + current_cost_l, Action::Up))
     						|| isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y - 1), current_g + current_cost_l + 1)
-							|| IsEdgeCollisionsAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), Action::Left, current_g + current_cost_l + 1)){
+							|| IsEdgeCollisionsAfterT(State(temp_s.state.x + 1, temp_s.state.y - 1), Action::Left, current_g + current_cost_l + 1)
+							|| is_jp_cat_down)
+						{
 							// if(m_env.isDebug)  std::cout << current_g + 1 << " Down re-start \n";
         					// if(!IsEdgeCollisions(State(temp_s.state.x + 1, temp_s.state.y - 1),
         						// edgeCollision(current_g + 1, Action::Up))){
@@ -1875,31 +1925,33 @@ public:
     }
 
 	bool isCatJumpPoint(const Location &loc1, const Location &loc2,  Cost timestep){
-		std::cout << ", " << timestep << ",cat size " <<  m_cat.size() << std::endl;
+		// std::cout << ", " << timestep << ",cat size " <<  m_cat.size() << std::endl;
 		// return false;
 		if(m_cat.size() == 0) return false;
-		// std::cout << "size " << m_cat.size() << std::endl;
-		int index_id1 = m_env.getIndex(loc1);
-		int index_id2 = m_env.getIndex(loc2);
+        Location temp_s(-1, -1), temp_s_p(-1, -1);
+		bool flag_is = false;
+		if(!m_env.stateValid(loc1) || !m_env.stateValid(loc2)) return false;
+        for(size_t agent_id = 0; agent_id < m_cat.size(); agent_id++){
+        	if(m_cat[agent_id].states.empty()) continue;
+            if(m_env.getAgentId() == agent_id) continue;
+            if (timestep < m_cat[agent_id].states.size()) {
+              temp_s = m_cat[agent_id].states[timestep].first;
+            }else{
+              temp_s = m_cat[agent_id].states.back().first;     
+            }
+            if(temp_s.x == loc1.x && temp_s.y == loc1.y) return false;
 
-		if (timestep >= (int) m_cat.size()) {
-			for (const auto& loc : m_cat.back()) {
-				if (loc == index_id1) return false;
+			if(timestep - 1 < m_cat[agent_id].states.size()){
+				temp_s_p = m_cat[agent_id].states[timestep - 1].first;
+			}else{
+				temp_s_p = m_cat[agent_id].states.back().first;
 			}
-		}
-		for (const auto& loc : m_cat[timestep]) {
-			if (loc == index_id1) return false;
-		}
-
-		if(timestep - 1 >= (int) m_cat.size()) return false;
-
-		for(const auto& loc : m_cat[timestep - 1]){
-			if(loc == index_id2){
-				std::cout << loc1.x << ", " << loc1.y << ", " << loc2.x << ", " << loc2.y << ", "<<"CAT jump points\n";
-				return true;
-			}
-		}
-		return false;
+			if(temp_s_p.x == loc2.x && temp_s_p.y == loc2.y) flag_is = true;
+        }
+		if(flag_is){
+			// std::cout << loc1.x << ", " << loc1.y << ", " << loc2.x << ", " << loc2.y<< " Cat Jump points \n";
+			return true;
+		}else return false;
 	}
 
     void onExpandNode(const JPSSIPPState& s, Cost fScore, Cost gScore) {
@@ -2244,7 +2296,7 @@ public:
 
    private:
     Environment& m_env;
-    std::vector<std::list<size_t> >& m_cat;	
+    std::vector<PlanResult<Location, Action, int> >& m_cat;	
     Cost m_lastGScore;
     std::vector<std::vector<interval>> m_safeIntervals_t;
     std::vector<std::vector<edgeCollision>> m_edgeCollision_t;

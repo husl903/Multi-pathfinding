@@ -629,6 +629,7 @@ class Environment {
     //   solution_path[a].states.back().first << std::endl;
     // }    
 
+    // std::cout << "Check here\n";
     Conflict result;
     std::vector<std::unordered_set<int>> jump_point(solution.size());
     for (int t = 0; t < max_t; ++t) {
@@ -677,13 +678,13 @@ class Environment {
 
  bool recoverConcretePath(
       std::vector<PlanResult<Location, Action, int> >& solution,
-      std::vector<PlanResult<Location, Action, int> >& solution_path, bool isCheck){
+      std::vector<PlanResult<Location, Action, int> >& solution_path, int agentnow, bool isCheck){
 
     solution_path.resize(solution.size());
-    
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
       if(solution[i].states.size() == 0) continue;
+      if(i == agentnow) continue;
       int tt = 0;
       Location a(-1, -1), b(-1, -1); 
       int time_a, time_b;
@@ -1976,7 +1977,7 @@ Location  setGoal(int agentId){
 public:
   int num_generation = 0;
   int num_expansion = 0;
-  int limit_jump = 32;
+  int limit_jump = 64;
   int m_dimx;
   int m_dimy;
  private:

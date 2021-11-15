@@ -103,7 +103,7 @@ class CBSJPSTAstar {
 
     HighLevelNodeJps startJps;
     std::vector<PlanResult<Location, Action, Cost>> solution_cat(initialStates.size());
-    std::vector<std::list<size_t> > cat_path;
+    // std::vector<std::list<size_t> > cat_path;
 
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
@@ -114,8 +114,8 @@ class CBSJPSTAstar {
     std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      buildCAT(startJps.solution, cat_path, i);
-      jpst_bit jps1(m_env, cat_path);
+      // buildCAT(startJps.solution, cat_path, i);
+      jpst_bit jps1(m_env, solution_cat);
       jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
@@ -276,8 +276,8 @@ class CBSJPSTAstar {
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
           }else*/{
-          buildCAT(NewChild[child_id].solution, cat_path, i);
-          jpst_bit jpstbit(m_env, cat_path);
+          // buildCAT(NewChild[child_id].solution, cat_path, i);
+          jpst_bit jpstbit(m_env, solution_cat);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
         	  Location location(constraint.x, constraint.y);
@@ -391,36 +391,36 @@ private:
     }
   };
 
-  void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
-               std::vector<std::list<size_t>>cat_path, size_t agent_now){
-    std::vector<PlanResult<Location, Action, int>> solution_path;
-    m_env.recoverConcretePath(solution, solution_path, false);
-    int max_t = 0;
-    for (const auto& sol : solution_path) {
-      max_t = std::max<int>(max_t, sol.states.size());
-    }
-    cat_path.resize(max_t);
+  // void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
+  //              std::vector<std::list<size_t>>cat_path, size_t agent_now){
+  //   std::vector<PlanResult<Location, Action, int>> solution_path;
+  //   m_env.recoverConcretePath(solution, solution_path, false);
+  //   int max_t = 0;
+  //   for (const auto& sol : solution_path) {
+  //     max_t = std::max<int>(max_t, sol.states.size());
+  //   }
+  //   cat_path.resize(max_t);
 
-    std::cout << " max_t " << max_t << ", " << cat_path.size() << std::endl;
-    for(size_t ag = 0; ag < solution_path.size(); ag++){
-      if(ag == agent_now) continue;
-      int prev = m_env.getIndex(solution_path[ag].states[0].first);
-      int curr;
-      for(size_t timestep = 1; timestep < solution_path[ag].states.size(); timestep++){
-        curr = m_env.getIndex(solution_path[ag].states[timestep].first);
-        cat_path[timestep].push_back(curr);
-        cat_path[timestep].push_back(m_env.getEdgeIndex(curr, prev));
-        prev = curr;
-        if(timestep + 1 >= solution_path[ag].states.size())std::cout << "timestep " << timestep << " \n";
-      }
-      int goalId = m_env.getIndex(solution_path[ag].states.back().first);
-      // std::cout << "start ------------------ ";
-      for(size_t timestep = solution_path[ag].states.size(); timestep < cat_path.size(); timestep++){
-        cat_path[timestep].push_back(goalId);
-        // std::cout << timestep << " stt \n";
-      }
-    }
-  }
+  //   std::cout << " max_t " << max_t << ", " << cat_path.size() << std::endl;
+  //   for(size_t ag = 0; ag < solution_path.size(); ag++){
+  //     if(ag == agent_now) continue;
+  //     int prev = m_env.getIndex(solution_path[ag].states[0].first);
+  //     int curr;
+  //     for(size_t timestep = 1; timestep < solution_path[ag].states.size(); timestep++){
+  //       curr = m_env.getIndex(solution_path[ag].states[timestep].first);
+  //       cat_path[timestep].push_back(curr);
+  //       cat_path[timestep].push_back(m_env.getEdgeIndex(curr, prev));
+  //       prev = curr;
+  //       if(timestep + 1 >= solution_path[ag].states.size())std::cout << "timestep " << timestep << " \n";
+  //     }
+  //     int goalId = m_env.getIndex(solution_path[ag].states.back().first);
+  //     // std::cout << "start ------------------ ";
+  //     for(size_t timestep = solution_path[ag].states.size(); timestep < cat_path.size(); timestep++){
+  //       cat_path[timestep].push_back(goalId);
+  //       // std::cout << timestep << " stt \n";
+  //     }
+  //   }
+  // }
 
 
   bool getFirstConflict(
