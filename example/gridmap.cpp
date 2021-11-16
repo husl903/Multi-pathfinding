@@ -94,6 +94,7 @@ namespace libMultiRobotPlanning {
 			{
 				libMultiRobotPlanning::dbword c = this->get_label(y*this->width()+x);
 				out << (c ? '.' : '@');
+				// if(c) std::cout << y << ", " << x << " ----------------\n";
 			}
 			out << std::endl;
 		}	

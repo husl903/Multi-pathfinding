@@ -1997,7 +1997,7 @@ public:
   bool is_jps = true;
   bool isOutput = false;
   bool isExact = true;
-  bool isFI = true;
+  bool isFI = false;
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
@@ -2242,7 +2242,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
-    // if(num_agent_iter == 20) break;
+    // if(num_agent_iter == 44) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";

@@ -111,7 +111,6 @@ class CBS {
     m_env.resetTemporalObstacle();
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      // std::cout << "--------------------------------------------------------\n";
       buildCAT(startJps.solution, cat_path, i);
       // std::cout<< "cat " << cat_path.size() << std::endl; 
       jpst_bit jpst_b(m_env, cat_path);
@@ -125,6 +124,7 @@ class CBS {
       startJps.cost += startJps.solution[i].cost;
     }
     solution = startJps.solution;
+    // std::cout << "initial " << startJps.cost << " ---------------\n";
 
     std::vector<Conflict> empty_1;
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
@@ -134,6 +134,7 @@ class CBS {
     startJps.conflicts_all.swap(empty_1);
     getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
     std::cout << ", num_cf, " << startJps.conflicts_all.size(); 
+
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
 
