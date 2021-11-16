@@ -938,6 +938,7 @@ public:
 							unsigned int current_dir = 0x01;
 							if(isCatJpUp) current_dir |= 0x04;
 							if(isCatJpDown) current_dir |= 0x08;
+							if(current_jumpnode_id - 1 == min_id) current_dir |= dir_jump_s;
 							if(isCatJpDown || isCatJpUp){
 								temp_s.dir = current_dir;
 								temp_s.interval = 0;
@@ -1267,8 +1268,8 @@ public:
 			// we treat such nodes as jump points
 			uint32_t stop_bits_temp = neis[0] | neis[1] | neis[2];
 			uint32_t stop_bits_cat = neis_cat[0] | neis_cat[2];
-			uint32_t stop_bits_all = stop_bits_temp;
-			// uint32_t stop_bits_all = stop_bits_temp | stop_bits_cat;
+			// uint32_t stop_bits_all = stop_bits_temp;
+			uint32_t stop_bits_all = stop_bits_temp | stop_bits_cat;
 
 			if(stop_bits_all)
 			{
@@ -1344,6 +1345,7 @@ public:
 							unsigned int current_dir = 0x02;
 							if(isCatJpUp) current_dir |= 0x04;
 							if(isCatJpDown) current_dir |= 0x08;
+							if(current_jumpnode_id + 1 == max_id) current_dir |= dir_jump_s;
 							if(isCatJpDown || isCatJpUp){
 								temp_s.dir = current_dir;
 								temp_s.interval = 0;
@@ -1758,16 +1760,16 @@ public:
             	            }
             	        }
             	        
-						// if(m_env.isFCheck()){
-            	        //     if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
-            	        //     else current_successor.dir = 0x07;
-            	        //     succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-            	        //     if(succ_f > par_f){
-						// 		current_successor.dir_p = 0x04;
-            	        //     	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
-            	        //     	break ;
-            	        //     }
-            	        // }					
+						if(m_env.isFCheck()){
+            	            if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
+            	            else current_successor.dir = 0x07;
+            	            succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+            	            if(succ_f > par_f){
+								current_successor.dir_p = 0x04;
+            	            	jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Up, current_cost_l + 1));
+            	            	break ;
+            	            }
+            	        }					
             			current_cost_l++;
 						if(current_cost_l - current_cost_l_pre > 1){
             	          if(current_successor.state.y == m_env.getDimY() - 1) current_successor.dir = 0x03; //check the border
@@ -1933,15 +1935,15 @@ public:
         	           			break ;
             	            }
             	        }
-            	    	// if(m_env.isFCheck()){
-    	             	// 	if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
-    	             	// 	else current_successor.dir = 0x0b;            	        
-						//    	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
-            	        //    	if(succ_f > par_f){
-            	        // 		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
-            	        // 		break ;
-            	        //    	}
-            	        // }
+            	    	if(m_env.isFCheck()){
+    	             		if(current_successor.state.y == 0) current_successor.dir = 0x03; //check the border
+    	             		else current_successor.dir = 0x0b;            	        
+						   	succ_f = m_env.admissibleHeuristic(current_successor.state) + current_cost_l + 1;
+            	           	if(succ_f > par_f){
+            	        		jps_successors.emplace_back(Neighbor<JPSSIPPState, Action, Cost>(current_successor, Action::Down, current_cost_l + 1));
+            	        		break ;
+            	           	}
+            	        }
 
             			current_cost_l++;
 						if(current_cost_l - current_cost_l_pre > 1){

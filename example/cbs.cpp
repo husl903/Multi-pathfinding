@@ -2242,7 +2242,7 @@ int main(int argc, char* argv[]) {
     startStates_temp.push_back(startStates[num_agent_iter]);
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
-    // if(num_agent_iter == 44) break;
+    // if(num_agent_iter == 27) break;
     if(solver == solver_jpst){
       Timer timer_t1;
       std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";

@@ -133,7 +133,12 @@ class CBS {
     // while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
     startJps.conflicts_all.swap(empty_1);
     getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
-    std::cout << ", num_cf, " << startJps.conflicts_all.size(); 
+    std::cout << ", num_cf, " << startJps.conflicts_all.size() << ", ";
+    // " cost, " << startJps.cost << std::endl; 
+    // for(int cf_num = 0; cf_num < startJps.conflicts_all.size(); cf_num++){
+    //   std::cout << "Num : " << cf_num << ", " << startJps.conflicts_all[cf_num] << std::endl;
+    // }
+    // return true;
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -877,8 +882,7 @@ private:
 
   void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
                std::vector<PlanResult<Location, Action, int>>&solution_path, size_t agent_now){
-              //  std::vector<std::list<size_t>>&cat_path, size_t agent_now){
-    // return;
+
     solution_path.resize(solution.size());
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
@@ -888,8 +892,8 @@ private:
       Location a(-1, -1), b(-1, -1); 
       int time_a, time_b;
       for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+        m_env.add_cat_obstacles(solution[i].states[jump_point_id].first);
         if(jump_point_id == solution[i].states.size() - 1){
-          m_env.add_cat_obstacles(solution[i].states[jump_point_id].first);
           solution_path[i].states.push_back(solution[i].states[jump_point_id]);
           tt++;
          if(tt > max_t) max_t = tt;          
@@ -907,14 +911,14 @@ private:
 
         for(int temp_y = 0; temp_y < abs(a.y - b.y); temp_y++){ //from 0 insure the first location is added
           Location temp_loc(a.x, a.y+flag_y*temp_y);
-          m_env.add_cat_obstacles(temp_loc);
+          // m_env.add_cat_obstacles(temp_loc);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           tt++;
         }
         if(a.x != b.x){
           Location temp_loc(a.x, a.y+flag_y*abs(a.y-b.y));
-          m_env.add_cat_obstacles(temp_loc);
+          // m_env.add_cat_obstacles(temp_loc);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           tt++;        
@@ -924,7 +928,7 @@ private:
         else{flag_x = -1; ac_c = Action::Left;}
         for(int temp_x = 1; temp_x < abs(a.x - b.x); temp_x++){// from 1 insure the last location is not added
           Location temp_loc(a.x + flag_x*temp_x, b.y);
-          m_env.add_cat_obstacles(temp_loc);
+          // m_env.add_cat_obstacles(temp_loc);
           solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
           solution_path[i].actions.push_back(std::make_pair<>(ac_c, 1));
           tt++;
@@ -936,7 +940,7 @@ private:
           if(a.x == b.x && a.y == b.y) temp_loc = a;
           int timed = abs(a.x - b.x) + abs(a.y - b.y);
           for(int temp_w = 0; temp_w  < delta_t - timed; temp_w++){
-            m_env.add_cat_obstacles(temp_loc);
+            // m_env.add_cat_obstacles(temp_loc);
             solution_path[i].states.push_back(std::make_pair<>(temp_loc, tt));
             solution_path[i].actions.push_back(std::make_pair<>(Action::Wait, 1));
             tt++;
