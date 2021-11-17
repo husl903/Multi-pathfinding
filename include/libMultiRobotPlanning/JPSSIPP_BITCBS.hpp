@@ -787,7 +787,6 @@ public:
 	}
 
 	bool getJPSLeft(JPSSIPPState s, unsigned int dir, unsigned int dir_p, Cost current_cost, Cost& jumpcost){
-		// std::cout << " Left " << s.state.x << ", " << s.state.y << " ---------\n";
 		if(isSolution(s)){
 			flag_is_solution = true;
 			s.dir_p = dir_p;
@@ -795,7 +794,7 @@ public:
 			return true;
 		}		
 		JPSSIPPState temp_s = s;
-   		const auto& si_s_l = safeIntervals(s.state);
+   		const auto& si_s_l = safeIntervals(s.state); //find the current safe interval for current state
     	Cost si_s_l_end = -1;
         for (size_t i = 0; i < si_s_l.size(); ++i) {
            const interval& si = si_s_l[i];  
@@ -804,15 +803,14 @@ public:
                break;
            }
         }      
-        Cost actualStartTimeP = -1;
-        Cost succEnd = INT_MAX;
+        Cost actualStartTimeP = -1; //the actual start time of current state
+        Cost succEnd = INT_MAX;// the current safe interval end of the current successor
         edgeCollision ecParent(m_lastGScore + current_cost, Action::Right);
-		State succ_s = s.state;
-		succ_s.x = s.state.x - 1;
-        if(!(m_env.stateValid(succ_s) && //check whether the successors is valid
-            !IsEdgeCollisions(succ_s, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
+		temp_s.state = s.state;
+		temp_s.state.x = s.state.x - 1;
+        if(!(m_env.stateValid(temp_s.state) && //check whether the successors is valid
+            !IsEdgeCollisions(temp_s.state, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
             return false;
-		
 		if(actualStartTimeP != m_lastGScore + current_cost){//it needs wait to start the left direction
 			temp_s.state.x = s.state.x - 1;
 			bool issafe = false;
@@ -824,9 +822,9 @@ public:
 		Cost successor_start = -1, successor_end = -1;
     	Cost successor_next_start = -1, successor_next_end = -1;
 		size_t successor_interval;
-    	findSafeInterval(succ_s, m_lastGScore + current_cost + 1, successor_interval,       //find the safe interval
+    	findSafeInterval(temp_s.state, m_lastGScore + current_cost + 1, successor_interval,       //find the safe interval
     						successor_start, successor_end, successor_next_start, successor_next_end);
-		if(successor_start == -1) return false;
+		if(successor_start == -1) return false;//no safe interval
 	
 		int current_id = m_env.jpst_gm_->gm_->to_padded_id(s.state.x, s.state.y);
 		int goal_id = m_env.jpst_gm_->gm_->to_padded_id(m_env.getGoalId());
@@ -1183,8 +1181,7 @@ public:
  		Cost succ_f = 0;
 
 		JPSSIPPState temp_s = s;
-		State succ_s = s.state;
-		succ_s.x = s.state.x + 1;
+		temp_s.state.x = s.state.x + 1;
    		const auto& si_s_l = safeIntervals(s.state);
     	Cost si_s_l_end = -1;
         for (size_t i = 0; i < si_s_l.size(); ++i) {
@@ -1198,8 +1195,8 @@ public:
         Cost succEnd = INT_MAX;
         edgeCollision ecParent(m_lastGScore + current_cost, Action::Left);
 
-        if(!(m_env.stateValid(succ_s) && //not check for the temproal obstacles
-            !IsEdgeCollisions(succ_s, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
+        if(!(m_env.stateValid(temp_s.state) && //not check for the temproal obstacles
+            !IsEdgeCollisions(temp_s.state, ecParent, m_lastGScore + current_cost, si_s_l_end, succEnd, actualStartTimeP)))
             return false;
 		// bool is_edge_collision = false;
 		if(actualStartTimeP != m_lastGScore + current_cost){
@@ -1216,12 +1213,12 @@ public:
     	Cost successor_start = -1, successor_end = -1;
      	Cost successor_next_start = -1, successor_next_end = -1;
 		size_t successor_interval;
-    	findSafeInterval(succ_s, m_lastGScore + current_cost + 1, successor_interval,                  //find the safe interval
+    	findSafeInterval(temp_s.state, m_lastGScore + current_cost + 1, successor_interval,                  //find the safe interval
     						successor_start, successor_end, successor_next_start, successor_next_end);
 		if(successor_start == -1 || s.state.x == m_env.getDimX() - 1) return false;
 
 		int current_id = m_env.jpst_gm_->gm_->to_padded_id(s.state.x, s.state.y);
-		int succ_id = m_env.jpst_gm_->gm_->to_padded_id(succ_s.x, succ_s.y);
+		int succ_id = m_env.jpst_gm_->gm_->to_padded_id(temp_s.state.x, temp_s.state.y);
 		int goal_id = m_env.jpst_gm_->gm_->to_padded_id(m_env.getGoalId());
 		Cost jump_cost;
 		uint32_t jump_id;

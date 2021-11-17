@@ -114,7 +114,7 @@ class CBSJPSTAstar {
     // std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      buildCAT(startJps.solution, solution_cat, i);
+      buildCAT(startJps.solution, solution_cat, i, true);
       jpst_bit jps1(m_env, solution_cat);
       jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -137,7 +137,7 @@ class CBSJPSTAstar {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
+    getFirstConflictJPST(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     
     std::cout <<" Num_cft," << startJps.conflicts_all.size() << ",";
     // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
@@ -260,7 +260,7 @@ class CBSJPSTAstar {
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
           }else*/{
-          buildCAT(NewChild[child_id].solution, solution_cat, i);
+          buildCAT(NewChild[child_id].solution, solution_cat, i, true);
           jpst_bit jpstbit(m_env, solution_cat);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
@@ -298,7 +298,7 @@ class CBSJPSTAstar {
 
           if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
           PJps.conflicts_all.swap(empty_1);
-          getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
+          getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " child\n";
           gen_node++;
@@ -376,9 +376,10 @@ private:
   };
 
   void buildCAT(std::vector<PlanResult<Location, Action, int>>& solution, 
-               std::vector<PlanResult<Location, Action, int>>&solution_path, size_t agent_now){
+               std::vector<PlanResult<Location, Action, int>>&solution_path, size_t agent_now, bool flag_recover){
               //  std::vector<std::list<size_t>>&cat_path, size_t agent_now){
     // return;
+    if(flag_recover){
     solution_path.resize(solution.size());
     int max_t = 0;
     for(size_t i = 0; i < solution.size(); i++){
@@ -447,6 +448,15 @@ private:
       if(tt - 1 != solution[i].cost){
         std::cout << tt - 1 << ", cost " << solution[i].cost << " -----------------------\n";
            std::cout << "recover path is not correct con000000\n";
+      }
+    }
+    }else{
+      for(size_t i = 0; i < solution.size(); i++){
+        if(solution[i].states.size() == 0) continue;
+        if(i == agent_now) continue;
+        for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
+          m_env.add_cat_obstacles(solution[i].states[jump_point_id].first);
+        }
       }
     }
 
@@ -925,11 +935,9 @@ private:
               //   }
               // }
               if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
-//              if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
-              AftJumpPointID = solution[i].states.size() - 1;
-              // AftJumpPointID = JumpPointId +;
-              // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId +2;
-
+              if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
+              // AftJumpPointID = solution[i].states.size() - 1;
+ 
               Location goalLoc = solution[i].states[AftJumpPointID].first;
               int time_a = solution[i].states[PreJumpPointId].second;
               int time_b = solution[i].states[AftJumpPointID].second;
@@ -1257,6 +1265,7 @@ private:
       std::vector<PlanResult<Location, Action, int> >& solution,
       std::vector<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
+    std::vector<PlanResult<Location, Action, int>> solution_cat(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
     Conflict result;
@@ -1381,7 +1390,9 @@ private:
               m_env.createConstraintsFromV(t, state1.x, state1.y, constraints);
               assert(!CurNode.constraints[i].overlap(constraints));
               CurNode.constraints[i].add(constraints);
-              jpst_bit jpstbit(m_env);
+
+              buildCAT(solution, solution_cat, i, false);
+              jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
@@ -1526,7 +1537,8 @@ private:
               m_env.resetTemporalObstacle();
               bool is_first_constraint_v = true;
               bool is_first_constraint_e = true;
-              jpst_bit jpstbit(m_env);
+              buildCAT(solution, solution_cat, i, false);
+              jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
         	      Location location(constraint.x, constraint.y);

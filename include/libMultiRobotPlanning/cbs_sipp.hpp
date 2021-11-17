@@ -348,7 +348,6 @@ class CBSSIPP {
       
       if(num_node % 100 == 0){
         getrusage(RUSAGE_SELF, &r_usage);
-        // std::cout << r_usage.ru_maxrss << " memory \n"; 
         if(r_usage.ru_maxrss > 15204352){
           std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";          
           return false;
@@ -406,8 +405,8 @@ class CBSSIPP {
         // Conflict conflict_temp = PJps.conflicts_all.front();
         // PJps.conflicts_all.pop();
         if(PJps.conflicts_all.size() == 0) return true;
-        int random_index = rand()%PJps.conflicts_all.size();
-        random_index = 0;
+        // int random_index = rand()%PJps.conflicts_all.size();
+        int random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
@@ -869,8 +868,9 @@ private:
         handle;
 
     bool operator<(const HighLevelNodeJps& n) const {
-      // if (cost != n.cost)
+      if (cost != n.cost)
       return cost > n.cost;
+      else conflicts_all.size() > n.conflicts_all.size();
       // return id > n.id;
     }
 

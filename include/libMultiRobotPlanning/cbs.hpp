@@ -99,9 +99,7 @@ class CBS {
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
     
-    // std::vector<std::list<size_t> > cat_path;
     std::vector<PlanResult<Location, Action, Cost>> cat_path;
-
     HighLevelNodeJps startJps, PJps;
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
@@ -112,7 +110,6 @@ class CBS {
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
       buildCAT(startJps.solution, cat_path, i);
-      // std::cout<< "cat " << cat_path.size() << std::endl; 
       jpst_bit jpst_b(m_env, cat_path);
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -181,8 +178,8 @@ class CBS {
         }
         
         if(PJps.conflicts_all.size() == 0) return true;
-        int random_index = rand()%PJps.conflicts_all.size();
-        // random_index = 0;
+        // int random_index = rand()%PJps.conflicts_all.size();
+        int random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
 
         HighLevelNodeJps NewChild[2];
@@ -190,9 +187,7 @@ class CBS {
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict_temp, constraints);
         int child_id = 0;
-        foundBypass = false;
-        
-        // std::cout << conflict_temp << " herehere \n";
+        foundBypass = false;        
         for(const auto& c : constraints){
           size_t i = c.first;
           NewChild[child_id].solution = PJps.solution;
@@ -209,10 +204,8 @@ class CBS {
       // std::cout << NewChild[child_id].solution[i].states.back().second << ": " <<
       // NewChild[child_id].solution[i].states.back().first << std::endl;
 
-          
           bool is_first_constraint_v = true;
           bool is_first_constraint_e = true;
-
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
           NewChild[child_id].constraints[i].add(c.second);
           NewChild[child_id].cost -= NewChild[child_id].solution[i].cost;
@@ -226,7 +219,6 @@ class CBS {
 
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
         	  Location location(constraint.x, constraint.y);
-            // std::cout << "VC1111 " << location.x << ", " << location.y << std::endl;
         	  m_env.setTemporalObstacle(location, constraint.time);
         	  if(is_first_constraint_v){
         		  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
@@ -238,7 +230,6 @@ class CBS {
         
           for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
         	  Location location(constraint.x2, constraint.y2);
-            // std::cout << "EC222 " << location.x << ", " << location.y << std::endl;
         	  m_env.setTemporalEdgeConstraint(location, constraint.time);
         	  if(constraint.x1 == constraint.x2){
         		  if(constraint.y1 == constraint.y2 - 1){
