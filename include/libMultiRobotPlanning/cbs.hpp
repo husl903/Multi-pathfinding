@@ -182,7 +182,7 @@ class CBS {
         
         if(PJps.conflicts_all.size() == 0) return true;
         int random_index = rand()%PJps.conflicts_all.size();
-        random_index = 0;
+        // random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
 
         HighLevelNodeJps NewChild[2];

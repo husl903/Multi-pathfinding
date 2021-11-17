@@ -111,7 +111,7 @@ class CBSJPSTAstar {
     startJps.id = 0;
     m_env.Reset();
     m_env.resetTemporalObstacle();
-    std::vector<int>num_replan(initialStates.size());
+    // std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
       buildCAT(startJps.solution, solution_cat, i);
@@ -139,7 +139,7 @@ class CBSJPSTAstar {
         openJps;
     getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     
-    std::cout <<" Num conflict " << startJps.conflicts_all.size();
+    std::cout <<" Num_cft," << startJps.conflicts_all.size() << ",";
     // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
     //   std::cout << startJps.conflicts_all[iiii] << std::endl;
     // solution = startJps.solution;
@@ -187,34 +187,20 @@ class CBSJPSTAstar {
       // std::cout << "Foundbypass ------------------------------\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
-          int num_sipp = 0;
-          // for(int iii = 0; iii < num_replan.size(); iii++) if(num_replan[iii] == -1) num_sipp++;
-          // std::cout << "sipp " << num_sipp << ", ";
           solution = PJps.solution;
           if(!m_env.CheckValid(PJps.solution)){
             return false;
           }else{
-            // for(auto & constraint : PJps.constraints[0].vertexConstraints){
-            //   std::cout << "0 vc " <<  constraint << std::endl;
-            // }
-            // if(PJps.solution.size() > 1){
-            // for(auto & constraint : PJps.constraints[1].vertexConstraints){
-            //   std::cout << "1 VC " <<  constraint << std::endl;
-            // }
-            // }
             std::cout << " ,done, " << PJps.cost << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
             return true;
           }
         }
 
         int random_index = rand()%PJps.conflicts_all.size();
-        // random_index = PJps.conflicts_all.size() - 1;
         random_index = 0;
         conflict = PJps.conflicts_all[random_index];
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
-        // std::cout << "Current cost!!!! " << PJps.cost  << ", id " << PJps.id << ", " << conflict << ", num " << PJps.conflicts_all.size()<<"   ------- " << std::endl;
-
         std::map<size_t, Constraints> constraints;
         m_env.createConstraintsFromConflict(conflict, constraints);
         int child_id = 0;
@@ -225,7 +211,7 @@ class CBSJPSTAstar {
           NewChild[child_id].constraints = PJps.constraints;
           NewChild[child_id].cost = PJps.cost;
           NewChild[child_id].id = id;
-          if(num_replan[i] != -1) num_replan[i]++;
+          // if(num_replan[i] != -1) num_replan[i]++;
 
           assert(!NewChild[child_id].constraints[i].overlap(c.second));
           NewChild[child_id].constraints[i].add(c.second);
@@ -938,9 +924,11 @@ private:
                   
               //   }
               // }
-              if(JumpPointId + 1 > solution[i].states.size()-1) continue;
+              if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
 //              if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
               AftJumpPointID = solution[i].states.size() - 1;
+              // AftJumpPointID = JumpPointId +;
+              // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId +2;
 
               Location goalLoc = solution[i].states[AftJumpPointID].first;
               int time_a = solution[i].states[PreJumpPointId].second;
@@ -1000,7 +988,7 @@ private:
                 }
                 // std::cout << "old num " <<  num_old << " new_num " << num_new << " cost_t " << cost_t << " agent " << i << " ----------------------------\n";
                 // if(num_new > 0) continue;
-                if(num_old <= num_new) continue;
+                // if(num_old <= num_new) continue;
                 is_update = true;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
