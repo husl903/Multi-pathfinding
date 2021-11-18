@@ -122,7 +122,7 @@ struct Conflict {
     return os;
   }
   bool operator<(const Conflict& cft) const{
-    return time < cft.time;
+    return time > cft.time;
   }
 };
 
@@ -1977,7 +1977,7 @@ Location  setGoal(int agentId){
 public:
   int num_generation = 0;
   int num_expansion = 0;
-  int limit_jump = 64;
+  int limit_jump = 32;
   int m_dimx;
   int m_dimy;
  private:
@@ -1997,7 +1997,7 @@ public:
   bool is_jps = true;
   bool isOutput = false;
   bool isExact = true;
-  bool isFI = false;
+  bool isFI = true;
 
   std::vector<std::vector<bool>> m_obstacles_m;
   std::vector<std::vector<bool>> m_temporal_obstacle;
@@ -2245,7 +2245,7 @@ int main(int argc, char* argv[]) {
     // if(num_agent_iter == 27) break;
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-J-LP-newBP, " << num_agent_iter << ", ";
+      std::cout << "JPST-jpcat, " << num_agent_iter << ", ";
       mapf.setBP(true);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
@@ -2260,7 +2260,7 @@ int main(int argc, char* argv[]) {
       Timer timer_t2;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "SIPPCAT-newBP , " << num_agent_iter << ", ";
+      std::cout << "SIPPCAT-newBP, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
@@ -2274,6 +2274,7 @@ int main(int argc, char* argv[]) {
     if(solver == solver_astar){
       Timer timer_t3;
       mapf.setBP(true);
+      mapf.setCAT(true);
       std::cout << "AstarCAT-newBP, "<< num_agent_iter << ", ";
       successA = cbs_astar.search(startStates_temp, solution_astar);
       timer_t3.stop();
@@ -2299,7 +2300,7 @@ int main(int argc, char* argv[]) {
       Timer timer_t8;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "JpstAstar-NoHelp, " << num_agent_iter << ", ";
+      std::cout << "JpstAstar-jpcat, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();

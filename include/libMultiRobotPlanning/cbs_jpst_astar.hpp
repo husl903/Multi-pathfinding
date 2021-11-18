@@ -137,7 +137,7 @@ class CBSJPSTAstar {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    getFirstConflictJPST(startJps.solution, startJps.conflicts_all, startJps, gen_node);
+    getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     
     std::cout <<" Num_cft," << startJps.conflicts_all.size() << ",";
     // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
@@ -298,7 +298,7 @@ class CBSJPSTAstar {
 
           if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
           PJps.conflicts_all.swap(empty_1);
-          getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
+          getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " child\n";
           gen_node++;
@@ -929,11 +929,7 @@ private:
                   PreJumpPointId = point_id[i][t- 1];
                 }
               }
-              // if(t + 1 < solution_path.size()){
-              //   if(point_id[i][t + 1] != JumpPointId){
-                  
-              //   }
-              // }
+
               if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
               if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
               // AftJumpPointID = solution[i].states.size() - 1;
@@ -1338,7 +1334,7 @@ private:
     }
 
     bool is_restart = false;
-    bool is_fail = true;
+    bool is_fail = false;
     std::vector<std::unordered_set<int>> jump_point(solution.size());
     for (int t = 0; t < max_t; ++t) {
       if(is_fail) break;

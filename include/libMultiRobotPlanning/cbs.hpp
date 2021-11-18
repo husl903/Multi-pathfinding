@@ -111,6 +111,8 @@ class CBS {
     for (size_t i = 0; i < initialStates.size(); ++i) {
       buildCAT(startJps.solution, cat_path, i);
       jpst_bit jpst_b(m_env, cat_path);
+      // jpst_bit jpst_b(m_env);
+
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
@@ -215,6 +217,8 @@ class CBS {
 
           buildCAT(NewChild[child_id].solution, cat_path, i);
           jpst_bit jpstbit(m_env, cat_path);
+          // jpst_bit jpstbit(m_env);
+
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
