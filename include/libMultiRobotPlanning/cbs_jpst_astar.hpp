@@ -1387,7 +1387,7 @@ private:
               assert(!CurNode.constraints[i].overlap(constraints));
               CurNode.constraints[i].add(constraints);
 
-              buildCAT(solution, solution_cat, i, false);
+              // buildCAT(solution, solution_cat, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
@@ -1533,7 +1533,7 @@ private:
               m_env.resetTemporalObstacle();
               bool is_first_constraint_v = true;
               bool is_first_constraint_e = true;
-              buildCAT(solution, solution_cat, i, false);
+              // buildCAT(solution, solution_cat, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
