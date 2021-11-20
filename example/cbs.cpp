@@ -2260,7 +2260,7 @@ int main(int argc, char* argv[]) {
       Timer timer_t2;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "SIPPCAT-newBP, " << num_agent_iter << ", ";
+      std::cout << "SIPPCAT-random, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
@@ -2299,8 +2299,8 @@ int main(int argc, char* argv[]) {
     if(solver == solver_jpsta){
       Timer timer_t8;
       mapf.setBP(true);
-      mapf.setCAT(true);
-      std::cout << "JpstAstar-jpcat, " << num_agent_iter << ", ";
+      // mapf.setCAT(true);
+      std::cout << "Jpst-JPST-wojp, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();

@@ -114,7 +114,7 @@ class CBSJPSTAstar {
     // std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      buildCAT(startJps.solution, solution_cat, i, true);
+      // buildCAT(startJps.solution, solution_cat, i, true);
       jpst_bit jps1(m_env, solution_cat);
       jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -260,7 +260,7 @@ class CBSJPSTAstar {
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
           }else*/{
-          buildCAT(NewChild[child_id].solution, solution_cat, i, true);
+          // buildCAT(NewChild[child_id].solution, solution_cat, i, true);
           jpst_bit jpstbit(m_env, solution_cat);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
@@ -980,13 +980,16 @@ private:
                 size_t jjj = 0;
                 bool new_conflict = false;
                 int num_old = 0, num_new = 0;
-                for(size_t iii = time_a; iii < time_b; ++iii){
+                for(size_t iii = time_a; iii < time_b && jjj <  segmentPath.states.size(); ++iii){
                   for(int agentId = 0; agentId < solution.size(); agentId++){
                     if(agentId == i) continue;
-                    if(solution_path[agentId].states[iii].first.x == segmentPath.states[jjj].first.x 
-                       && solution_path[agentId].states[iii].first.y == segmentPath.states[jjj].first.y) num_new++;
-                    if(solution_path[agentId].states[iii].first.x == solution_path[i].states[iii].first.x 
-                       && solution_path[agentId].states[iii].first.y == solution_path[i].states[iii].first.y) num_old++;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;
+                    if(loc_old.x == segmentPath.states[jjj].first.x 
+                       && loc_old.y == segmentPath.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
                   }
                   jjj++;
                 }
@@ -995,7 +998,8 @@ private:
                 // if(num_old <= num_new) continue;
                 is_update = true;
                 jjj = 0;
-                for(size_t iii = time_a; iii < time_b; ++iii){
+                for(size_t iii = time_a; iii < time_b && jjj < segmentPath.states.size(); ++iii){
+                  if(iii >= solution_path[i].states.size()) continue;                  
                   solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
                   solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                   solution_path[i].states[iii].second = iii;
@@ -1110,20 +1114,24 @@ private:
                 size_t jjj = 0;
                 bool new_conflict = false;
                 int num_old = 0, num_new = 0;
-                for(size_t iii = time_a; iii < time_b; ++iii){
+                for(size_t iii = time_a; iii < time_b && jjj <  segmentPath.states.size(); ++iii){
                   for(int agentId = 0; agentId < solution.size(); agentId++){
                     if(agentId == i) continue;
-                    if(solution_path[agentId].states[iii].first.x == segmentPath.states[jjj].first.x 
-                       && solution_path[agentId].states[iii].first.y == segmentPath.states[jjj].first.y) num_new++;
-                    if(solution_path[agentId].states[iii].first.x == solution_path[i].states[iii].first.x 
-                       && solution_path[agentId].states[iii].first.y == solution_path[i].states[iii].first.y) num_old++;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;
+                    if(loc_old.x == segmentPath.states[jjj].first.x 
+                       && loc_old.y == segmentPath.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
                   }
                   jjj++;
                 }
                 // if(num_new > 0) continue;
                 if(num_old <= num_new) continue;
                 jjj = 0;
-                for(size_t iii = time_a; iii < time_b; ++iii){
+                for(size_t iii = time_a; iii < time_b && jjj <  segmentPath.states.size(); ++iii){
+                  if(iii >= solution_path[i].states.size()) continue;                  
                   solution_path[i].states[iii].first.x = segmentPath.states[jjj].first.x;
                   solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                   solution_path[i].states[iii].second = iii;
@@ -1445,12 +1453,16 @@ private:
                 PlanResult<Location, Action, int> segmentPath2;
                 recoverConcretePath(segmentPath, segmentPath2);
                 for(size_t iii = time_a; iii < time_b; ++iii){
+                  if(jjj >= segmentPath2.states.size()) continue;
                   for(int agentId = 0; agentId < solution.size(); agentId++){
                     if(agentId == i) continue;
-                    if(solution_path[agentId].states[iii].first.x == segmentPath2.states[jjj].first.x 
-                       && solution_path[agentId].states[iii].first.y == segmentPath2.states[jjj].first.y) num_new++;
-                    if(solution_path[agentId].states[iii].first.x == solution_path[i].states[iii].first.x 
-                       && solution_path[agentId].states[iii].first.y == solution_path[i].states[iii].first.y) num_old++;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;                    
+                    if(loc_old.x == segmentPath2.states[jjj].first.x 
+                       && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
                   }
                   jjj++;
                 }
