@@ -111,8 +111,6 @@ class CBS {
     for (size_t i = 0; i < initialStates.size(); ++i) {
       // buildCAT(startJps.solution, cat_path, i);
       jpst_bit jpst_b(m_env, cat_path);
-      // jpst_bit jpst_b(m_env);
-
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
@@ -133,11 +131,6 @@ class CBS {
     startJps.conflicts_all.swap(empty_1);
     getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
     std::cout << ", num_cf, " << startJps.conflicts_all.size() << ", ";
-    // " cost, " << startJps.cost << std::endl; 
-    // for(int cf_num = 0; cf_num < startJps.conflicts_all.size(); cf_num++){
-    //   std::cout << "Num : " << cf_num << ", " << startJps.conflicts_all[cf_num] << std::endl;
-    // }
-    // return true;
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
