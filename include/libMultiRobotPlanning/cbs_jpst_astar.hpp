@@ -114,7 +114,7 @@ class CBSJPSTAstar {
     // std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      buildCAT(startJps.solution, solution_cat, i, true);
+      // buildCAT(startJps.solution, solution_cat, i, true);
       jpst_bit jps1(m_env, solution_cat);
       jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -260,7 +260,7 @@ class CBSJPSTAstar {
             is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
             // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
           }else*/{
-          buildCAT(NewChild[child_id].solution, solution_cat, i, true);
+          // buildCAT(NewChild[child_id].solution, solution_cat, i, true);
           jpst_bit jpstbit(m_env, solution_cat);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
@@ -931,8 +931,8 @@ private:
               }
 
               if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
-              if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
-              // AftJumpPointID = solution[i].states.size() - 1;
+              // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
+              AftJumpPointID = solution[i].states.size() - 1;
  
               Location goalLoc = solution[i].states[AftJumpPointID].first;
               int time_a = solution[i].states[PreJumpPointId].second;

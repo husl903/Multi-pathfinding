@@ -405,8 +405,8 @@ class CBSSIPP {
         // Conflict conflict_temp = PJps.conflicts_all.front();
         // PJps.conflicts_all.pop();
         if(PJps.conflicts_all.size() == 0) return true;
-        // int random_index = rand()%PJps.conflicts_all.size();
-        int random_index = 0;
+        int random_index = rand()%PJps.conflicts_all.size();
+        // int random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
