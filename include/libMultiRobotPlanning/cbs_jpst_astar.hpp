@@ -137,7 +137,7 @@ class CBSJPSTAstar {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
+    getFirstConflictJPST(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     
     std::cout <<" Num_cft," << startJps.conflicts_all.size() << ",";
     // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
@@ -296,7 +296,7 @@ class CBSJPSTAstar {
 
           if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
           PJps.conflicts_all.swap(empty_1);
-          getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
+          getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " child\n";
           gen_node++;
@@ -445,7 +445,7 @@ private:
 
       if(tt - 1 != solution[i].cost){
         std::cout << tt - 1 << ", cost " << solution[i].cost << " -----------------------\n";
-           std::cout << "recover path is not correct con000000\n";
+           std::cout << "recover path is not correct con111111\n";
       }
     }
     }else{
@@ -1081,8 +1081,8 @@ private:
               int time_b = solution[i].states[AftJumpPointId].second;
               int cost_t = time_b - time_a;
               State initialState(-1, -1, -1);
-              initialState.x = solution[i].states[JumpPointId].first.x;
-              initialState.y = solution[i].states[JumpPointId].first.y;
+              initialState.x = solution[i].states[PreJumpPointId].first.x;
+              initialState.y = solution[i].states[PreJumpPointId].first.y;
               initialState.time = time_a;
               if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) continue;
               if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
@@ -1373,24 +1373,24 @@ private:
               if(ct == 1) i = j;
               if(t > point_id[i].size() - 1) continue;
               int JumpPointId = point_id[i][t];
-              int PreJumpPointId = -1;
-              int AftJumpPointID = -1;
+              int PreJumpPointId = JumpPointId;
+              int AftJumpPointId = JumpPointId + 1;
               if(t - 1 >= 0){
-                if(point_id[i][t - 1] != JumpPointId) continue;
+                if(point_id[i][t - 1] != JumpPointId){
+                  PreJumpPointId = point_id[i][t - 1];
+                }
               }
-              if(t + 1 < solution_path.size()){
-                if(point_id[i][t + 1] != JumpPointId) continue;
-              }
-              if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
+              if(AftJumpPointId > solution[i].states.size() - 1) continue;
+              AftJumpPointId = solution[i].states.size() - 1;
 
-              Location goalLoc = solution[i].states[JumpPointId+1].first;
-              int time_a = solution[i].states[JumpPointId].second;
-              int time_b = solution[i].states[JumpPointId + 1].second;
+              Location goalLoc = solution[i].states[AftJumpPointId].first;
+              int time_a = solution[i].states[PreJumpPointId].second;
+              int time_b = solution[i].states[AftJumpPointId].second;
               int cost_t = time_b - time_a;
             
-              State initialState(-1, -1, time_a);
-              initialState.x = solution[i].states[JumpPointId].first.x;
-              initialState.y = solution[i].states[JumpPointId].first.y;
+              State initialState(-1, -1, -1);
+              initialState.x = solution[i].states[PreJumpPointId].first.x;
+              initialState.y = solution[i].states[PreJumpPointId].first.y;
               initialState.time = time_a;
               if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) continue;
               if(initialState.x == goalLoc.x || initialState.y == goalLoc.y //stright line
@@ -1404,7 +1404,7 @@ private:
               assert(!CurNode.constraints[i].overlap(constraints));
               CurNode.constraints[i].add(constraints);
 
-              // buildCAT(solution, solution_cat, i, false);
+              buildCAT(solution, solution_cat, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
@@ -1440,7 +1440,7 @@ private:
               }
               jpstbit.sortCollisionVertex();
               jpstbit.sortCollisionEdgeConstraint();
-              if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
+              if(AftJumpPointId == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
               else m_env.setIsSegPlanning(true);
               PlanResult<Location, Action, int> segmentPath;
               m_env.setGoal(goalLoc, i);
@@ -1461,20 +1461,20 @@ private:
                 int num_old = 0, num_new = 0;
                 PlanResult<Location, Action, int> segmentPath2;
                 recoverConcretePath(segmentPath, segmentPath2);
-                for(size_t iii = time_a; iii < time_b; ++iii){
-                  if(jjj >= segmentPath2.states.size()) continue;
-                  for(int agentId = 0; agentId < solution.size(); agentId++){
-                    if(agentId == i) continue;
-                    Location loc_old(-1, -1);
-                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
-                    else loc_old= solution_path[agentId].states[iii].first;                    
-                    if(loc_old.x == segmentPath2.states[jjj].first.x 
-                       && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
-                    if(loc_old.x == solution_path[i].states[iii].first.x 
-                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
-                  }
-                  jjj++;
-                }
+                // for(size_t iii = time_a; iii < time_b; ++iii){
+                //   if(jjj >= segmentPath2.states.size()) continue;
+                //   for(int agentId = 0; agentId < solution.size(); agentId++){
+                //     if(agentId == i) continue;
+                //     Location loc_old(-1, -1);
+                //     if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                //     else loc_old= solution_path[agentId].states[iii].first;                    
+                //     if(loc_old.x == segmentPath2.states[jjj].first.x 
+                //        && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
+                //     if(loc_old.x == solution_path[i].states[iii].first.x 
+                //        && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
+                //   }
+                //   jjj++;
+                // }
                 // if(num_new > 0) continue;
                 // if(num_old <= num_new) continue;
                 
@@ -1489,11 +1489,15 @@ private:
 
                 auto it = solution[i].states.begin();
                 auto it_ac = solution[i].actions.begin();
-                solution[i].states.insert(it + JumpPointId + 1, segmentPath.states.begin() + 1,
-                segmentPath.states.end() - 1);
+                if(AftJumpPointId != PreJumpPointId + 1){
+                  solution[i].states.erase(it + PreJumpPointId + 1, it + AftJumpPointId);
+                  solution[i].actions.erase(it_ac + PreJumpPointId + 1, it_ac + AftJumpPointId);
+                }
+                solution[i].states.insert(it + PreJumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+                solution_path[i].states.begin() + time_b);
 
-                solution[i].actions.insert(it_ac + JumpPointId + 1, segmentPath.actions.begin(),
-                segmentPath.actions.end());              
+                solution[i].actions.insert(it_ac + PreJumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+                solution_path[i].actions.begin() + time_b);              
 
                 is_restart = true;
                 is_update = true;
@@ -1531,15 +1535,25 @@ private:
               if(ct == 1) i = j;
               if(t > point_id[i].size() - 1) continue;
               int JumpPointId = point_id[i][t];
-              if(JumpPointId + 1 > solution[i].states.size()-1) continue;            
-            
-              Location goalLoc = solution[i].states[JumpPointId+1].first;
-              int time_a = solution[i].states[JumpPointId].second;
-              int time_b = solution[i].states[JumpPointId + 1].second;
+              int PreJumpPointId = JumpPointId;
+              int AftJumpPointId = JumpPointId + 1;
+              if(AftJumpPointId > solution[i].states.size() - 1) continue;
+              if(t - 1 >= 0){
+                if(point_id[i][t - 1] != JumpPointId){
+                  PreJumpPointId = point_id[i][t- 1];
+                }
+              }
+              if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
+              // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
+              AftJumpPointId = solution[i].states.size() - 1;
+
+              Location goalLoc = solution[i].states[AftJumpPointId].first;
+              int time_a = solution[i].states[PreJumpPointId].second;
+              int time_b = solution[i].states[AftJumpPointId].second;
               int cost_t = time_b - time_a;
               State initialState(-1, -1, time_a);
-              initialState.x = solution[i].states[JumpPointId].first.x;
-              initialState.y = solution[i].states[JumpPointId].first.y;
+              initialState.x = solution[i].states[PreJumpPointId].first.x;
+              initialState.y = solution[i].states[PreJumpPointId].first.y;
               initialState.time = time_a;
               if(abs(initialState.x - goalLoc.x) + abs(initialState.y - goalLoc.y) == 1) continue;
               if(initialState.x == goalLoc.x || initialState.y == goalLoc.y
@@ -1554,7 +1568,7 @@ private:
               m_env.resetTemporalObstacle();
               bool is_first_constraint_v = true;
               bool is_first_constraint_e = true;
-              // buildCAT(solution, solution_cat, i, false);
+              buildCAT(solution, solution_cat, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
@@ -1590,7 +1604,7 @@ private:
               jpstbit.sortCollisionVertex();
               jpstbit.sortCollisionEdgeConstraint();
                
-              if(JumpPointId + 1 == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
+              if(AftJumpPointId == solution[i].states.size() - 1) m_env.setIsSegPlanning(false);
               else m_env.setIsSegPlanning(true);
               PlanResult<Location, Action, int> segmentPath;
               m_env.setGoal(goalLoc, i);
@@ -1611,16 +1625,16 @@ private:
                 int num_old = 0, num_new = 0;
                 PlanResult<Location, Action, int> segmentPath2;
                 recoverConcretePath(segmentPath, segmentPath2);
-                for(size_t iii = time_a; iii < time_b; ++iii){
-                  for(int agentId = 0; agentId < solution.size(); agentId++){
-                    if(agentId == i) continue;
-                    if(solution_path[agentId].states[iii].first.x == segmentPath2.states[jjj].first.x 
-                       && solution_path[agentId].states[iii].first.y == segmentPath2.states[jjj].first.y) num_new++;
-                    if(solution_path[agentId].states[iii].first.x == solution_path[i].states[iii].first.x 
-                       && solution_path[agentId].states[iii].first.y == solution_path[i].states[iii].first.y) num_old++;
-                  }
-                  jjj++;
-                }
+                // for(size_t iii = time_a; iii < time_b; ++iii){
+                //   for(int agentId = 0; agentId < solution.size(); agentId++){
+                //     if(agentId == i) continue;
+                //     if(solution_path[agentId].states[iii].first.x == segmentPath2.states[jjj].first.x 
+                //        && solution_path[agentId].states[iii].first.y == segmentPath2.states[jjj].first.y) num_new++;
+                //     if(solution_path[agentId].states[iii].first.x == solution_path[i].states[iii].first.x 
+                //        && solution_path[agentId].states[iii].first.y == solution_path[i].states[iii].first.y) num_old++;
+                //   }
+                //   jjj++;
+                // }
                 // if(num_old <= num_new) continue;
                 // if(num_new >  0) continue;
                 jjj = 0;
@@ -1634,10 +1648,14 @@ private:
 
                 auto it = solution[i].states.begin();
                 auto it_ac = solution[i].actions.begin();
-                solution[i].states.insert(it + JumpPointId + 1, segmentPath.states.begin() + 1,
-                segmentPath.states.end() - 1);
-                solution[i].actions.insert(it_ac + JumpPointId + 1, segmentPath.actions.begin(),
-                segmentPath.actions.end());              
+                if(AftJumpPointId != PreJumpPointId + 1){
+                  solution[i].states.erase(it + PreJumpPointId + 1, it + AftJumpPointId);
+                  solution[i].actions.erase(it_ac + PreJumpPointId + 1, it_ac + AftJumpPointId);
+                }
+                solution[i].states.insert(it + PreJumpPointId + 1, solution_path[i].states.begin() + time_a + 1,
+                solution_path[i].states.begin() + time_b);
+                solution[i].actions.insert(it_ac + PreJumpPointId + 1, solution_path[i].actions.begin() + time_a + 1,
+                solution_path[i].actions.begin() + time_b);              
 
                 is_restart = true;
                 is_update = true;
