@@ -99,11 +99,8 @@ class CBSJPSTAstar {
 
   bool search(const std::vector<State>& initialStates,
               std::vector<PlanResult<Location, Action, Cost> >& solution) {
-
-
     HighLevelNodeJps startJps;
     std::vector<PlanResult<Location, Action, Cost>> solution_cat(initialStates.size());
-    // std::vector<std::list<size_t> > cat_path;
 
     startJps.solution.resize(initialStates.size());
     startJps.constraints.resize(initialStates.size());
@@ -111,15 +108,14 @@ class CBSJPSTAstar {
     startJps.id = 0;
     m_env.Reset();
     m_env.resetTemporalObstacle();
-    // std::vector<int>num_replan(initialStates.size());
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
       buildCAT(startJps.solution, solution_cat, i, true);
-      jpst_bit jps1(m_env, solution_cat);
-      jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
+      jpst_bit jpstbit(m_env, solution_cat);
+      jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
       Location startNode(initialStates[i].x, initialStates[i].y);
-      bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0);
+      bool isJpsSucc = jpstbit.search(startNode, Action::Wait, startJps.solution[i], 0);
       if(!isJpsSucc) return false;
       startJps.cost += startJps.solution[i].cost;
     }
@@ -137,13 +133,8 @@ class CBSJPSTAstar {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    getFirstConflictJPST(startJps.solution, startJps.conflicts_all, startJps, gen_node);
-    
+    getFirstConflictAstar(startJps.solution, startJps.conflicts_all, startJps, gen_node);
     std::cout <<" Num_cft," << startJps.conflicts_all.size() << ",";
-    // for(int iiii = 0; iiii < startJps.conflicts_all.size(); iiii++)
-    //   std::cout << startJps.conflicts_all[iiii] << std::endl;
-    // solution = startJps.solution;
-    // return true;
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -196,8 +187,8 @@ class CBSJPSTAstar {
           }
         }
 
-        int random_index = rand()%PJps.conflicts_all.size();
-        random_index = 0;
+        // int random_index = rand()%PJps.conflicts_all.size();
+        int random_index = 0;
         conflict = PJps.conflicts_all[random_index];
         HighLevelNodeJps NewChild[2];
         bool is_solved[2] = {false, false};
@@ -223,42 +214,7 @@ class CBSJPSTAstar {
           Location startNode(initialStates[i].x, initialStates[i].y);        
           bool is_first_constraint_v = true;
           bool is_first_constraint_e = true;
-/*          if(num_replan[i] > 10 || num_replan[i] == -1){
-            // std::cout << i << " here \n";
-            num_replan[i] = -1;
-            solution_cat.clear();
-            m_env.recoverConcretePath(NewChild[child_id].solution, solution_cat, false);
-            sipp_t sipp(m_env, solution_cat);
-            sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
-            for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
-        	    Location location(constraint.x, constraint.y);
-        	    m_env.setTemporalObstacle(location, constraint.time);
-       		    sipp.setCollisionVertex(location, constraint.time, constraint.time, is_first_constraint_v);
-        	    if(is_first_constraint_v) is_first_constraint_v = false;
-            }
-            for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
-        	    Location location(constraint.x2, constraint.y2);
-        	    m_env.setTemporalEdgeConstraint(location, constraint.time);
-        	    if(constraint.x1 == constraint.x2){
-        		    if(constraint.y1 == constraint.y2 - 1){
-        			    sipp.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
-        		    }else if(constraint.y1 == constraint.y2 + 1){
-        			    sipp.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
-        		    }
-        	    }else{
-        		    if(constraint.x1 == constraint.x2 - 1){
-        			    sipp.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
-        		    }else if(constraint.x1 == constraint.x2 + 1){
-        			    sipp.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
-        		    }
-        	    }
-        	    if(is_first_constraint_e) is_first_constraint_e = false;
-            }
-            sipp.sortCollisionVertex();
-            sipp.sortCollisionEdgeConstraint();
-            is_solved[child_id] = sipp.search(startNode, Action::Wait, NewChild[child_id].solution[i]);
-            // std::cout << "Agentid " << i << ", " << NewChild[child_id].solution[i].cost << " \n";
-          }else*/
+
           buildCAT(NewChild[child_id].solution, solution_cat, i, true);
           jpst_bit jpstbit(m_env, solution_cat);
           jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
@@ -290,20 +246,17 @@ class CBSJPSTAstar {
 
           jpstbit.sortCollisionVertex();
           jpstbit.sortCollisionEdgeConstraint();
-          // PlanResult<Location, Action, int> solutiontempJps;
           is_solved[child_id] = jpstbit.search(startNode, Action::Wait, NewChild[child_id].solution[i], 0);
           if(!is_solved[child_id]) { child_id++; continue;}
 
-          if(NewChild[child_id].conflicts_all.size()!=0) NewChild[child_id].conflicts_all.clear();
-          PJps.conflicts_all.swap(empty_1);
-          getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
-          // getFirstConflict(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
-          // std::cout << "chilid " << child_id << ", " << NewChild[child_id].conflicts_all.size() << ", " << PJps.conflicts_all.size() << " child\n";
+          if(NewChild[child_id].conflicts_all.size()!=0){
+            NewChild[child_id].conflicts_all.clear();
+            PJps.conflicts_all.swap(empty_1);
+          }
+          getFirstConflictAstar(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           gen_node++;
-          // std::cout << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << " , " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " test cost\n";
           if(m_env.isBP && NewChild[child_id].solution[i].cost == PJps.solution[i].cost 
              && NewChild[child_id].num_conflict < PJps.num_conflict){
-            // std::cout << "successe " << NewChild[child_id].num_conflict << ", " << PJps.num_conflict << " ";
             foundBypass = true;
             PJps.solution = NewChild[child_id].solution;
             PJps.num_conflict = NewChild[child_id].num_conflict;
@@ -929,19 +882,20 @@ private:
 
               if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
               // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
+              PreJumpPointId = 0;
               AftJumpPointID = solution[i].states.size() - 1;
 
               //find the mahattan distance optimal segment path
-              int time_jump_point_id = solution[i].states[JumpPointId].second;
-              for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
-                Location pre_loc = solution[i].states[prjpid].first;
-                int pre_time = solution[i].states[prjpid].second;
-                int mahattanD = abs(solution[i].states[prjpid].first.x - solution[i].states[JumpPointId].first.x)
-                                + abs(solution[i].states[prjpid].first.y - solution[i].states[JumpPointId].first.y);
-                if(abs(time_jump_point_id - pre_time) == mahattanD){
-                  PreJumpPointId = prjpid;
-                }else break;
-              }
+              // int time_jump_point_id = solution[i].states[JumpPointId].second;
+              // for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
+              //   Location pre_loc = solution[i].states[prjpid].first;
+              //   int pre_time = solution[i].states[prjpid].second;
+              //   int mahattanD = abs(solution[i].states[prjpid].first.x - solution[i].states[JumpPointId].first.x)
+              //                   + abs(solution[i].states[prjpid].first.y - solution[i].states[JumpPointId].first.y);
+              //   if(abs(time_jump_point_id - pre_time) == mahattanD){
+              //     PreJumpPointId = prjpid;
+              //   }else break;
+              // }
               // for(int afjpid = AftJumpPointID  + 1; afjpid < solution[i].states.size();  afjpid++){
               //   Location pre_loc = solution[i].states[afjpid].first;
               //   int pre_time = solution[i].states[afjpid].second;
@@ -986,11 +940,7 @@ private:
               LowLevelEnvironment llenv(m_env, solution_path, i, goalLoc, CurNode.constraints[i]);
               LowLevelSearch_t lowLevel(llenv);            
               PlanResult<State, Action, int>segmentPath;
-              // std::cout << "Here Astar\n";
-              // std::cout << "Agent i " << i  << ", " << initialState.x << ", " << initialState.y << ", time "
-              // << initialState.time << ",goal " << goalLoc.x << ", " << goalLoc.y << " \n";
               bool success = lowLevel.search(initialState, segmentPath, 0, cost_t);
-              // std::cout << "End \n";
               jump_point[i].insert(JumpPointId);
               m_env.setIsSegPlanning(false);
               CurNode.constraints[i].vertexConstraints.erase(*constraints.vertexConstraints.begin());
@@ -999,22 +949,22 @@ private:
                 size_t jjj = 0;
                 bool new_conflict = false;
                 int num_old = 0, num_new = 0;
-                // for(size_t iii = time_a; iii < time_b && jjj <  segmentPath.states.size(); ++iii){
-                //   for(int agentId = 0; agentId < solution.size(); agentId++){
-                //     if(agentId == i) continue;
-                //     Location loc_old(-1, -1);
-                //     if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
-                //     else loc_old= solution_path[agentId].states[iii].first;
-                //     if(loc_old.x == segmentPath.states[jjj].first.x 
-                //        && loc_old.y == segmentPath.states[jjj].first.y) num_new++;
-                //     if(loc_old.x == solution_path[i].states[iii].first.x 
-                //        && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
-                //   }
-                //   jjj++;
-                // }
-                // // std::cout << "old num " <<  num_old << " new_num " << num_new << " cost_t " << cost_t << " agent " << i << " ----------------------------\n";
-                // // if(num_new > 0) continue;
-                // if(num_old <= num_new) continue;
+                for(size_t iii = time_a; iii < time_b && jjj <  segmentPath.states.size(); ++iii){
+                  for(int agentId = 0; agentId < solution.size(); agentId++){
+                    if(agentId == i) continue;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;
+                    if(loc_old.x == segmentPath.states[jjj].first.x 
+                       && loc_old.y == segmentPath.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
+                  }
+                  jjj++;
+                }
+                // std::cout << "old num " <<  num_old << " new_num " << num_new << " cost_t " << cost_t << " agent " << i << " ----------------------------\n";
+                // if(num_new > 0) continue;
+                if(num_old <= num_new) continue;
                 is_update = true;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b && jjj < segmentPath.states.size(); ++iii){
@@ -1023,8 +973,6 @@ private:
                   solution_path[i].states[iii].first.y = segmentPath.states[jjj].first.y;
                   solution_path[i].states[iii].second = iii;
                   solution_path[i].actions[iii] = segmentPath.actions[jjj];
-                  // std::cout << "time " << iii << "(x,y) " << solution_path[i].states[iii].first.x << ", " << 
-                  // solution_path[i].states[iii].first.y << std::endl;
                   jjj++;
                 }
 
@@ -1084,19 +1032,20 @@ private:
                 if(point_id[i][t - 1] != JumpPointId) PreJumpPointId = point_id[i][t - 1];
               }
               if(AftJumpPointId > solution[i].states.size() - 1) continue;
+              PreJumpPointId =0;
               AftJumpPointId = solution[i].states.size() - 1;
 
               //find the mahattan distance optimal segment path              
-              int time_jump_point_id = solution[i].states[JumpPointId].second;
-              for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
-                Location pre_loc = solution[i].states[prjpid].first;
-                int pre_time = solution[i].states[prjpid].second;
-                int mahattanD = abs(solution[i].states[prjpid].first.x - solution[i].states[JumpPointId].first.x)
-                                + abs(solution[i].states[prjpid].first.y - solution[i].states[JumpPointId].first.y);
-                if(abs(time_jump_point_id - pre_time) == mahattanD){
-                  PreJumpPointId = prjpid;
-                }else break;
-              }
+              // int time_jump_point_id = solution[i].states[JumpPointId].second;
+              // for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
+              //   Location pre_loc = solution[i].states[prjpid].first;
+              //   int pre_time = solution[i].states[prjpid].second;
+              //   int mahattanD = abs(solution[i].states[prjpid].first.x - solution[i].states[JumpPointId].first.x)
+              //                   + abs(solution[i].states[prjpid].first.y - solution[i].states[JumpPointId].first.y);
+              //   if(abs(time_jump_point_id - pre_time) == mahattanD){
+              //     PreJumpPointId = prjpid;
+              //   }else break;
+              // }
               // for(int afjpid = AftJumpPointId  + 1; afjpid < solution[i].states.size();  afjpid++){
               //   Location pre_loc = solution[i].states[afjpid].first;
               //   int pre_time = solution[i].states[afjpid].second;
@@ -1309,7 +1258,7 @@ private:
       std::vector<PlanResult<Location, Action, int> >& solution,
       std::vector<Conflict>& conflicts_all, HighLevelNodeJps& CurNode, int& gen_node){
     std::vector<PlanResult<Location, Action, int>> solution_path(solution.size());
-    std::vector<PlanResult<Location, Action, int>> solution_cat(solution.size());
+    // std::vector<PlanResult<Location, Action, int>> solution_cat(solution.size());
     std::vector<std::vector<int>> point_id(solution.size());
     std::vector<std::vector<int>> point_st(solution.size());
     Conflict result;
@@ -1412,9 +1361,10 @@ private:
                 }
               }
               if(AftJumpPointId > solution[i].states.size() - 1) continue;
-              // AftJumpPointId = solution[i].states.size() - 1;
+              PreJumpPointId = 0;
+              AftJumpPointId = solution[i].states.size() - 1;
               //find the mahattan distance optimal segment path
-              int time_jump_point_id = solution[i].states[JumpPointId].second;
+              // int time_jump_point_id = solution[i].states[JumpPointId].second;
               // for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
               //   Location pre_loc = solution[i].states[prjpid].first;
               //   int pre_time = solution[i].states[prjpid].second;
@@ -1424,15 +1374,15 @@ private:
               //     PreJumpPointId = prjpid;
               //   }else break;
               // }
-              for(int afjpid = AftJumpPointId  + 1; afjpid < solution[i].states.size();  afjpid++){
-                Location pre_loc = solution[i].states[afjpid].first;
-                int pre_time = solution[i].states[afjpid].second;
-                int mahattanD = abs(solution[i].states[afjpid].first.x - solution[i].states[JumpPointId].first.x)
-                                + abs(solution[i].states[afjpid].first.y - solution[i].states[JumpPointId].first.y);
-                if(abs(time_jump_point_id - pre_time) == mahattanD){
-                  AftJumpPointId = afjpid;
-                }else break;
-              }              
+              // for(int afjpid = AftJumpPointId  + 1; afjpid < solution[i].states.size();  afjpid++){
+              //   Location pre_loc = solution[i].states[afjpid].first;
+              //   int pre_time = solution[i].states[afjpid].second;
+              //   int mahattanD = abs(solution[i].states[afjpid].first.x - solution[i].states[JumpPointId].first.x)
+              //                   + abs(solution[i].states[afjpid].first.y - solution[i].states[JumpPointId].first.y);
+              //   if(abs(time_jump_point_id - pre_time) == mahattanD){
+              //     AftJumpPointId = afjpid;
+              //   }else break;
+              // }              
 
               Location goalLoc = solution[i].states[AftJumpPointId].first;
               int time_a = solution[i].states[PreJumpPointId].second;
@@ -1455,19 +1405,17 @@ private:
               assert(!CurNode.constraints[i].overlap(constraints));
               CurNode.constraints[i].add(constraints);
 
-              buildCAT(solution, solution_cat, i, false);
+              buildCAT(solution, solution, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
 
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
         	      Location location(constraint.x, constraint.y);
         	      m_env.setTemporalObstacle(location, constraint.time);
-        	      if(is_first_constraint_v){
-        		      jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
-        		      is_first_constraint_v = false;
-        	      }else{
-        		      jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
-        	      }
+        		    jpstbit.setCollisionVertex(location, constraint.time, constraint.time, is_first_constraint_v);
+                if(is_first_constraint_v){
+                  is_first_constraint_v = false;
+                }
               }
               for(auto & constraint : CurNode.constraints[i].edgeConstraints){
         	      Location location(constraint.x2, constraint.y2);
@@ -1496,12 +1444,10 @@ private:
               PlanResult<Location, Action, int> segmentPath;
               m_env.setGoal(goalLoc, i);
               m_env.Reset();
-              Location startNode(-1, -1);
-              startNode.x = initialState.x;
-              startNode.y = initialState.y;
+              Location startNode(initialState.x, initialState.y);
               m_env.setExactHeuristTrue();
               bool success = jpstbit.search(startNode, Action::Wait, segmentPath, time_a);
-              
+
               jump_point[i].insert(JumpPointId); 
               m_env.setIsSegPlanning(false);
               CurNode.constraints[i].vertexConstraints.erase(*constraints.vertexConstraints.begin());
@@ -1512,23 +1458,22 @@ private:
                 int num_old = 0, num_new = 0;
                 PlanResult<Location, Action, int> segmentPath2;
                 recoverConcretePath(segmentPath, segmentPath2);
-                // for(size_t iii = time_a; iii < time_b; ++iii){
-                //   if(jjj >= segmentPath2.states.size()) continue;
-                //   for(int agentId = 0; agentId < solution.size(); agentId++){
-                //     if(agentId == i) continue;
-                //     Location loc_old(-1, -1);
-                //     if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
-                //     else loc_old= solution_path[agentId].states[iii].first;                    
-                //     if(loc_old.x == segmentPath2.states[jjj].first.x 
-                //        && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
-                //     if(loc_old.x == solution_path[i].states[iii].first.x 
-                //        && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
-                //   }
-                //   jjj++;
-                // }
-                // // if(num_new > 0) continue;
-                // if(num_old <= num_new) continue;
-                
+                for(size_t iii = time_a; iii < time_b; ++iii){
+                  if(jjj >= segmentPath2.states.size()) continue;
+                  for(int agentId = 0; agentId < solution.size(); agentId++){
+                    if(agentId == i) continue;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;                    
+                    if(loc_old.x == segmentPath2.states[jjj].first.x 
+                       && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
+                  }
+                  jjj++;
+                }
+                // if(num_new > 0) continue;
+                if(num_old <= num_new) continue;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
                   solution_path[i].states[iii].first.x = segmentPath2.states[jjj].first.x;
@@ -1563,7 +1508,7 @@ private:
         }
         if(is_restart || is_fail) break;
       }
-      if(is_fail) break;;
+      if(is_fail) break;
       // drive-drive edge (swap)
       for (size_t i = 0; i < solution_path.size(); ++i) {
         Location state1a = getState(i, solution_path, t);
@@ -1596,10 +1541,11 @@ private:
               }
               if(JumpPointId + 1 > solution[i].states.size() - 1) continue;
               // if(JumpPointId + 2 <= solution[i].states.size() - 1) AftJumpPointID = JumpPointId + 2;
-              // AftJumpPointId = solution[i].states.size() - 1;
+              PreJumpPointId = 0;
+              AftJumpPointId = solution[i].states.size() - 1;
 
               //find the mahattan distance optimal segment path
-              int time_jump_point_id = solution[i].states[JumpPointId].second;
+              // int time_jump_point_id = solution[i].states[JumpPointId].second;
               // for(int prjpid = PreJumpPointId - 1; prjpid >=0;  prjpid--){
               //   Location pre_loc = solution[i].states[prjpid].first;
               //   int pre_time = solution[i].states[prjpid].second;
@@ -1609,15 +1555,15 @@ private:
               //     PreJumpPointId = prjpid;
               //   }else break;
               // }
-              for(int afjpid = AftJumpPointId  + 1; afjpid < solution[i].states.size();  afjpid++){
-                Location pre_loc = solution[i].states[afjpid].first;
-                int pre_time = solution[i].states[afjpid].second;
-                int mahattanD = abs(solution[i].states[afjpid].first.x - solution[i].states[JumpPointId].first.x)
-                                + abs(solution[i].states[afjpid].first.y - solution[i].states[JumpPointId].first.y);
-                if(abs(time_jump_point_id - pre_time) == mahattanD){
-                  AftJumpPointId = afjpid;
-                }else break;
-              }                 
+              // for(int afjpid = AftJumpPointId  + 1; afjpid < solution[i].states.size();  afjpid++){
+              //   Location pre_loc = solution[i].states[afjpid].first;
+              //   int pre_time = solution[i].states[afjpid].second;
+              //   int mahattanD = abs(solution[i].states[afjpid].first.x - solution[i].states[JumpPointId].first.x)
+              //                   + abs(solution[i].states[afjpid].first.y - solution[i].states[JumpPointId].first.y);
+              //   if(abs(time_jump_point_id - pre_time) == mahattanD){
+              //     AftJumpPointId = afjpid;
+              //   }else break;
+              // }                 
 
               Location goalLoc = solution[i].states[AftJumpPointId].first;
               int time_a = solution[i].states[PreJumpPointId].second;
@@ -1640,17 +1586,15 @@ private:
               m_env.resetTemporalObstacle();
               bool is_first_constraint_v = true;
               bool is_first_constraint_e = true;
-              buildCAT(solution, solution_cat, i, false);
+              buildCAT(solution, solution, i, false);
               jpst_bit jpstbit(m_env, solution_path);
               jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
               for(auto & constraint : CurNode.constraints[i].vertexConstraints){
         	      Location location(constraint.x, constraint.y);
         	      m_env.setTemporalObstacle(location, constraint.time);
+                jpstbit.setCollisionVertex(location, constraint.time, constraint.time, is_first_constraint_v);    
         	      if(is_first_constraint_v){
-        		      jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
         		      is_first_constraint_v = false;
-        	      }else{
-        		      jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
         	      }
               }
               for(auto & constraint : CurNode.constraints[i].edgeConstraints){
@@ -1681,9 +1625,7 @@ private:
               PlanResult<Location, Action, int> segmentPath;
               m_env.setGoal(goalLoc, i);
               m_env.Reset();
-              Location startNode(-1, -1);
-              startNode.x = initialState.x;
-              startNode.y = initialState.y;
+              Location startNode(initialState.x, initialState.y);
               m_env.setExactHeuristTrue();
               bool success = jpstbit.search(startNode, Action::Wait, segmentPath, time_a);
 
@@ -1697,21 +1639,21 @@ private:
                 int num_old = 0, num_new = 0;
                 PlanResult<Location, Action, int> segmentPath2;
                 recoverConcretePath(segmentPath, segmentPath2);
-                // for(size_t iii = time_a; iii < time_b; ++iii){
-                //   for(int agentId = 0; agentId < solution.size(); agentId++){
-                //     if(agentId == i) continue;
-                //     Location loc_old(-1, -1);
-                //     if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
-                //     else loc_old= solution_path[agentId].states[iii].first;                    
-                //     if(loc_old.x == segmentPath2.states[jjj].first.x 
-                //        && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
-                //     if(loc_old.x == solution_path[i].states[iii].first.x 
-                //        && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
-                //   }
-                //   jjj++;
-                // }
-                // // if(num_new >  0) continue;                
-                // if(num_old <= num_new) continue;
+                for(size_t iii = time_a; iii < time_b; ++iii){
+                  for(int agentId = 0; agentId < solution.size(); agentId++){
+                    if(agentId == i) continue;
+                    Location loc_old(-1, -1);
+                    if(iii >= solution_path[agentId].states.size()) loc_old= solution_path[agentId].states.back().first;
+                    else loc_old= solution_path[agentId].states[iii].first;                    
+                    if(loc_old.x == segmentPath2.states[jjj].first.x 
+                       && loc_old.y == segmentPath2.states[jjj].first.y) num_new++;
+                    if(loc_old.x == solution_path[i].states[iii].first.x 
+                       && loc_old.y == solution_path[i].states[iii].first.y) num_old++;
+                  }
+                  jjj++;
+                }
+                // if(num_new >  0) continue;                
+                if(num_old <= num_new) continue;
                 jjj = 0;
                 for(size_t iii = time_a; iii < time_b; ++iii){
                   solution_path[i].states[iii].first.x = segmentPath2.states[jjj].first.x;
