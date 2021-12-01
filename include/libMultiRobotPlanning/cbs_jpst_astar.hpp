@@ -250,8 +250,9 @@ class CBSJPSTAstar {
           if(!is_solved[child_id]) { child_id++; continue;}
 
           if(NewChild[child_id].conflicts_all.size()!=0){
-            NewChild[child_id].conflicts_all.clear();
-            PJps.conflicts_all.swap(empty_1);
+            // NewChild[child_id].conflicts_all.clear();
+            // PJps.conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(PJps.conflicts_all);
           }
           getFirstConflictJPST(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id], gen_node);
           gen_node++;
@@ -260,8 +261,9 @@ class CBSJPSTAstar {
             foundBypass = true;
             PJps.solution = NewChild[child_id].solution;
             PJps.num_conflict = NewChild[child_id].num_conflict;
-            PJps.conflicts_all.clear();
-            PJps.conflicts_all.swap(empty_1);
+            // PJps.conflicts_all.clear();
+            // PJps.conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(PJps.conflicts_all);
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }

@@ -299,8 +299,8 @@ class CBSAstar {
         // while(!P.conflicts_all.empty()) P.conflicts_all.pop();
         // m_env.getAllConflicts(P.solution, P.conflicts_all, P.num_conflict);
         if(P.conflicts_all.size() == 0) return true;
-        int random_index = rand()%P.conflicts_all.size();
-        random_index = 0;
+        // int random_index = rand()%P.conflicts_all.size();
+        int random_index = 0;
         Conflict conflict_temp = P.conflicts_all[random_index];
         // Conflict conflict_temp = P.conflicts_all.front();
         // P.conflicts_all.pop();
@@ -351,6 +351,7 @@ class CBSAstar {
           if(!NewChild[child_id].conflicts_all.empty()) {
             NewChild[child_id].conflicts_all.clear();
             NewChild[child_id].conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(NewChild[child_id].conflicts_all);
           }          
           m_env.getAllConflicts(NewChild[child_id].solution, NewChild[child_id].conflicts_all, NewChild[child_id].num_conflict);
           gen_node++;
@@ -360,9 +361,11 @@ class CBSAstar {
             foundBypass = true;
             P.solution[i] = NewChild[child_id].solution[i];
             P.num_conflict = NewChild[child_id].num_conflict;
-            P.conflicts_all.clear();
-            P.conflicts_all.swap(empty_1);
+            // P.conflicts_all.clear();
+            // P.conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(P.conflicts_all);            
             P.conflicts_all = NewChild[child_id].conflicts_all;
+
             break;
           }
           NewChild[child_id].cost += NewChild[child_id].solution[i].cost;

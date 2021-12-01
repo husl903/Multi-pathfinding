@@ -294,7 +294,8 @@ class CBSCAstar {
         // Conflict conflict_temp = P.conflicts_all.front();
         // P.conflicts_all.pop();
         if(P.conflicts_all.size() == 0) return true;
-        int random_index = rand()%P.conflicts_all.size();
+        // int random_index = rand()%P.conflicts_all.size();
+        int random_index = 0;
         Conflict conflict_temp = P.conflicts_all[random_index];
 
         HighLevelNode NewChild[2];
@@ -346,9 +347,10 @@ class CBSCAstar {
             foundBypass = true;
             P.solution[i] = NewChild[child_id].solution[i];
             P.num_conflict = NewChild[child_id].num_conflict;
+            std::vector<Conflict>().swap(P.conflicts_all);            
             // while(!P.conflicts_all.empty()) P.conflicts_all.pop();
-            P.conflicts_all.clear();
-            P.conflicts_all.swap(empty_1);
+            // P.conflicts_all.clear();
+            // P.conflicts_all.swap(empty_1);
             P.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }

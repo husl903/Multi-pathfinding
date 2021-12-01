@@ -306,7 +306,8 @@ class CBSSIPP {
                                      boost::heap::mutable_<true> >
         openJps;
     std::vector<Conflict> empty_1;
-    startJps.conflicts_all.swap(empty_1);
+    std::vector<Conflict>().swap(startJps.conflicts_all);
+    // startJps.conflicts_all.swap(empty_1);
 
     // for (size_t a = 0; a < startJps.solution.size(); ++a) {
     //   std::cout << "Solution for: " << a << std::endl;
@@ -405,8 +406,8 @@ class CBSSIPP {
         // Conflict conflict_temp = PJps.conflicts_all.front();
         // PJps.conflicts_all.pop();
         if(PJps.conflicts_all.size() == 0) return true;
-        int random_index = rand()%PJps.conflicts_all.size();
-        // int random_index = 0;
+        // int random_index = rand()%PJps.conflicts_all.size();
+        int random_index = 0;
         Conflict conflict_temp = PJps.conflicts_all[random_index];
         // std::cout << "Current cost " << PJps.cost << ", " << conflict_temp << "   ------- " << std::endl;
         HighLevelNodeJps NewChild[2];
@@ -509,8 +510,10 @@ class CBSSIPP {
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
-            PJps.conflicts_all.clear();
-            PJps.conflicts_all.swap(empty_1);
+            // PJps.conflicts_all.clear();
+            // PJps.conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(PJps.conflicts_all);
+            // std::cout << "size " << PJps.conflicts_all.size() << " \n";            
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }
