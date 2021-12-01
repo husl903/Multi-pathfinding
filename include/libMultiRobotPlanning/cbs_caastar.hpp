@@ -224,6 +224,7 @@ class CBSCAstar {
     std::vector<Conflict> empty_1;
     start.conflicts_all.swap(empty_1);
     m_env.getAllConflicts(start.solution, start.conflicts_all, start.num_conflict);
+    std::cout <<",Num conflict," << start.conflicts_all.size() << ",";    
 
     auto handle = open.push(start);
     (*handle).handle = handle;
@@ -246,14 +247,14 @@ class CBSCAstar {
         std::cout << " ,done, time-out fail" << ", num_node,  " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
-      if(num_node % 100 == 0){
-        getrusage(RUSAGE_SELF, &r_usage);
-        // std::cout << r_usage.ru_maxrss << " memory \n"; 
-        if(r_usage.ru_maxrss > 15204352){
-          std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";          
-          return false;
-        }
-      }      
+      // if(num_node % 100 == 0){
+      //   getrusage(RUSAGE_SELF, &r_usage);
+      //   // std::cout << r_usage.ru_maxrss << " memory \n"; 
+      //   if(r_usage.ru_maxrss > 15204352){
+      //     std::cout << " ,done, memory-out fail" << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";          
+      //     return false;
+      //   }
+      // }      
 
       HighLevelNode P = open.top();
       m_env.onExpandHighLevelNode(P.cost);

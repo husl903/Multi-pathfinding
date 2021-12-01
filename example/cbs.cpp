@@ -2273,9 +2273,9 @@ int main(int argc, char* argv[]) {
 
     if(solver == solver_astar){
       Timer timer_t3;
-      mapf.setBP(true);
+      mapf.setBP(false);
       mapf.setCAT(true);
-      std::cout << "AstarCAT-newBP, "<< num_agent_iter << ", ";
+      std::cout << "AstarCAT-NoBP, "<< num_agent_iter << ", ";
       successA = cbs_astar.search(startStates_temp, solution_astar);
       timer_t3.stop();
       if(successA) std::cout << " Planning successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile <<  std::endl;
@@ -2284,9 +2284,9 @@ int main(int argc, char* argv[]) {
 
     if(solver == solver_castar){
       Timer timer_t4;
-      mapf.setBP(true);
+      mapf.setBP(false);
       mapf.setCAT(true);
-      std::cout << "CAstarCAT-BP, " << num_agent_iter << ", ";
+      std::cout << "CAstarCAT-NoBP, " << num_agent_iter << ", ";
       successCA= cbs_castar.search(startStates_temp, solution_castar);
       timer_t4.stop();
       if(successCA) std::cout << " Planning successful! time, " << timer_t4.elapsedSeconds() << ", " << inputFile <<  std::endl;
@@ -2300,7 +2300,7 @@ int main(int argc, char* argv[]) {
       Timer timer_t8;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "Jpst-Astar-0toG-28, " << num_agent_iter << ", ";
+      std::cout << "Jpst-Jpst-mtog-28, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
