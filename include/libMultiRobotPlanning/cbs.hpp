@@ -127,10 +127,10 @@ class CBS {
     typename boost::heap::d_ary_heap<HighLevelNodeJps, boost::heap::arity<2>,
                                      boost::heap::mutable_<true> >
         openJps;
-    // while(!startJps.conflicts_all.empty()) startJps.conflicts_all.pop();
-    startJps.conflicts_all.swap(empty_1);
+
+    std::vector<Conflict>().swap(startJps.conflicts_all);      
     getAllConflicts(startJps.solution, startJps.conflicts_all, startJps.num_conflict);
-    std::cout << ", num_cf, " << startJps.conflicts_all.size() << ", ";
+    std::cout << ",num_cf, " << startJps.conflicts_all.size() << ", ";
 
     auto handleJps = openJps.push(startJps);
     (*handleJps).handle = handleJps;
@@ -159,8 +159,6 @@ class CBS {
       openJps.pop();
 
       bool foundBypass = true;
-      // std::cout << "-----------------------------------------------------------\n";
-      // std::cout << "cost " << PJps.cost << " conflict " << PJps.conflicts_all.size() << " cd, " << PJps.id << ", pd " << PJps.parent_id << " Herererere ***********************************************************************\n";
       while(foundBypass){
         if(PJps.conflicts_all.size() == 0){
           if(!m_env.CheckValid(PJps.solution)){
@@ -273,11 +271,7 @@ class CBS {
             foundBypass = true;
             PJps.solution[i] = NewChild[child_id].solution[i];
             PJps.num_conflict = NewChild[child_id].num_conflict;
-            PJps.conflicts_all.clear();
-            PJps.conflicts_all.swap(empty_1);
-            // std::cout << PJps.conflicts_all.size() << " conflict size \n";
-            // while(!PJps.conflicts_all.empty()) PJps.conflicts_all.pop();
-            // PJps.conflicts_all.swap(empty_1);
+            std::vector<Conflict>().swap(PJps.conflicts_all);
             PJps.conflicts_all = NewChild[child_id].conflicts_all;
             break;
           }

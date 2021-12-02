@@ -682,12 +682,12 @@ class Environment {
 
     solution_path.resize(solution.size());
     int max_t = 0;
+    Location a(-1, -1), b(-1, -1); 
+    int time_a, time_b;
     for(size_t i = 0; i < solution.size(); i++){
       if(solution[i].states.size() == 0) continue;
       if(i == agentnow) continue;
       int tt = 0;
-      Location a(-1, -1), b(-1, -1); 
-      int time_a, time_b;
       for(size_t jump_point_id = 0; jump_point_id < solution[i].states.size(); jump_point_id++){
 
         if(jump_point_id == solution[i].states.size() - 1){
@@ -2245,8 +2245,8 @@ int main(int argc, char* argv[]) {
     // if(num_agent_iter == 27) break;
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-jpcat, " << num_agent_iter << ", ";
-      mapf.setBP(true);
+      std::cout << "JPST-NojpcatBP, " << num_agent_iter << ", ";
+      mapf.setBP(false);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
       timer_t1.stop();
@@ -2258,9 +2258,9 @@ int main(int argc, char* argv[]) {
     }
     if(solver == solver_sipp){
       Timer timer_t2;
-      mapf.setBP(true);
-      mapf.setCAT(true);
-      std::cout << "SIPPCAT-random, " << num_agent_iter << ", ";
+      mapf.setBP(false);
+      mapf.setCAT(false);
+      std::cout << "SIPPCAT-NoBPCAT, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
@@ -2274,8 +2274,8 @@ int main(int argc, char* argv[]) {
     if(solver == solver_astar){
       Timer timer_t3;
       mapf.setBP(false);
-      mapf.setCAT(true);
-      std::cout << "AstarCAT-NoBP, "<< num_agent_iter << ", ";
+      mapf.setCAT(false);
+      std::cout << "AstarCAT-NoBPCAT, "<< num_agent_iter << ", ";
       successA = cbs_astar.search(startStates_temp, solution_astar);
       timer_t3.stop();
       if(successA) std::cout << " Planning successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile <<  std::endl;
@@ -2285,8 +2285,8 @@ int main(int argc, char* argv[]) {
     if(solver == solver_castar){
       Timer timer_t4;
       mapf.setBP(false);
-      mapf.setCAT(true);
-      std::cout << "CAstarCAT-NoBP, " << num_agent_iter << ", ";
+      mapf.setCAT(false);
+      std::cout << "CAstarCAT-NoBPCAT, " << num_agent_iter << ", ";
       successCA= cbs_castar.search(startStates_temp, solution_castar);
       timer_t4.stop();
       if(successCA) std::cout << " Planning successful! time, " << timer_t4.elapsedSeconds() << ", " << inputFile <<  std::endl;
