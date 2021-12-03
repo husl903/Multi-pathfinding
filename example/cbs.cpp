@@ -2300,7 +2300,7 @@ int main(int argc, char* argv[]) {
       Timer timer_t8;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "Jpst-Jpst-mtog-28, " << num_agent_iter << ", ";
+      std::cout << "Jpst-Jpst-jtom2, " << num_agent_iter << ", ";
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
