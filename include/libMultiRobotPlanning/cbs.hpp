@@ -109,7 +109,7 @@ class CBS {
     m_env.resetTemporalObstacle();
 
     for (size_t i = 0; i < initialStates.size(); ++i) {
-      // buildCAT(startJps.solution, cat_path, i);
+      buildCAT(startJps.solution, cat_path, i);
       jpst_bit jpst_b(m_env, cat_path);
       jpst_b.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
       Location goal = m_env.setGoal(i);
@@ -206,7 +206,7 @@ class CBS {
           is_first_constraint_v = true;
           is_first_constraint_e = true;
 
-          // buildCAT(NewChild[child_id].solution, cat_path, i);
+          buildCAT(NewChild[child_id].solution, cat_path, i);
           jpst_bit jpstbit(m_env, cat_path);
           // jpst_bit jpstbit(m_env);
 

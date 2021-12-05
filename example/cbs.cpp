@@ -2245,7 +2245,7 @@ int main(int argc, char* argv[]) {
     // if(num_agent_iter == 27) break;
     if(solver == solver_jpst){
       Timer timer_t1;
-      std::cout << "JPST-NojpcatBP, " << num_agent_iter << ", ";
+      std::cout << "JPST-CATNoBP, " << num_agent_iter << ", ";
       mapf.setBP(false);
       solution.clear();
       successJpst = cbs.search(startStates_temp, solution);
@@ -2300,7 +2300,8 @@ int main(int argc, char* argv[]) {
       Timer timer_t8;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "Jpst-Jpst-jtom2, " << num_agent_iter << ", ";
+      std::cout << "Jpst-Jpst-0tog, " << num_agent_iter << ", ";
+
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
