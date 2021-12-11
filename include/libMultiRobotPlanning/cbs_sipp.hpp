@@ -108,20 +108,38 @@ class CBSSIPP {
     m_env.Reset();
     m_env.resetTemporalObstacle();
 
+    int number_path = 0;
+    PlanResult<Location, Action, Cost> solution_tempjpst;
     for (size_t i = 0; i < initialStates.size(); ++i) {
 
         // jpst_bit jps1(m_env);
-        sipp_t jps1(m_env, startJps.solution);
-        jps1.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
+        sipp_t sipp(m_env, startJps.solution);
+        sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);      
         Location goal = m_env.setGoal(i);
         Location startNode(-1, -1);
         startNode.x = initialStates[i].x;
         startNode.y = initialStates[i].y;       
-        bool isJpsSucc = jps1.search(startNode, Action::Wait, startJps.solution[i], 0);
+        Timer timer_sipp;
+        timer_sipp.reset();
+        bool isJpsSucc = sipp.search(startNode, Action::Wait, startJps.solution[i], 0);
+        timer_sipp.stop();
+        double time_sipp = timer_sipp.elapsedSeconds();
         if(!isJpsSucc){
           return false;
         }
         startJps.cost += startJps.solution[i].cost;
+
+
+        jpst_bit jpst(m_env, startJps.solution);
+        jpst.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+        Timer timer_jpst;
+        timer_jpst.reset();
+        bool jpstSucc = jpst.search(startNode, Action::Wait, solution_tempjpst);
+        timer_jpst.stop();
+        double time_jpst = timer_jpst.elapsedSeconds();        
+        if(!jpstSucc) return false;
+        std::cout << "id " << number_path << ", " << time_sipp << ", " << time_jpst << " \n";
+        number_path++;
     //  LowLevelEnvironment llenv(m_env, i, start.constraints[i]);
     //  LowLevelSearch_t lowLevel(llenv);
     //  bool success = lowLevel.search(initialStates[i], start.solution[i]);
@@ -342,7 +360,7 @@ class CBSSIPP {
       // if(num_node > 50) return false;
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 300){
+      if(duration1 > 500){
         std::cout << " ,done, time-out fail " << ", num_node, " << num_node << " , gen_node, " << gen_node << ", " << " num_open, " << id << ", ";
     	  return false;
       }
@@ -440,7 +458,6 @@ class CBSSIPP {
           sipp.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
           m_env.resetTemporalObstacle();
           for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
-            // std::cout << "Berfore vc " << constraint << std::endl;
         	  Location location(constraint.x, constraint.y);
             m_env.setTemporalObstacle(location, constraint.time);
         	  if(is_first_constraint_v){
@@ -482,6 +499,118 @@ class CBSSIPP {
           double tSipp = timerSipp.elapsedSeconds();
           int ExpSipp = m_env.num_expansion;
           int GenSipp = m_env.num_generation;
+
+          jpst_bit jpstbit(m_env, PJps.solution);
+          m_env.resetTemporalObstacle();
+          is_first_constraint_v = true;
+          is_first_constraint_e = true;
+          jpstbit.setEdgeCollisionSize(m_env.m_dimx, m_env.m_dimy);
+
+          for(auto & constraint : NewChild[child_id].constraints[i].vertexConstraints){
+        	  Location location(constraint.x, constraint.y);
+            m_env.setTemporalObstacle(location, constraint.time);
+        	  if(is_first_constraint_v){
+        		  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);
+        		  is_first_constraint_v = false;
+        	  }else{
+        		  jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);
+          	}
+          }
+          for(auto & constraint : NewChild[child_id].constraints[i].edgeConstraints){
+        	  Location loc(constraint.x2, constraint.y2);
+            m_env.setTemporalEdgeConstraint(loc, constraint.time);
+        	  if(constraint.x1 == constraint.x2){
+        		  if(constraint.y1 == constraint.y2 - 1){
+        			  jpstbit.setEdgeConstraint(loc, constraint.time, Action::Down, is_first_constraint_e);
+        		  }else if(constraint.y1 == constraint.y2 + 1){
+        			  jpstbit.setEdgeConstraint(loc, constraint.time, Action::Up, is_first_constraint_e);
+        	  	}
+        	  }else{
+        		  if(constraint.x1 == constraint.x2 - 1){
+        			  jpstbit.setEdgeConstraint(loc, constraint.time, Action::Left, is_first_constraint_e);
+        		  }else if(constraint.x1 == constraint.x2 + 1){
+        			  jpstbit.setEdgeConstraint(loc, constraint.time, Action::Right, is_first_constraint_e);
+        		  }
+        	  }
+        	  if(is_first_constraint_e){
+        		  is_first_constraint_e = false;
+          	}
+          }
+          jpstbit.sortCollisionVertex();
+          jpstbit.sortCollisionEdgeConstraint();
+          m_env.setGoal(i);
+          startNode.x = initialStates[i].x;
+          startNode.y = initialStates[i].y;
+          
+          Timer timer_jpst;
+          timer_jpst.reset();
+          is_solved[child_id] = jpstbit.search(startNode, Action::Wait, solution_tempjpst, 0);
+          timer_jpst.stop();
+          double time_jpst = timer_jpst.elapsedSeconds();
+          std::cout << "id, " << number_path << ", " << tSipp << ", " << time_jpst << "\n";
+          number_path++;
+          // std::cout << solution_tempjpst.cost << ", " << NewChild[child_id].solution[i].cost << "\n";
+          if(solution_tempjpst.cost != NewChild[child_id].solution[i].cost){
+            return false;
+            std::cout << " not equal\n";
+          }
+//         for(auto & constraint : newNodeJps.constraints[i].vertexConstraints){
+//         	Location location(constraint.x, constraint.y);
+//         	m_env.setTemporalObstacle(location, constraint.time);
+//         	if(is_first_constraint_v){
+// //        		jps.setCollisionVertex(location, constraint.time, constraint.time, true);
+//         		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, true);            
+//         		is_first_constraint_v = false;
+//         	}else{
+// //        		jps.setCollisionVertex(location, constraint.time, constraint.time, false);
+//         		jpstbit.setCollisionVertex(location, constraint.time, constraint.time, false);            
+//         	}
+//         }
+        
+//         for(auto & constraint : newNodeJps.constraints[i].edgeConstraints){
+//         	Location location(constraint.x2, constraint.y2);
+//         	m_env.setTemporalEdgeConstraint(location, constraint.time);
+//         	if(constraint.x1 == constraint.x2){
+//         		if(constraint.y1 == constraint.y2 - 1){
+// //        			jps.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
+//         			jpstbit.setEdgeConstraint(location, constraint.time, Action::Down, is_first_constraint_e);
+//         		}else if(constraint.y1 == constraint.y2 + 1){
+// //        			jps.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
+//         			jpstbit.setEdgeConstraint(location, constraint.time, Action::Up, is_first_constraint_e);
+//         		}
+//         	}else{
+//         		if(constraint.x1 == constraint.x2 - 1){
+// //        			jps.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
+//         			jpstbit.setEdgeConstraint(location, constraint.time, Action::Left, is_first_constraint_e);
+//         		}else if(constraint.x1 == constraint.x2 + 1){
+// //        			jps.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
+//         			jpstbit.setEdgeConstraint(location, constraint.time, Action::Right, is_first_constraint_e);
+//         		}
+//         	}
+//         	if(is_first_constraint_e){
+//         		is_first_constraint_e = false;
+//         	}
+//         }
+
+        // jpstbit.sortCollisionVertex();
+        // jpstbit.sortCollisionEdgeConstraint();
+        // PlanResult<Location, Action, int> solutiontempJps;
+        // Location goal = m_env.setGoal(i);
+        // m_env.Reset();
+        // Location startNode(-1, -1);
+        // startNode.x = initialStates[i].x;
+        // startNode.y = initialStates[i].y;
+        
+        // Timer timerJpstbit;
+        // timerJpstbit.reset();
+        // m_env.setExactHeuristTrue();
+        // bool isJpstbit = jpstbit.search(startNode, Action::Wait, newNodeJps.solution[i], 0);
+        // // newNodeJps.solution[i] = solutiontempJps;
+        // timerJpstbit.stop();
+        // double tJpstbit = timerJpstbit.elapsedSeconds();
+        // int ExpJps1 = m_env.num_expansion;
+        // int GenJps1 = m_env.num_generation;
+
 
           // std::cout <<"Cost " << NewChild[child_id].solution[i].cost << ", " << PJps.solution[i].cost << std::endl;
 
