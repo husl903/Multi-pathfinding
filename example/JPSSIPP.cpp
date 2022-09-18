@@ -9,7 +9,8 @@
 #include <libMultiRobotPlanning/JPSSIPP.hpp>
 #include <libMultiRobotPlanning/JPSSIPPAN.hpp>
 #include <libMultiRobotPlanning/sipp.hpp>
-#include "timer.hpp"
+#include <libMultiRobotPlanning/timer.hpp>
+// #include "timer.hpp"
 
 using libMultiRobotPlanning::JPSSIPP;
 using libMultiRobotPlanning::JPSSIPPAN;

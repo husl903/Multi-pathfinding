@@ -48,6 +48,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPP.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/JPSSIPPCBS.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_move.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/assignment.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/cbs.cpp
@@ -77,7 +78,7 @@ add_custom_target(everything
 )
 
 # Enable C++14 and warnings
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -Wextra")
@@ -94,6 +95,13 @@ include_directories(
   include
 )
 
+include_directories(
+  ./stonesngems_cpp/include
+)
+
+add_subdirectory(stonesngems_cpp)
+link_libraries(stonesngems)
+
 # Examples
 
 ## a_star
@@ -101,6 +109,15 @@ add_executable(a_star
   example/a_star.cpp
 )
 target_link_libraries(a_star
+  ${Boost_LIBRARIES}
+)
+
+## a_star_move
+add_executable(a_star_move
+  example/a_star_move.cpp
+)
+target_link_libraries(a_star_move
+  PUBLIC stonesngems
   ${Boost_LIBRARIES}
 )
 
@@ -194,3 +211,5 @@ target_link_libraries(mapf_prioritized_sipp
   ${Boost_LIBRARIES}
   yaml-cpp
 )
+
+
