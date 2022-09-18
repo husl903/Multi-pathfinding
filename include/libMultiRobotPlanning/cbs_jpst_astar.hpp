@@ -147,7 +147,7 @@ class CBSJPSTAstar {
       m_env.onExpandHighLevelNode(PJps.cost);
       openJps.pop();
 
-      if(duration1 > 300){
+      if(duration1 > 60){
         solution = PJps.solution;
         std::cout << " ,done, time-out fail" << PJps.cost  << ", num_node, " << num_node << " , gen_node_low, " << gen_node_low << ", " << ", gen_node_seg," << gen_node_seg << ",num_open " << id << ",";
     	  return false;
