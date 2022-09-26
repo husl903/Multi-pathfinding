@@ -110,11 +110,11 @@ class Environment {
 //whether needs const
   void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
+    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
+
     neighbors.clear();
     std::vector<int8_t> gridtemp;
-    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
     gridtemp.swap(s.grid);
-
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
@@ -123,9 +123,10 @@ class Environment {
     //     std::cout << std::endl;
     // } 
 
-    state_game.board.agent_pos = -1;
-    state_game.apply_action(0);
     int index = s.x * m_dimy + s.y;
+    int index1 = -1;
+    state_game.board.agent_pos = index;
+    state_game.apply_action(0);
     State wait(s.x, s.y, s.time + 1, state_game.board.grid);
     if(index == state_game.board.agent_pos){
        neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
@@ -133,42 +134,38 @@ class Environment {
     } 
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
-    state_game.board.agent_pos = -1;
+    state_game.board.agent_pos = index;
     state_game.apply_action(1);
     State up(s.x - 1, s.y, s.time + 1, state_game.board.grid);
-    index = (s.x - 1) * m_dimy + s.y;
-    if (index == state_game.board.agent_pos) {
+    if (index - m_dimy == state_game.board.agent_pos) {
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       //  std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
-    state_game.board.agent_pos = -1;
+    state_game.board.agent_pos = index;
     state_game.apply_action(3);
     State down(s.x + 1, s.y, s.time + 1, state_game.board.grid);
-    index = (s.x + 1) * m_dimy + s.y;
-    if (index == state_game.board.agent_pos) {
+    if (index + m_dimy == state_game.board.agent_pos) {
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;      
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
-    state_game.board.agent_pos = -1;
+    state_game.board.agent_pos = index;
     state_game.apply_action(4);
     State left(s.x, s.y - 1, s.time + 1, state_game.board.grid);
-    index = s.x * m_dimy + s.y - 1;
-    if (index == state_game.board.agent_pos) {
+    if (index - 1 == state_game.board.agent_pos) {
       neighbors.emplace_back(
           Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
-    state_game.board.agent_pos = -1;
+    state_game.board.agent_pos = index;
     state_game.apply_action(2);
     State right(s.x, s.y + 1, s.time + 1, state_game.board.grid);
-    index = s.x * m_dimy + s.y + 1;
-    if (index == state_game.board.agent_pos) {
+    if (index + 1 == state_game.board.agent_pos) {
       neighbors.emplace_back(
           Neighbor<State, Action, int>(right, Action::Right, 1));
       //  std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
@@ -227,7 +224,7 @@ int main(int argc, char* argv[]) {
               // std::cout <<  "||" << h << ", " << w;
             }
             if(grid[h * state_p.board.cols + w] == 5){
-              // std::cout <<  "||" << h << ", " << w;
+              std::cout <<  "||" << h << ", " << w;
             }
 
             std::cout << kCellTypeToElement.at(grid[h * state_p.board.cols + w]).id;

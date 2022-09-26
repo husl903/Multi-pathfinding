@@ -62,7 +62,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/cbs_astar.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/cbs_castar.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_move.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new.cpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/assignment.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/cbs.cpp
@@ -97,9 +97,9 @@ add_custom_target(everything
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -w -O3 -g -Wextra")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -w -O3 -pg -Wextra")
 
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g")
+#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -pg")
 
 #link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so")
 #link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.74.0")
@@ -128,11 +128,11 @@ target_link_libraries(a_star
   ${Boost_LIBRARIES}
 )
 
-## a_star_move
-add_executable(a_star_move
-  example/a_star_move.cpp
+## a_star_new
+add_executable(a_star_new
+  example/a_star_new.cpp
 )
-target_link_libraries(a_star_move
+target_link_libraries(a_star_new
   PUBLIC stonesngems
   ${Boost_LIBRARIES}
 )
