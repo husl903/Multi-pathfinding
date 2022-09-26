@@ -10,6 +10,7 @@
 #include <libMultiRobotPlanning/cbs.hpp>
 #include <libMultiRobotPlanning/cbs_astar.hpp>
 #include <libMultiRobotPlanning/cbs_jpst_astar.hpp>
+#include <libMultiRobotPlanning/cbs_jpst_jpst.hpp>
 #include <libMultiRobotPlanning/cbs_jpst_sipp.hpp>
 #include <libMultiRobotPlanning/cbs_caastar.hpp>
 #include <libMultiRobotPlanning/cbs_sipp.hpp>
@@ -21,6 +22,7 @@ using namespace std;
 
 using libMultiRobotPlanning::CBS;
 using libMultiRobotPlanning::CBSJPSTAstar;
+using libMultiRobotPlanning::CBSJPSTJPST;
 using libMultiRobotPlanning::CBSJPSTSIPP;
 using libMultiRobotPlanning::CBSSIPP;
 using libMultiRobotPlanning::CBSAstar;
@@ -96,7 +98,6 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 }
 
 ///
-
 struct Conflict {
   enum Type {
     Vertex,
@@ -2198,6 +2199,10 @@ int main(int argc, char* argv[]) {
   CBSJPSTAstar<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpsta(mapf);
   std::vector<PlanResult<Location, Action, int> > solution_jpsta;
 
+  CBSJPSTJPST<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpstj(mapf);
+  std::vector<PlanResult<Location, Action, int> > solution_jpstj;
+
+
   CBSJPSTSIPP<State, Location, Action, int, Conflict, Constraints, Environment> cbs_jpstsipp(mapf);
   std::vector<PlanResult<Location, Action, int>> solution_jpstsipp;
 
@@ -2227,11 +2232,15 @@ int main(int argc, char* argv[]) {
   // std::cout << startStates.size() << " Here \n";
   bool successJpst = true, successSipp = true, successA = true, successCA = true;
   bool successJpstA = true, successSippNoCat = true, successANoCAT = true, successCANoCAT = true, successJpstNoBP = true;
+  bool successJpstJ = true;
+  bool successJpstS = true;
+
   int num_agent_iter = 0;
   std::vector<State> startStates_temp;
 
   string solver_jpst = "JPST";
   string solver_jpsta = "JPSTA";
+  string solver_jpstj = "JPSTJ";
   string solver_jpstsipp = "JPSTSIPP";
   string solver_sipp = "SIPP";
   string solver_astar = "Astar";
@@ -2241,10 +2250,12 @@ int main(int argc, char* argv[]) {
   string solver_sippncat = "SIPPNoCAT";
   string solver_cancat = "CastarNoCAT";
   mapf.setBP(true);
+  bool isJpst = true, isSipp = true;
   while(true)
   {
-    std::cout << "seed, " << seed << ", ";
+//    std::cout << "seed, " << seed << ", ";
     startStates_temp.push_back(startStates[num_agent_iter]);
+//    if(!successJpstA && !successSipp) break;
   //  num_agent_iter++;
   //  if(num_agent_iter < 53) continue;
     // if(num_agent_iter == 27) break;
@@ -2267,13 +2278,13 @@ int main(int argc, char* argv[]) {
       Timer timer_t2;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "SIPPCAT-CatBP, " << num_agent_iter << ", ";
+      std::cout << "SIPPCAT-CatBP-sig, " << num_agent_iter << ", ";
       successSipp = cbs_sipp.search(startStates_temp, solution_sipp);
       timer_t2.stop();
       if(successSipp) std::cout << " Planning successful! time, " << timer_t2.elapsedSeconds()  << ", " << inputFile <<  std::endl;
       else {
         std::cout << " Planning NOT successful! time, " << timer_t2.elapsedSeconds() << ", " << inputFile <<  std::endl;
-        break;
+       break;
       }
       // if(num_agent_iter == 5) {std::cout << "solution_sipp " << ", " << solution_sipp.size() << std::endl; break;}
     }
@@ -2286,7 +2297,9 @@ int main(int argc, char* argv[]) {
       successA = cbs_astar.search(startStates_temp, solution_astar);
       timer_t3.stop();
       if(successA) std::cout << " Planning successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile <<  std::endl;
-      else {std::cout << " Planning NOT successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile << std::endl; break;}
+      else {std::cout << " Planning NOT successful! time, " << timer_t3.elapsedSeconds() << ", " << inputFile << std::endl; 
+        break;
+      }
     }
 
     if(solver == solver_castar){
@@ -2307,32 +2320,51 @@ int main(int argc, char* argv[]) {
       Timer timer_t8;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "Jpst-JPst-jtoj1-, " << num_agent_iter << ", ";
+      std::cout << "Jpst-A-jtog-, " << num_agent_iter << ", ";
 
       solution_jpsta.clear();
       successJpstA = cbs_jpsta.search(startStates_temp, solution_jpsta);
       timer_t8.stop();
       if(successJpstA) std::cout << " Planning successful! time, " << timer_t8.elapsedSeconds() << ", "<< inputFile << std::endl;
-      else {std::cout << " Planning NOT successful! time, " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;break;}
+      else {
+        std::cout << " Planning NOT successful! time, " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;
+       break;
+      }
     }
+
+    if(solver == solver_jpstj){
+      Timer timer_t8;
+      mapf.setBP(true);
+      mapf.setCAT(true);
+      std::cout << "Jpst-J-jtog-, " << num_agent_iter << ", ";
+
+      solution_jpsta.clear();
+      successJpstJ = cbs_jpstj.search(startStates_temp, solution_jpstj);
+      timer_t8.stop();
+      if(successJpstJ) std::cout << " Planning successful! time, " << timer_t8.elapsedSeconds() << ", "<< inputFile << std::endl;
+      else {
+        std::cout << " Planning NOT successful! time, " << timer_t8.elapsedSeconds() << ", " << inputFile << std::endl;
+//        break;
+      }
+    }
+
 
     if(solver == solver_jpstsipp){
       Timer timer_t9;
       mapf.setBP(true);
       mapf.setCAT(true);
-      std::cout << "JPST-SIPP-jtom1-, " << num_agent_iter << ", ";
+      std::cout << "JPST-SIPP-jtog-, " << num_agent_iter << ", ";
       solution_jpstsipp.clear();
-      bool successJpstS = cbs_jpstsipp.search(startStates_temp, solution_jpstsipp);
+      successJpstS = cbs_jpstsipp.search(startStates_temp, solution_jpstsipp);
       timer_t9.stop();
       if(successJpstS) std::cout << " Planning successful! time, " << timer_t9.elapsedSeconds() << ", " << inputFile <<  std::endl;
       else{
         std::cout << " Planning NOT successful! time, " << timer_t9.elapsedSeconds() << ", " << inputFile <<  std::endl;
-        break;  
+//        break;  
       }
     }
 
     // mapf.setBP(false);
-
     if(solver == solver_sippncat){
       Timer timer_t5;
       mapf.setCAT(false);
@@ -2408,7 +2440,7 @@ int main(int argc, char* argv[]) {
   // bool successCA= cbs_castar.search(startStates, solution_castar);
 
   // std::cout << "----------------------------\n";
-  if (successSipp) {
+/*  if (successSipp) {
 
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
     int cost = 0;
@@ -2446,9 +2478,9 @@ int main(int argc, char* argv[]) {
     }
   } else {
     std::cout << inputFile << " Planning NOT successful!" << std::endl;
-  }
+  }*/
 
-  if (successJpstA) {
+/*  if (successJpstA) {
 
     std::cout << inputFile << " Planning successful! time " << timer.elapsedSeconds() << std::endl;
     int cost = 0;
@@ -2486,7 +2518,7 @@ int main(int argc, char* argv[]) {
     }
   } else {
     std::cout << inputFile << " Planning NOT successful!" << std::endl;
-  }
+  }*/
 
 
 //  if (successA) {
