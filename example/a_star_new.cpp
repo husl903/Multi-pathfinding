@@ -126,6 +126,8 @@ class Environment {
     int index = s.x * m_dimy + s.y;
     int index1 = -1;
     state_game.board.agent_pos = index;
+    state_game.board.agent_idx = index;
+
     state_game.apply_action(0);
     State wait(s.x, s.y, s.time + 1, state_game.board.grid);
     if(index == state_game.board.agent_pos){
@@ -135,15 +137,17 @@ class Environment {
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
     state_game.board.agent_pos = index;
+    state_game.board.agent_idx = index;
     state_game.apply_action(1);
     State up(s.x - 1, s.y, s.time + 1, state_game.board.grid);
-    if (index - m_dimy == state_game.board.agent_pos) {
+    if ((index - m_dimy) == state_game.board.agent_pos) {
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       //  std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
     state_game.board.agent_pos = index;
+    state_game.board.agent_idx = index;
     state_game.apply_action(3);
     State down(s.x + 1, s.y, s.time + 1, state_game.board.grid);
     if (index + m_dimy == state_game.board.agent_pos) {
@@ -153,6 +157,7 @@ class Environment {
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
     state_game.board.agent_pos = index;
+    state_game.board.agent_idx = index;
     state_game.apply_action(4);
     State left(s.x, s.y - 1, s.time + 1, state_game.board.grid);
     if (index - 1 == state_game.board.agent_pos) {
@@ -163,6 +168,7 @@ class Environment {
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
     state_game.board.agent_pos = index;
+    state_game.board.agent_idx = index;
     state_game.apply_action(2);
     State right(s.x, s.y + 1, s.time + 1, state_game.board.grid);
     if (index + 1 == state_game.board.agent_pos) {
@@ -215,23 +221,37 @@ int main(int argc, char* argv[]) {
 
     std::cout << state_p.board.grid.size() << "end\n";
     int startX, startY, goalX = -1, goalY = -1;  
+
     for (int h = 0; h < state_p.board.rows; ++h) {
         for (int w = 0; w < state_p.board.cols; ++w) {
-            //printf("%d ", grid[h * state_p.board.cols + w]);
             if(grid[h * state_p.board.cols + w] == 0){
               startX = h;
               startY = w;
               // std::cout <<  "||" << h << ", " << w;
             }
-            if(grid[h * state_p.board.cols + w] == 5){
-              std::cout <<  "||" << h << ", " << w;
-            }
 
-            std::cout << kCellTypeToElement.at(grid[h * state_p.board.cols + w]).id;
-            // if(h==0) grid[h * state_p.board.cols + w] = 100;
+            std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
         }
         std::cout << std::endl;
     }
+
+//     for (int h = 0; h < state_p.board.rows; ++h) {
+//         for (int w = 0; w < state_p.board.cols; ++w) {
+//             //printf("%d ", grid[h * state_p.board.cols + w]);
+//             if(grid[h * state_p.board.cols + w] == 0){
+//               startX = h;
+//               startY = w;
+//               std::cout <<  "||" << h << ", " << w;
+//             }
+// //            if(grid[h * state_p.board.cols + w] == 5){
+// //              std::cout <<  "||" << h << ", " << w;
+// //            }
+
+//             std::cout << kCellTypeToElement.at(grid[h * state_p.board.cols + w]).id;
+//             // if(h==0) grid[h * state_p.board.cols + w] = 100;
+//         }
+//         std::cout << std::endl;
+//     }
 
 
     State start(startX, startY, 0, grid);
