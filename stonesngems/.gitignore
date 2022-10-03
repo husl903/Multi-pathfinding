@@ -1,0 +1,12 @@
+# Build products
+build/
+build*/
+debug/
+debug*/
+cmake-build-*/
+dist/
+
+# IDE
+.idea/
+.vscode/
+.cache/

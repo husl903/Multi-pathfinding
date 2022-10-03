@@ -112,10 +112,10 @@ include_directories(
 )
 
 include_directories(
-  ./stonesngems_cpp/include
+  ./stonesngems/include
 )
 
-add_subdirectory(stonesngems_cpp)
+add_subdirectory(stonesngems)
 link_libraries(stonesngems)
 
 # Examples
