@@ -31,6 +31,21 @@ Board parse_board_str(const std::string &board_str) {
     for (std::size_t i = 4; i < seglist.size(); ++i) {
         HiddenCellType el = static_cast<HiddenCellType>(std::stoi(seglist[i]));
         board.item(i - 4) = static_cast<int8_t>(el);
+        if(board.is_update_event){
+            if(el == HiddenCellType::kStone || el == HiddenCellType::kStoneFalling ||
+               el == HiddenCellType::kDiamond || el == HiddenCellType::kDiamondFalling || 
+               el == HiddenCellType::kNut || el == HiddenCellType::kNutFalling ||
+               el == HiddenCellType::kBomb || el == HiddenCellType::kBombFalling ||
+               el == HiddenCellType::kBlob || el == HiddenCellType::kExitClosed){
+                   board.need_update_queue.push(i - 4);
+            }else {
+                const Element &element = kCellTypeToElement[board.item(i - 4) + 1];
+                if(IsButterfly(element) || IsFirefly(element) || IsOrange(element) 
+                   || IsMagicWall(element) || IsExplosion(element)){
+                   board.need_update_queue.push(i - 4);
+                }
+            }            
+        }
         if (el == HiddenCellType::kAgent) {
             board.agent_pos = i - 4;
             board.agent_idx = i - 4;

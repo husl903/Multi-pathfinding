@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <queue>
 
 namespace stonesngems {
 
@@ -863,6 +864,8 @@ struct Board {
     int max_steps;
     std::vector<int8_t> grid;
     std::vector<bool> has_updated;
+    std::queue<int> need_update_queue;
+    bool is_update_event = false;
 };
 
 }    // namespace stonesngems

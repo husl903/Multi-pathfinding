@@ -69,58 +69,115 @@ void RNDGameState::apply_action(int action) {
     UpdateAgent(board.agent_idx, static_cast<Directions>(action));
 
     // Handle all other items
-    for (int i = 0; i < board.rows * board.cols; ++i) {
-        if (board.has_updated[i]) {    // Item already updated
-            continue;
+    if(!board.is_update_event){
+        for (int i = 0; i < board.rows * board.cols; ++i) {
+            if (board.has_updated[i]) {    // Item already updated
+                continue;
+            }
+            switch (board.item(i)) {
+                // Handle non-compound types
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStone):
+                    UpdateStone(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStoneFalling):
+                    UpdateStoneFalling(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
+                    UpdateDiamond(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
+                    UpdateDiamondFalling(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNut):
+                    UpdateNut(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNutFalling):
+                    UpdateNutFalling(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBomb):
+                    UpdateBomb(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBombFalling):
+                    UpdateBombFalling(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kExitClosed):
+                    UpdateExit(i);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBlob):
+                    UpdateBlob(i);
+                    break;
+                default:
+                    // Handle compound types
+                    const Element &element = kCellTypeToElement[board.item(i) + 1];
+                    if (IsButterfly(element)) {
+                        UpdateButterfly(i, kButterflyToDirection.at(element));
+                    } else if (IsFirefly(element)) {
+                        UpdateFirefly(i, kFireflyToDirection.at(element));
+                    } else if (IsOrange(element)) {
+                        UpdateOrange(i, kOrangeToDirection.at(element));
+                    } else if (IsMagicWall(element)) {
+                        UpdateMagicWall(i);
+                    } else if (IsExplosion(element)) {
+                        UpdateExplosions(i);
+                    }
+                    break;
+            }
         }
-        switch (board.item(i)) {
-            // Handle non-compound types
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStone):
-                UpdateStone(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStoneFalling):
-                UpdateStoneFalling(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
-                UpdateDiamond(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
-                UpdateDiamondFalling(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNut):
-                UpdateNut(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNutFalling):
-                UpdateNutFalling(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBomb):
-                UpdateBomb(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBombFalling):
-                UpdateBombFalling(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kExitClosed):
-                UpdateExit(i);
-                break;
-            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBlob):
-                UpdateBlob(i);
-                break;
-            default:
-                // Handle compound types
-                const Element &element = kCellTypeToElement[board.item(i) + 1];
-                if (IsButterfly(element)) {
-                    UpdateButterfly(i, kButterflyToDirection.at(element));
-                } else if (IsFirefly(element)) {
-                    UpdateFirefly(i, kFireflyToDirection.at(element));
-                } else if (IsOrange(element)) {
-                    UpdateOrange(i, kOrangeToDirection.at(element));
-                } else if (IsMagicWall(element)) {
-                    UpdateMagicWall(i);
-                } else if (IsExplosion(element)) {
-                    UpdateExplosions(i);
-                }
-                break;
-        }
+    }else{
+         board.need_update_queue.push(-1);
+         while(!board.need_update_queue.empty()){
+            int item_index = board.need_update_queue.front();
+            board.need_update_queue.pop();
+            if(item_index == -1) break;
+            switch (board.item(item_index)) {
+                // Handle non-compound types
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStone):
+                    UpdateStone(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStoneFalling):
+                    UpdateStoneFalling(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
+                    UpdateDiamond(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
+                    UpdateDiamondFalling(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNut):
+                    UpdateNut(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNutFalling):
+                    UpdateNutFalling(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBomb):
+                    UpdateBomb(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBombFalling):
+                    UpdateBombFalling(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kExitClosed):
+                    UpdateExit(item_index);
+                    break;
+                case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBlob):
+                    UpdateBlob(item_index);
+                    break;
+                default:
+                    // Handle compound types
+                    const Element &element = kCellTypeToElement[board.item(item_index) + 1];
+                    if (IsButterfly(element)) {
+                        UpdateButterfly(item_index, kButterflyToDirection.at(element));
+                    } else if (IsFirefly(element)) {
+                        UpdateFirefly(item_index, kFireflyToDirection.at(element));
+                    } else if (IsOrange(element)) {
+                        UpdateOrange(item_index, kOrangeToDirection.at(element));
+                    } else if (IsMagicWall(element)) {
+                        UpdateMagicWall(item_index);
+                    } else if (IsExplosion(element)) {
+                        UpdateExplosions(item_index);
+                    }
+                    break;
+            }            
+         }
     }
 
     EndScan();
@@ -379,15 +436,21 @@ void RNDGameState::UpdateStone(int index) {
         UpdateStoneFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
         RollLeft(index, kElStoneFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElStoneFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
+    } else{
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
+    
 }
 
 void RNDGameState::UpdateStoneFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);        
     } else if (HasProperty(index, ElementProperties::kCanExplode, Directions::kDown)) {
         // Falling stones can cause elements to explode
         auto it = kElementToExplosion.find(GetItem(index, Directions::kDown));
@@ -395,20 +458,25 @@ void RNDGameState::UpdateStoneFalling(int index) {
     } else if (IsType(index, kElWallMagicOn, Directions::kDown) ||
                IsType(index, kElWallMagicDormant, Directions::kDown)) {
         MoveThroughMagic(index, kMagicWallConversion.at(GetItem(index)));
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);
     } else if (IsType(index, kElNut, Directions::kDown)) {
         // Falling on a nut, crack it open to reveal a diamond!
         SetItem(index, kElDiamond, -1, Directions::kDown);
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);
     } else if (IsType(index, kElNut, Directions::kDown)) {
         // Falling on a bomb, explode!
         auto it = kElementToExplosion.find(GetItem(index));
         Explode(index, (it == kElementToExplosion.end()) ? kElExplosionEmpty : it->second);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElStoneFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElStoneFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     } else {
         // Default options is for falling stones to become stationary
         SetItem(index, kElStone, -1);
+        if(board.is_update_event) board.need_update_queue.push(index);        
     }
 }
 
@@ -424,8 +492,12 @@ void RNDGameState::UpdateDiamond(int index) {
         UpdateDiamondFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
         RollLeft(index, kElDiamondFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElDiamondFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
+    } else {
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -433,6 +505,7 @@ void RNDGameState::UpdateDiamondFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);        
     } else if (HasProperty(index, ElementProperties::kCanExplode, Directions::kDown) &&
                !IsType(index, kElBomb, Directions::kDown) && !IsType(index, kElBombFalling, Directions::kDown)) {
         // Falling diamonds can cause elements to explode (but not bombs)
@@ -441,13 +514,17 @@ void RNDGameState::UpdateDiamondFalling(int index) {
     } else if (IsType(index, kElWallMagicOn, Directions::kDown) ||
                IsType(index, kElWallMagicDormant, Directions::kDown)) {
         MoveThroughMagic(index, kMagicWallConversion.at(GetItem(index)));
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElDiamondFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElDiamondFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     } else {
         // Default options is for falling diamond to become stationary
         SetItem(index, kElDiamond, -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -463,8 +540,10 @@ void RNDGameState::UpdateNut(int index) {
         UpdateNutFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElNutFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElNutFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     }
 }
 
@@ -472,13 +551,16 @@ void RNDGameState::UpdateNutFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElNutFalling);
     } else if (CanRollRight(index)) {
         RollRight(index, kElNutFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     } else {
         // Default options is for falling nut to become stationary
         SetItem(index, kElNut, -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -494,8 +576,10 @@ void RNDGameState::UpdateBomb(int index) {
         UpdateBombFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElBomb);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElBomb);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     }
 }
 
@@ -503,10 +587,13 @@ void RNDGameState::UpdateBombFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
+        if(board.is_update_event) board.need_update_queue.push(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElBombFalling);
+        if(board.is_update_event) board.need_update_queue.push(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElBombFalling);
+        if(board.is_update_event) board.need_update_queue.push(index + 1);
     } else {
         // Default options is for bomb to explode if stopped falling
         auto it = kElementToExplosion.find(GetItem(index));
@@ -518,6 +605,8 @@ void RNDGameState::UpdateExit(int index) {
     // Open exit if enough gems collected
     if (local_state.gems_collected >= board.gems_required) {
         SetItem(index, kElExitOpen, -1);
+    }else{
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -594,12 +683,15 @@ void RNDGameState::UpdateFirefly(int index, int action) {
         // Fireflies always try to rotate left, otherwise continue forward
         SetItem(index, kDirectionToFirefly[new_dir], -1);
         MoveItem(index, new_dir);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, new_dir));
     } else if (IsType(index, kElEmpty, action)) {
         SetItem(index, kDirectionToFirefly[action], -1);
         MoveItem(index, action);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, action));
     } else {
         // No other options, rotate right
         SetItem(index, kDirectionToFirefly[kRotateRight[action]], -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -613,12 +705,15 @@ void RNDGameState::UpdateButterfly(int index, int action) {
         // Butterflies always try to rotate right, otherwise continue forward
         SetItem(index, kDirectionToButterfly[new_dir], -1);
         MoveItem(index, new_dir);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, new_dir));
     } else if (IsType(index, kElEmpty, action)) {
         SetItem(index, kDirectionToButterfly[action], -1);
         MoveItem(index, action);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, action));
     } else {
         // No other options, rotate right
         SetItem(index, kDirectionToButterfly[kRotateLeft[action]], -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     }
 }
 
@@ -626,6 +721,7 @@ void RNDGameState::UpdateOrange(int index, int action) {
     if (IsType(index, kElEmpty, action)) {
         // Continue moving in direction
         MoveItem(index, action);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, action));
     } else if (IsTypeAdjacent(index, kElAgent)) {
         // Run into the agent, explode!
         auto it = kElementToExplosion.find(GetItem(index));
@@ -645,6 +741,7 @@ void RNDGameState::UpdateOrange(int index, int action) {
         if (!open_dirs.empty()) {
             int new_dir = open_dirs[shared_state_ptr->dist(shared_state_ptr->gen) % open_dirs.size()];
             SetItem(index, kDirectionToOrange[new_dir], -1);
+            if(board.is_update_event) board.need_update_queue.push(index);
         }
     }
 }
@@ -653,8 +750,10 @@ void RNDGameState::UpdateMagicWall(int index) {
     // Dorminant, active, then expired once time runs out
     if (local_state.magic_active) {
         SetItem(index, kElWallMagicOn, -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     } else if (local_state.magic_wall_steps > 0) {
         SetItem(index, kElWallMagicDormant, -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
     } else {
         SetItem(index, kElWallMagicExpired, -1);
     }
@@ -664,6 +763,7 @@ void RNDGameState::UpdateBlob(int index) {
     // Replace blobs if swap element set
     if (local_state.blob_swap != ElementToItem(kNullElement)) {
         SetItem(index, kCellTypeToElement[local_state.blob_swap + 1], -1);
+        if(board.is_update_event) board.need_update_queue.push(index);
         return;
     }
     ++local_state.blob_size;
@@ -676,6 +776,7 @@ void RNDGameState::UpdateBlob(int index) {
     int grow_dir = shared_state_ptr->dist(shared_state_ptr->gen) % kNumActions;
     if (will_grow && (IsType(index, kElEmpty, grow_dir) || IsType(index, kElDirt, grow_dir))) {
         SetItem(index, kElBlob, grow_dir, -1);
+        if(board.is_update_event) board.need_update_queue.push(IndexFromAction(index, grow_dir));        
     }
 }
 

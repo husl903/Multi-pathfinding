@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <queue>
 #include <rnd/stonesngems.h>
 
 #include <boost/functional/hash.hpp>
@@ -20,7 +21,8 @@ RNDGameState state_game;
 
 struct State {
   State(int x, int y, int time) : x(x), y(y), time(time) {}
-  State(int x, int y, int time, std::vector<int8_t>grid) : x(x), y(y), time(time), grid(std::move(grid)) {}  
+  State(int x, int y, int time, std::vector<int8_t>grid, std::queue<int>need_update_index) : x(x), y(y), 
+         time(time), grid(std::move(grid)), need_update_index(std::move(need_update_index)) {}  
   State(int x, int y) : x(x), y(y) {}
 
   State(const State&) = default;
@@ -40,7 +42,8 @@ struct State {
   int x;
   int y;
   int time;
-  std::vector<int8_t> grid;  
+  std::vector<int8_t> grid;
+  std::queue<int>need_update_index;
 };
 
 namespace std {
@@ -114,8 +117,12 @@ class Environment {
 
     neighbors.clear();
     std::vector<int8_t> gridtemp;
+    std::queue<int> index_queue;
+    index_queue.swap(s.need_update_index);
     gridtemp.swap(s.grid);
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
+    state_game.board.need_update_queue.swap(s.need_update_index);
+    state_game.board.need_update_queue = index_queue;
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
     //         std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
@@ -129,49 +136,59 @@ class Environment {
     state_game.board.agent_idx = index;
 
     state_game.apply_action(0);
-    State wait(s.x, s.y, s.time + 1, state_game.board.grid);
     if(index == state_game.board.agent_pos){
-       neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
+      State wait(s.x, s.y, s.time + 1, state_game.board.grid, state_game.board.need_update_queue);
+      neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
       //  std::cout << "Neighbor  "<< wait.x <<", " << wait.y << ", time " << wait.time << ", " << s.grid.size() << std::endl;
     } 
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
+    state_game.board.need_update_queue.swap(s.need_update_index);
+    state_game.board.need_update_queue = index_queue;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(1);
-    State up(s.x - 1, s.y, s.time + 1, state_game.board.grid);
+    
     if ((index - m_dimy) == state_game.board.agent_pos) {
+      State up(s.x - 1, s.y, s.time + 1, state_game.board.grid, state_game.board.need_update_queue);
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       //  std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
+    state_game.board.need_update_queue.swap(s.need_update_index);
+    state_game.board.need_update_queue = index_queue;        
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(3);
-    State down(s.x + 1, s.y, s.time + 1, state_game.board.grid);
     if (index + m_dimy == state_game.board.agent_pos) {
+      State down(s.x + 1, s.y, s.time + 1, state_game.board.grid, state_game.board.need_update_queue);
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;      
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
+    state_game.board.need_update_queue.swap(s.need_update_index);
+    state_game.board.need_update_queue = index_queue;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(4);
-    State left(s.x, s.y - 1, s.time + 1, state_game.board.grid);
+    
     if (index - 1 == state_game.board.agent_pos) {
+      State left(s.x, s.y - 1, s.time + 1, state_game.board.grid, state_game.board.need_update_queue);      
       neighbors.emplace_back(
           Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(gridtemp.begin(), gridtemp.end());
+    state_game.board.need_update_queue.swap(s.need_update_index);
+    state_game.board.need_update_queue = index_queue;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(2);
-    State right(s.x, s.y + 1, s.time + 1, state_game.board.grid);
     if (index + 1 == state_game.board.agent_pos) {
+      State right(s.x, s.y + 1, s.time + 1, state_game.board.grid, state_game.board.need_update_queue);
       neighbors.emplace_back(
           Neighbor<State, Action, int>(right, Action::Right, 1));
       //  std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
@@ -201,7 +218,8 @@ int  num_expand = 0;
 };
 
 int main(int argc, char* argv[]) {
-
+    
+    std::cout << "Begin test \n";
     const std::string filename="./levels/bd_01_1.txt";
     std::ifstream infile(filename.c_str());
     assert(infile.is_open());
@@ -227,7 +245,6 @@ int main(int argc, char* argv[]) {
             if(grid[h * state_p.board.cols + w] == 0){
               startX = h;
               startY = w;
-              // std::cout <<  "||" << h << ", " << w;
             }
 
             std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
@@ -235,27 +252,27 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-//     for (int h = 0; h < state_p.board.rows; ++h) {
-//         for (int w = 0; w < state_p.board.cols; ++w) {
-//             //printf("%d ", grid[h * state_p.board.cols + w]);
-//             if(grid[h * state_p.board.cols + w] == 0){
-//               startX = h;
-//               startY = w;
-//               std::cout <<  "||" << h << ", " << w;
-//             }
-// //            if(grid[h * state_p.board.cols + w] == 5){
-// //              std::cout <<  "||" << h << ", " << w;
-// //            }
+    for (int h = 0; h < state_p.board.rows; ++h) {
+        for (int w = 0; w < state_p.board.cols; ++w) {
+            //printf("%d ", grid[h * state_p.board.cols + w]);
+            if(grid[h * state_p.board.cols + w] == 0){
+              startX = h;
+              startY = w;
+              std::cout <<  "||" << h << ", " << w;
+            }
+           if(grid[h * state_p.board.cols + w] == 5){
+             std::cout <<  "||" << h << ", " << w;
+           }
 
-//             std::cout << kCellTypeToElement.at(grid[h * state_p.board.cols + w]).id;
-//             // if(h==0) grid[h * state_p.board.cols + w] = 100;
-//         }
-//         std::cout << std::endl;
-//     }
+            std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+            // if(h==0) grid[h * state_p.board.cols + w] = 100;
+        }
+        std::cout << std::endl;
+    }
 
 
-    State start(startX, startY, 0, grid);
-    State goal(15, 16);
+    State start(startX, startY, 0, grid, state_p.board.need_update_queue);
+    State goal(2, 22);
     bool success = false;
     Environment env(state_p.board.rows, state_p.board.cols, goal);
 
