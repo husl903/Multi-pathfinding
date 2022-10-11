@@ -864,8 +864,8 @@ struct Board {
     int max_steps;
     std::vector<int8_t> grid;
     std::vector<bool> has_updated;
-    std::queue<int> need_update_queue;
-    bool is_update_event = false;
+    std::queue<int> need_update_index;
+    bool is_update_event = true;
 };
 
 }    // namespace stonesngems
