@@ -99,8 +99,8 @@ class AStar {
           iter = cameFrom.find(std::get<0>(iter->second));
         }
         solution.states.push_back(std::make_pair<>(startState, initialCost));
-        std::reverse(solution.states.begin(), solution.states.end());
-        std::reverse(solution.actions.begin(), solution.actions.end());
+        // std::reverse(solution.states.begin(), solution.states.end());
+        // std::reverse(solution.actions.begin(), solution.actions.end());
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
 
