@@ -865,7 +865,7 @@ struct Board {
     std::vector<int8_t> grid;
     std::vector<bool> has_updated;
     std::queue<int> need_update_index;
-    bool is_update_event = true;
+    bool is_opt_queue_event = true;
 };
 
 }    // namespace stonesngems

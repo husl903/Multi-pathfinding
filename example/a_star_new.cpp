@@ -9,6 +9,7 @@
 #include <libMultiRobotPlanning/a_star_t.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
 #include <libMultiRobotPlanning/vectorCache.hpp>
+#include <libMultiRobotPlanning/queueCache.hpp>
 
 using namespace stonesngems;
 using namespace stonesngems::util;
@@ -20,6 +21,50 @@ using libMultiRobotPlanning::PlanResult;
 GameParameters params = kDefaultGameParams;
 RNDGameState state_game;
 vectorCache<int8_t> gridCache;
+queueCache<int> indexCache;
+
+
+
+struct State {
+  // State(int x, int y, int time) : x(x), y(y), time(time) {}
+  State(int x, int y, int time, std::vector<int8_t>&grid, std::queue<int>&need_update_index) : x(x), y(y), 
+         time(time), grid(grid), need_update_index(need_update_index) {}  
+  // State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
+  // State(int x, int y) : x(x), y(y) {}
+
+  State(const State&) = default;
+  State(State&&) = default;
+  State& operator=(const State&) = default;
+  State& operator=(State&&) = default;
+
+  bool operator==(const State& other) const {
+    return std::tie(x, y) == std::tie(other.x, other.y);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const State& s) {
+    return os << "(" << s.x << "," << s.y << ")";
+  }
+
+  unsigned int dir = 0xff;
+  int x;
+  int y;
+  int time;
+  std::vector<int8_t> &grid;
+  std::queue<int> &need_update_index;
+};
+
+namespace std {
+template <>
+struct hash<State> {
+  size_t operator()(const State& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    boost::hash_combine(seed, s.time);
+    return seed;
+  }
+};
+}  // namespace std
 
 struct Location {
   Location(int x, int y) : x(x), y(y) {}
@@ -49,54 +94,6 @@ struct hash<Location> {
     size_t seed = 0;
     boost::hash_combine(seed, s.x);
     boost::hash_combine(seed, s.y);
-    return seed;
-  }
-};
-}  // namespace std
-
-struct State {
-  // State(int x, int y, int time) : x(x), y(y), time(time) {}
-  State(int x, int y, int time, std::vector<int8_t>&grid, std::queue<int>need_update_index) : x(x), y(y), 
-         time(time), grid(grid), need_update_index(std::move(need_update_index)) {}  
-  State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
-  // State(int x, int y) : x(x), y(y) {}
-
-  State(const State&) = default;
-  State(State&&) = default;
-  State& operator=(const State&) = default;
-  State& operator=(State&&) = default;
-
-  bool operator==(const State& other) const {
-    return std::tie(x, y) == std::tie(other.x, other.y);
-  }
-
-  // void operator=(const State& other) const{
-  //   other.x = x;
-  //   other.y = y;
-  //   other.time = time;
-  // }
-
-  friend std::ostream& operator<<(std::ostream& os, const State& s) {
-    return os << "(" << s.x << "," << s.y << ")";
-  }
-
-  unsigned int dir = 0xff;
-  int x;
-  int y;
-  int time;
-  std::vector<int8_t> &grid;
-  std::queue<int> need_update_index;
-  Board* board;
-};
-
-namespace std {
-template <>
-struct hash<State> {
-  size_t operator()(const State& s) const {
-    size_t seed = 0;
-    boost::hash_combine(seed, s.x);
-    boost::hash_combine(seed, s.y);
-    boost::hash_combine(seed, s.time);
     return seed;
   }
 };
@@ -156,16 +153,13 @@ class Environment {
 //whether needs const
   void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
-    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
+    std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
 
     neighbors.clear();
-    // static std::vector<int8_t> gridtemp;
     static std::queue<int> index_queue;
-    index_queue.swap(s.need_update_index);
-    // gridtemp.swap(s.grid);
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(s.need_update_index);
-    state_game.board.need_update_index = index_queue;
+    state_game.board.need_update_index.swap(index_queue);
+    state_game.board.need_update_index = s.need_update_index;
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
     //         std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
@@ -180,66 +174,71 @@ class Environment {
 
     state_game.apply_action(0);
     if(index == state_game.board.agent_pos){
-      State wait(s.x, s.y, s.time + 1, *gridCache.getItem(), state_game.board.need_update_index);
+      State wait(s.x, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       wait.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
+      wait.need_update_index = state_game.board.need_update_index;
       neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
       //  std::cout << "Neighbor  "<< wait.x <<", " << wait.y << ", time " << wait.time << ", " << s.grid.size() << std::endl;
     } 
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(s.need_update_index);
-    state_game.board.need_update_index = index_queue;    
+    state_game.board.need_update_index.swap(index_queue);
+    state_game.board.need_update_index = s.need_update_index;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(1);
     if ((index - m_dimy) == state_game.board.agent_pos) {
-      State up(s.x - 1, s.y, s.time + 1, *gridCache.getItem(), state_game.board.need_update_index);
+      State up(s.x - 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       up.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
+      up.need_update_index = state_game.board.need_update_index;
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       //  std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(s.need_update_index);
-    state_game.board.need_update_index = index_queue;        
+    state_game.board.need_update_index.swap(index_queue);
+    state_game.board.need_update_index = s.need_update_index;        
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(3);
     if (index + m_dimy == state_game.board.agent_pos) {
-      State down(s.x + 1, s.y, s.time + 1, *gridCache.getItem(), state_game.board.need_update_index);
+      State down(s.x + 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       down.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
+      down.need_update_index = state_game.board.need_update_index;
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;      
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(s.need_update_index);
-    state_game.board.need_update_index = index_queue;    
+    state_game.board.need_update_index.swap(index_queue);
+    state_game.board.need_update_index = s.need_update_index;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(4);
-    
     if (index - 1 == state_game.board.agent_pos) {
-      State left(s.x, s.y - 1, s.time + 1, *gridCache.getItem(), state_game.board.need_update_index);
+      State left(s.x, s.y - 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       left.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
+      left.need_update_index = state_game.board.need_update_index;
       neighbors.emplace_back(Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(s.need_update_index);
-    state_game.board.need_update_index = index_queue;    
+    state_game.board.need_update_index.swap(index_queue);
+    state_game.board.need_update_index = s.need_update_index;    
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(2);
     if (index + 1 == state_game.board.agent_pos) {
-      State right(s.x, s.y + 1, s.time + 1, *gridCache.getItem(), state_game.board.need_update_index);
+      State right(s.x, s.y + 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       right.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
+      right.need_update_index = state_game.board.need_update_index;
       neighbors.emplace_back(Neighbor<State, Action, int>(right, Action::Right, 1));
       //  std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
     }
-    gridCache.returnItem(&s.grid);
 
+    gridCache.returnItem(&s.grid);
+    indexCache.returnItem(&s.need_update_index);
   }
 
 
@@ -317,8 +316,10 @@ int main(int argc, char* argv[]) {
     }
 
 
-    State start(startX, startY, 0, *gridCache.getItem(), state_p.board.need_update_index);
+    State start(startX, startY, 0, *gridCache.getItem(), *indexCache.getItem());
     start.grid.assign(grid.begin(), grid.end());
+    start.need_update_index = state_p.board.need_update_index;
+
     for (int h = 0; h < state_p.board.rows; ++h) {
         for (int w = 0; w < state_p.board.cols; ++w) {
             //printf("%d ", grid[h * state_p.board.cols + w]);
@@ -337,7 +338,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-    Location goal(2, 22);
+    Location goal(15, 16);
     bool success = false;
     Environment env(state_p.board.rows, state_p.board.cols, goal);
 
@@ -356,7 +357,7 @@ int main(int argc, char* argv[]) {
     std::cout << timer.elapsedSeconds() <<  ", " << env.num_expand <<std::endl;
 
     if (success) {
-      std::cout << "Planning successful! Total cost: " << solution.cost
+      std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " << env.num_expand
                 << std::endl;
       for (size_t i = 0; i < solution.actions.size(); ++i) {
         std::cout << solution.states[i].second << ": " << solution.states[i].first

@@ -31,7 +31,7 @@ Board parse_board_str(const std::string &board_str) {
     for (std::size_t i = 4; i < seglist.size(); ++i) {
         HiddenCellType el = static_cast<HiddenCellType>(std::stoi(seglist[i]));
         board.item(i - 4) = static_cast<int8_t>(el);
-        if(board.is_update_event){
+        if(board.is_opt_queue_event){
             if(el == HiddenCellType::kStone || el == HiddenCellType::kStoneFalling ||
                el == HiddenCellType::kDiamond || el == HiddenCellType::kDiamondFalling || 
                el == HiddenCellType::kNut || el == HiddenCellType::kNutFalling ||

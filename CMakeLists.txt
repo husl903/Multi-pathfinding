@@ -62,6 +62,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/cbs_astar.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/cbs_castar.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/vectorCache.hpp 
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/queueCache.hpp 
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new.cpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
