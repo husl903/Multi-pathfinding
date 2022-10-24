@@ -864,7 +864,8 @@ struct Board {
     int max_steps;
     std::vector<int8_t> grid;
     std::vector<bool> has_updated;
-    std::queue<int> need_update_index;
+    std::vector<int> need_update_index;
+    std::vector<int> need_update_index_temp;
     bool is_opt_queue_event = true;
 };
 

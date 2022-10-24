@@ -20,14 +20,14 @@ using libMultiRobotPlanning::PlanResult;
 
 GameParameters params = kDefaultGameParams;
 RNDGameState state_game;
-vectorCache<int8_t> gridCache;
-queueCache<int> indexCache;
+static vectorCache<int8_t> gridCache;
+static vectorCache<int> indexCache;
 
 
 
 struct State {
   // State(int x, int y, int time) : x(x), y(y), time(time) {}
-  State(int x, int y, int time, std::vector<int8_t>&grid, std::queue<int>&need_update_index) : x(x), y(y), 
+  State(int x, int y, int time, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
          time(time), grid(grid), need_update_index(need_update_index) {}  
   // State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
   // State(int x, int y) : x(x), y(y) {}
@@ -50,7 +50,7 @@ struct State {
   int y;
   int time;
   std::vector<int8_t> &grid;
-  std::queue<int> &need_update_index;
+  std::vector<int> &need_update_index;
 };
 
 namespace std {
@@ -153,13 +153,13 @@ class Environment {
 //whether needs const
   void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
-    std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
+    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
 
     neighbors.clear();
     static std::queue<int> index_queue;
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(index_queue);
-    state_game.board.need_update_index = s.need_update_index;
+    state_game.board.need_update_index.clear();
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
     //         std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
@@ -175,68 +175,67 @@ class Environment {
     state_game.apply_action(0);
     if(index == state_game.board.agent_pos){
       State wait(s.x, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
-      wait.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
-      wait.need_update_index = state_game.board.need_update_index;
+      wait.grid.swap(state_game.board.grid);
+      wait.need_update_index.swap(state_game.board.need_update_index);
       neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
       //  std::cout << "Neighbor  "<< wait.x <<", " << wait.y << ", time " << wait.time << ", " << s.grid.size() << std::endl;
     } 
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(index_queue);
-    state_game.board.need_update_index = s.need_update_index;    
+    state_game.board.need_update_index.clear();
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(1);
     if ((index - m_dimy) == state_game.board.agent_pos) {
       State up(s.x - 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
-      up.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
-      up.need_update_index = state_game.board.need_update_index;
+      up.grid.swap(state_game.board.grid);
+      up.need_update_index.swap(state_game.board.need_update_index);
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       //  std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(index_queue);
-    state_game.board.need_update_index = s.need_update_index;        
+    state_game.board.need_update_index.clear();
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(3);
     if (index + m_dimy == state_game.board.agent_pos) {
       State down(s.x + 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
-      down.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
-      down.need_update_index = state_game.board.need_update_index;
+      down.grid.swap(state_game.board.grid);
+      down.need_update_index.swap(state_game.board.need_update_index);
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;      
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(index_queue);
-    state_game.board.need_update_index = s.need_update_index;    
+    state_game.board.need_update_index.clear();
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(4);
     if (index - 1 == state_game.board.agent_pos) {
       State left(s.x, s.y - 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
-      left.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
-      left.need_update_index = state_game.board.need_update_index;
+      left.grid.swap(state_game.board.grid);
+      left.need_update_index.swap(state_game.board.need_update_index);
       neighbors.emplace_back(Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.swap(index_queue);
-    state_game.board.need_update_index = s.need_update_index;    
+    state_game.board.need_update_index.clear();
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(2);
     if (index + 1 == state_game.board.agent_pos) {
       State right(s.x, s.y + 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
-      right.grid.assign(state_game.board.grid.begin(), state_game.board.grid.end());
-      right.need_update_index = state_game.board.need_update_index;
+      right.grid.swap(state_game.board.grid);
+      right.need_update_index.swap(state_game.board.need_update_index);
       neighbors.emplace_back(Neighbor<State, Action, int>(right, Action::Right, 1));
       //  std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
     }
-
     gridCache.returnItem(&s.grid);
     indexCache.returnItem(&s.need_update_index);
   }
