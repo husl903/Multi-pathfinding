@@ -17,10 +17,10 @@ public:
 	~queueCache();
 	queueCache(const queueCache<storage> &v) { count = 0; freeList.resize(0); }
 	queueCache<storage> &operator=(const queueCache<storage> &v) = delete;
-	std::queue<storage> *getItem();
-	void returnItem(std::queue<storage> *);
+	std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *getItem();
+	void returnItem(std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *);
 private:
-	std::vector<std::queue<storage> *> freeList;
+	std::vector<std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *> freeList;
 	int count;
 };
 
@@ -36,18 +36,18 @@ queueCache<storage>::~queueCache<storage>()
 }
 
 template<class storage>
-std::queue<storage> *queueCache<storage>::getItem()
+std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *queueCache<storage>::getItem()
 {
 	if (freeList.size() > 0)
 	{
-		std::queue<storage> *theItem = freeList.back();
+		std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *theItem = freeList.back();
 		freeList.pop_back();
 //		printf("CACHE: REALLOC: %p\n", theItem);
 		return theItem;
 	}
 	else {
 //		printf("%d items allocated\n", ++count);
-		std::queue<storage> *newItem = new std::queue<storage>();
+		std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *newItem = new std::priority_queue<storage, std::vector<storage>, std::greater<storage>>();
 //		printf("CACHE: ALLOC: %p\n", newItem);
 		return newItem;
 //		theCache.resize(theCache.size()+1);
@@ -59,7 +59,7 @@ std::queue<storage> *queueCache<storage>::getItem()
 }
 
 template<class storage>
-void queueCache<storage>::returnItem(std::queue<storage> *item)
+void queueCache<storage>::returnItem(std::priority_queue<storage, std::vector<storage>, std::greater<storage>> *item)
 {
 //	printf("CACHE: FREE: %p\n", item);
 	while(!item->empty()) item->pop();

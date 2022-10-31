@@ -23,7 +23,7 @@ using libMultiRobotPlanning::PlanResult;
 GameParameters params = kDefaultGameParams;
 RNDGameState state_game;
 static vectorCache<int8_t> gridCache;
-static vectorCache<int> indexCache;
+static queueCache<int> indexCache;
 std::vector<size_t> rand_x;
 std::vector<size_t> rand_y;
 
@@ -31,7 +31,7 @@ std::vector<size_t> rand_y;
 
 struct State {
   // State(int x, int y, int time) : x(x), y(y), time(time) {}
-  State(int x, int y, int time, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
+  State(int x, int y, int time, std::vector<int8_t>&grid, std::priority_queue<int, std::vector<int>, std::greater<int>>&need_update_index) : x(x), y(y), 
          time(time), grid(grid), need_update_index(need_update_index) {}  
   // State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
   // State(int x, int y) : x(x), y(y) {}
@@ -54,7 +54,7 @@ struct State {
   int y;
   int time;
   std::vector<int8_t> &grid;
-  std::vector<int> &need_update_index;
+  std::priority_queue<int, std::vector<int>, std::greater<int>> &need_update_index;
 };
 
 namespace std {
@@ -162,12 +162,12 @@ class Environment {
   void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
-
+    std::priority_queue<int, std::vector<int>, std::greater<int>> index_temp;
     neighbors.clear();
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    sort(s.need_update_index.begin(), s.need_update_index.end());
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.swap(index_temp);
+//    sort(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index = s.need_update_index;
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
     //       std::cout << kCellTypeToElement[state_game.board.grid[h * state_game.board.cols + w] + 1].id;
@@ -175,19 +175,6 @@ class Environment {
     //     }
     //     std::cout << std::endl;
     // } 
-    // }
-    // if((s.x == 13 && s.y == 31 && s.time == 39) 
-    // // || 
-    // // (s.x == 3 && s.y == 3 && s.time == 1) || (s.x == 4 && s.y == 3 && s.time == 2) || 
-    // // (s.x == 4 && s.y == 4 && s.time == 3) || (s.x == 4 && s.y == 5 && s.time == 4) ||
-    // // (s.x == 3 && s.y == 5 && s.time == 5) || (s.x == 2 && s.y == 5 && s.time == 6) ||
-    // // (s.x == 2 && s.y == 4 && s.time == 7) || (s.x == 1 && s.y == 4 && s.time == 8))
-    // )
-    // {
-    //   for(int xx = 0; xx < s.need_update_index.size(); xx ++){
-    //     std::cout << s.need_update_index[xx] << ", ";
-    //   }
-    //   std::cout << std::endl;
     // }
 
     int index = s.x * m_dimy + s.y;
@@ -205,8 +192,8 @@ class Environment {
     } 
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.swap(index_temp);
+    state_game.board.need_update_index = s.need_update_index;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(1);
@@ -219,8 +206,8 @@ class Environment {
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.swap(index_temp);
+    state_game.board.need_update_index = s.need_update_index;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(3);
@@ -233,8 +220,8 @@ class Environment {
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.swap(index_temp);
+    state_game.board.need_update_index = s.need_update_index;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(4);
@@ -247,8 +234,8 @@ class Environment {
     }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.swap(index_temp);
+    state_game.board.need_update_index = s.need_update_index;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.apply_action(2);
@@ -359,7 +346,7 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-    Location goal(17, 28);
+    Location goal(15, 16);
     bool success = false;
 
     // std::mt19937 g2; 

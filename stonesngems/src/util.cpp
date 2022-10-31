@@ -37,12 +37,12 @@ Board parse_board_str(const std::string &board_str) {
                el == HiddenCellType::kNut || el == HiddenCellType::kNutFalling ||
                el == HiddenCellType::kBomb || el == HiddenCellType::kBombFalling ||
                el == HiddenCellType::kBlob || el == HiddenCellType::kExitClosed){
-                   board.need_update_index.push_back(i - 4);
+                   board.need_update_index.push(i - 4);
             }else {
                 const Element &element = kCellTypeToElement[board.item(i - 4) + 1];
                 if(IsButterfly(element) || IsFirefly(element) || IsOrange(element) 
                    || IsMagicWall(element) || IsExplosion(element)){
-                   board.need_update_index.push_back(i - 4);
+                   board.need_update_index.push(i - 4);
                 }
             }            
         }

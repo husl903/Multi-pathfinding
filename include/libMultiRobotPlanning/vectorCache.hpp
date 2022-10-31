@@ -22,13 +22,14 @@ public:
 private:
 	std::vector<std::vector<storage> *> freeList;
 	int count;
+	int vector_size = 0;
 };
 
 
 template<class storage>
 vectorCache<storage>::~vectorCache<storage>()
 {
-//	printf("Cached storage destroyed\n");
+	// printf("Cached storage destroyed\n");
 	for (unsigned int x = 0; x < freeList.size(); x++)
 		delete freeList[x];
 	freeList.resize(0);
