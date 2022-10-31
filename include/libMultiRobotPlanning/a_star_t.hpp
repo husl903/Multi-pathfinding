@@ -126,11 +126,11 @@ class AStar {
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
-          //  std::cout << "  this is a new node " << fScore << ","  << neighbor.state.x << ", " << neighbor.state.y << ", " <<
+          //  std::cout << "  this is a new node " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " <<
           //   tentative_gScore << std::endl;
           } else {
             auto handle = iter->second;
-            // std::cout << "  this is an old node: " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
+            // std::cout << "  this is an old node: " << tentative_gScore + m_env.admissibleHeuristic(neighbor.state) << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
             // << (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
@@ -180,9 +180,11 @@ class AStar {
       // Our heap is a maximum heap, so we invert the comperator function here
       if (fScore != other.fScore) {
         return fScore > other.fScore;
-      } else {
-    	return gScore < other.gScore;
-      }
+      } else if(gScore != other.gScore){
+    	  return gScore < other.gScore;
+      }/*else if(state.x != other.state.x){
+        return state.x < other.state.x;
+      } else return state.y < other.state.y;*/
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else {

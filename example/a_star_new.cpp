@@ -2,6 +2,8 @@
 #include <iostream>
 #include <queue>
 #include <rnd/stonesngems.h>
+#include <random>
+#include <algorithm>
 
 #include <boost/functional/hash.hpp>
 #include <boost/program_options.hpp>
@@ -22,6 +24,8 @@ GameParameters params = kDefaultGameParams;
 RNDGameState state_game;
 static vectorCache<int8_t> gridCache;
 static vectorCache<int> indexCache;
+std::vector<size_t> rand_x;
+std::vector<size_t> rand_y;
 
 
 
@@ -60,6 +64,8 @@ struct hash<State> {
     size_t seed = 0;
     boost::hash_combine(seed, s.x);
     boost::hash_combine(seed, s.y);
+    // seed^=rand_x[s.x];
+    // seed^=rand_y[s.y];
     boost::hash_combine(seed, s.time);
     return seed;
   }
@@ -92,8 +98,10 @@ template <>
 struct hash<Location> {
   size_t operator()(const Location& s) const {
     size_t seed = 0;
-    boost::hash_combine(seed, s.x);
-    boost::hash_combine(seed, s.y);
+    // boost::hash_combine(seed, s.x);
+    // boost::hash_combine(seed, s.y);
+    seed^=rand_x[s.x];
+    seed^=rand_y[s.y];
     return seed;
   }
 };
@@ -156,16 +164,31 @@ class Environment {
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
 
     neighbors.clear();
-    static std::queue<int> index_queue;
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
     state_game.board.need_update_index.clear();
+    sort(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
-    //         std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+    //       std::cout << kCellTypeToElement[state_game.board.grid[h * state_game.board.cols + w] + 1].id;
+    //         // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
     //     }
     //     std::cout << std::endl;
     // } 
+    // }
+    // if((s.x == 13 && s.y == 31 && s.time == 39) 
+    // // || 
+    // // (s.x == 3 && s.y == 3 && s.time == 1) || (s.x == 4 && s.y == 3 && s.time == 2) || 
+    // // (s.x == 4 && s.y == 4 && s.time == 3) || (s.x == 4 && s.y == 5 && s.time == 4) ||
+    // // (s.x == 3 && s.y == 5 && s.time == 5) || (s.x == 2 && s.y == 5 && s.time == 6) ||
+    // // (s.x == 2 && s.y == 4 && s.time == 7) || (s.x == 1 && s.y == 4 && s.time == 8))
+    // )
+    // {
+    //   for(int xx = 0; xx < s.need_update_index.size(); xx ++){
+    //     std::cout << s.need_update_index[xx] << ", ";
+    //   }
+    //   std::cout << std::endl;
+    // }
 
     int index = s.x * m_dimy + s.y;
     int index1 = -1;
@@ -257,7 +280,6 @@ int  num_expand = 0;
   int m_dimx;
   int m_dimy;
   std::unordered_set<State> m_obstacles;
-  
   Location m_goal;
 };
 
@@ -337,8 +359,13 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
-    Location goal(15, 16);
+    Location goal(17, 28);
     bool success = false;
+
+    // std::mt19937 g2; 
+    // for (int x = 0; x < state_p.board.rows; x++) {rand_x.push_back(g2()); std::cout << rand_x[x] << ", ";} std::cout << "end " <<  std::endl; 
+    // for (int y = 0; y < state_p.board.cols; y++) {rand_y.push_back(g2()); std::cout << rand_y[y] << ", ";} std::cout << std::endl;
+
     Environment env(state_p.board.rows, state_p.board.cols, goal);
 
     AStar<State, Action, int, Environment> astar(env);

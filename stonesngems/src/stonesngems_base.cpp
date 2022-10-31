@@ -373,6 +373,7 @@ void RNDGameState::Push(int index, const Element &stationary, const Element &fal
     int new_index = IndexFromAction(index, action);
     // Check if same direction past element is empty so that theres room to push
     if (IsType(new_index, kElEmpty, action)) {
+
         // Check if the element will become stationary or falling
         int next_index = IndexFromAction(new_index, action);
         bool is_empty = IsType(next_index, kElEmpty, Directions::kDown);
@@ -381,6 +382,9 @@ void RNDGameState::Push(int index, const Element &stationary, const Element &fal
         MoveItem(index, action);
         board.agent_pos = IndexFromAction(index, action);    // Assume only agent is pushing?
         board.agent_idx = IndexFromAction(index, action);    // Assume only agent is pushing?
+        if(board.is_opt_queue_event){
+            board.need_update_index_temp.push_back(next_index);
+        }        
     }
 }
 
@@ -429,13 +433,14 @@ void RNDGameState::UpdateStone(int index) {
     if (!shared_state_ptr->gravity) {
         return;
     }
-
+    // std::cout << "stone " << index  << std::endl;
     // Boulder falls if empty below
     if (IsType(index, kElEmpty, Directions::kDown)) {
         SetItem(index, kElStoneFalling, -1);
         UpdateStoneFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
         RollLeft(index, kElStoneFalling);
+        // std::cout << "roll left " << index  << std::endl;
         if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElStoneFalling);
