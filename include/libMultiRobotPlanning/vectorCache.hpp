@@ -13,7 +13,17 @@
 template<class storage>
 class vectorCache {
 public:
-	vectorCache() { count = 0; }
+	vectorCache() {
+		count = 0; 
+		count = 904;
+		// freeList.resize(count);
+		for(int x = 0; x < count; x++){
+			std::vector<storage> *newItem = new std::vector<storage>(881);
+			freeList.push_back(newItem);
+			// std::cout << "x Test\n";
+		} 
+		std::cout << freeList.size() << " freeList size \n";
+	}
 	~vectorCache();
 	vectorCache(const vectorCache<storage> &v) { count = 0; freeList.resize(0); }
 	vectorCache<storage> &operator=(const vectorCache<storage> &v) = delete;
@@ -47,9 +57,9 @@ std::vector<storage> *vectorCache<storage>::getItem()
 		return theItem;
 	}
 	else {
-//		printf("%d items allocated\n", ++count);
-		std::vector<storage> *newItem = new std::vector<storage>();
-//		printf("CACHE: ALLOC: %p\n", newItem);
+		// printf("%d items allocated\n", ++count);
+		std::vector<storage> *newItem = new std::vector<storage>(881);
+		printf("CACHE: ALLOC: %p\n", newItem);
 		return newItem;
 //		theCache.resize(theCache.size()+1);
 //		printf("CACHE: ALLOC: %p\n", &theCache[theCache.size()-1]);
@@ -62,9 +72,11 @@ std::vector<storage> *vectorCache<storage>::getItem()
 template<class storage>
 void vectorCache<storage>::returnItem(std::vector<storage> *item)
 {
-//	printf("CACHE: FREE: %p\n", item);
+	// printf("CACHE: FREE: %p\n", item);
 	item->clear();
+	item->resize(881);
 	freeList.push_back(item);
+	// std::cout << freeList.size() << " free\n";
 }
 
 #endif

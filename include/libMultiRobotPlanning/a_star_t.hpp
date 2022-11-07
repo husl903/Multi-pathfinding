@@ -55,11 +55,11 @@ purposes.
    std::hash<State>
 */
 
-template <typename State, typename Action, typename Cost, typename Environment,
+template <typename State, typename Action, typename Cost, typename Environment, typename vectorCache1, typename vectorCache2,
           typename StateHasher = std::hash<State> >
 class AStar {
  public:
-  AStar(Environment& environment) : m_env(environment) {}
+  AStar(Environment& environment, vectorCache1& gc, vectorCache2& ic) : m_env(environment), gc(gc), ic(ic) {}
 
   bool search(const State& startState,
               PlanResult<State, Action, Cost>& solution, Cost initialCost = 0) {
@@ -82,9 +82,11 @@ class AStar {
 
     std::vector<Neighbor<State, Action, Cost> > neighbors;
     neighbors.reserve(10);
-
+    int max_size_open = 0;
     while (!openSet.empty()) {
       Node current = openSet.top();
+      if(openSet.size() > max_size_open) max_size_open = openSet.size();
+      // std::cout << "size " << max_size_open << std::endl;
       m_env.onExpandNode(current.state, current.fScore, current.gScore);
       // std::cout << current.state.x << ", " << current.state.y << ",f, "<< current.fScore << ",g, " << current.gScore  << "--------------------"<< std::endl;
       if (m_env.isSolution(current.state)) {
@@ -103,7 +105,7 @@ class AStar {
         // std::reverse(solution.actions.begin(), solution.actions.end());
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
-
+        std::cout << "max size of open list: " << max_size_open << "\n";
         return true;
       }
 
@@ -126,6 +128,7 @@ class AStar {
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
+            if(openSet.size() > max_size_open) max_size_open = openSet.size();            
           //  std::cout << "  this is a new node " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " <<
           //   tentative_gScore << std::endl;
           } else {
@@ -134,11 +137,15 @@ class AStar {
             // << (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
+              gc.returnItem(&neighbor.state.grid);
+              ic.returnItem(&neighbor.state.need_update_index);
               continue;
             }
 
             if (tentative_gScore == (*handle).gScore) {
             	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+              gc.returnItem(&neighbor.state.grid);
+              ic.returnItem(&neighbor.state.need_update_index);              
                continue;
             }
 
@@ -147,6 +154,9 @@ class AStar {
             (*handle).state.dir =  neighbor.state.dir;
             (*handle).gScore = tentative_gScore;
             (*handle).fScore -= delta;
+            (*handle).state.grid.swap(neighbor.state.grid);
+            (*handle).state.need_update_index.swap(neighbor.state.need_update_index);
+            
             openSet.increase(handle);
             m_env.onDiscover(neighbor.state, (*handle).fScore,
                              (*handle).gScore);
@@ -160,6 +170,9 @@ class AStar {
               neighbor.state,
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
+        }else{
+            gc.returnItem(&neighbor.state.grid);
+            ic.returnItem(&neighbor.state.need_update_index);
         }
       }
     }
@@ -224,6 +237,9 @@ class AStar {
 
  private:
   Environment& m_env;
+  vectorCache1& gc;
+  vectorCache2& ic;
+
 };
 
 }  // namespace libMultiRobotPlanning
