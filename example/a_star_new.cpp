@@ -369,74 +369,113 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
     }
 
+    std::vector<Location> goals_loc;
+    goals_loc.push_back(Location(1, 10));
+    goals_loc.push_back(Location(2, 22));
+    goals_loc.push_back(Location(8, 9));
+    goals_loc.push_back(Location(8, 27));
+    goals_loc.push_back(Location(8, 30));
+    goals_loc.push_back(Location(9, 3));
+    goals_loc.push_back(Location(11, 32));
+    goals_loc.push_back(Location(15, 16));
+    goals_loc.push_back(Location(17, 28));
+    goals_loc.push_back(Location(18, 6));
+    goals_loc.push_back(Location(18, 28));
+    goals_loc.push_back(Location(19, 28));
+    goals_loc.push_back(Location(20, 2));
 
-    State start(startX, startY, 0, *gridCache.getItem(), *indexCache.getItem());
-    start.grid.assign(grid.begin(), grid.end());
-    start.need_update_index = state_p.board.need_update_index;
+    std::vector <PlanResult<State, Action, int>>  solutions;
+    for(int index_g = 0; index_g < goals_loc.size(); index_g++){
+      if(index_g != 0 ){
+        startX = goals_loc[index_g -1].x;
+        startY = goals_loc[index_g -1].y;
+        // std::cout  << "---------------------------------------" << solutions[index_g - 1].states[0].first.grid.size() << std::endl;
+        // for (int h = 0; h < state_p.board.rows; ++h) {
+        //   for (int w = 0; w < state_p.board.cols; ++w) {
 
-    for (int h = 0; h < state_p.board.rows; ++h) {
-        for (int w = 0; w < state_p.board.cols; ++w) {
-            //printf("%d ", grid[h * state_p.board.cols + w]);
-            if(start.grid[h * state_p.board.cols + w] == 0){
-              startX = h;
-              startY = w;
-              std::cout <<  "||" << h << ", " << w;
-            }
-           if(start.grid[h * state_p.board.cols + w] == 5){
-             std::cout <<  "||" << h << ", " << w;
-           }
+        //       std::cout << kCellTypeToElement[solutions[index_g - 1].states[0].first.grid[h * state_p.board.cols + w] + 1].id;
+        //       // if(h==0) grid[h * state_p.board.cols + w] = 100;
+        //   }
+        //   std::cout << std::endl;
+        // } 
 
-            std::cout << kCellTypeToElement[start.grid[h * state_p.board.cols + w] + 1].id;
-            // if(h==0) grid[h * state_p.board.cols + w] = 100;
-        }
-        std::cout << std::endl;
-    }
-    
-    std::cout << goalX << ", " << goalY << " goal location\n";
-    Location goal(goalX, goalY);
-    bool success = false;
-
-    // std::mt19937 g2; 
-    // for (int x = 0; x < state_p.board.rows; x++) {rand_x.push_back(g2()); std::cout << rand_x[x] << ", ";} std::cout << "end " <<  std::endl; 
-    // for (int y = 0; y < state_p.board.cols; y++) {rand_y.push_back(g2()); std::cout << rand_y[y] << ", ";} std::cout << std::endl;
-
-    Environment env(state_p.board.rows, state_p.board.cols, goal);
-
-    AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
-
-    PlanResult<State, Action, int> solution;
-    Timer timer;
-
-    if (env.stateValid(start)) {
-      success = astar.search(start, solution);
-      if(success){
-        std::cout << "Pathfinding success !\n";
       }
-    }
-    timer.stop();
-    std::cout << timer.elapsedSeconds() <<  ", " << env.num_expand <<std::endl;
+      // std::cout << "index_g" << startX << ","
+      State start(startX, startY, 0, *gridCache.getItem(), *indexCache.getItem());
+      if(index_g == 0){
+        start.grid.assign(grid.begin(), grid.end());
+        start.need_update_index = state_p.board.need_update_index;
+      }else{
+        start.grid.assign(solutions[index_g - 1].states[0].first.grid.begin(), solutions[index_g - 1].states[0].first.grid.end());
+        start.need_update_index.assign(solutions[index_g - 1].states[0].first.need_update_index.begin(), solutions[index_g - 1].states[0].first.need_update_index.end());
+      }
 
-    if (success) {
-      std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " << env.num_expand
+      // for (int h = 0; h < state_p.board.rows; ++h) {
+      //   for (int w = 0; w < state_p.board.cols; ++w) {
+      //       //printf("%d ", grid[h * state_p.board.cols + w]);
+      //       if(start.grid[h * state_p.board.cols + w] == 0){
+      //         startX = h;
+      //         startY = w;
+      //         std::cout <<  "||" << h << ", " << w;
+      //       }
+      //      if(start.grid[h * state_p.board.cols + w] == 5){
+      //        std::cout <<  "||" << h << ", " << w;
+      //      }
+
+      //       std::cout << kCellTypeToElement[start.grid[h * state_p.board.cols + w] + 1].id;
+      //       // if(h==0) grid[h * state_p.board.cols + w] = 100;
+      //   }
+      //   std::cout << std::endl;
+      // } 
+
+      bool success = false;
+
+      Environment env(state_p.board.rows, state_p.board.cols, goals_loc[index_g]);
+
+      AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
+
+      PlanResult<State, Action, int> solution;
+      Timer timer;
+
+      if (env.stateValid(start)) {
+        success = astar.search(start, solution);
+        if(success){
+          std::cout << "Pathfinding success !\n";
+        }
+      }
+      timer.stop();
+      std::cout << timer.elapsedSeconds() <<  ", " << env.num_expand <<std::endl;      
+
+      if (success) {
+        std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " << env.num_expand
                 << std::endl;
-      for (size_t i = 0; i < solution.actions.size(); ++i) {
-        std::cout << solution.states[i].second << ": " << solution.states[i].first
+        for (size_t i = 0; i < solution.actions.size(); ++i) {
+          std::cout << solution.states[i].second << ": " << solution.states[i].first
                   << "->" << solution.actions[i].first
                   << "(cost: " << solution.actions[i].second << ")" << std::endl;
-      }
-      std::cout << solution.states.back().second << ": "
+        }
+        std::cout << solution.states.back().second << ": "
                 << solution.states.back().first << std::endl;
 
-      // out << "schedule:" << std::endl;
-      // out << "  agent1:" << std::endl;
-      // for (size_t i = 0; i < solution.states.size(); ++i) {
-      //   out << "    - x: " << solution.states[i].first.x << std::endl
-      //       << "      y: " << solution.states[i].first.y << std::endl
-      //       << "      t: " << i << std::endl;
-      // }
-    } else {
-      std::cout << "Planning NOT successful!" << std::endl;
+        solutions.push_back(solution);
+        // out << "schedule:" << std::endl;
+        // out << "  agent1:" << std::endl;
+        // for (size_t i = 0; i < solution.states.size(); ++i) {
+        //   out << "    - x: " << solution.states[i].first.x << std::endl
+        //       << "      y: " << solution.states[i].first.y << std::endl
+        //       << "      t: " << i << std::endl;
+        // }
+      } else {
+        std::cout << "Planning NOT successful!" << std::endl;
+        break;
+      }
+
     }
+
+
+    
+
+
 
   // namespace po = boost::program_options;
   // Declare the supported options.
