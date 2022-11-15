@@ -104,6 +104,14 @@ public:
      */
     void reset();
 
+
+    /**
+     * Reset the environment to the state as given by the GameParameters
+     */
+    void resetLocalState(LocalState &localstate){
+        local_state = localstate;
+    }
+
     /**
      * Apply the action to the current state, and set the reward and signals.
      * @param action The action to apply, should be one of the legal actions
@@ -202,8 +210,10 @@ public:
         return {kNumVisibleCellType, rows, cols};
     }
 
+
     friend std::ostream &operator<<(std::ostream &os, const RNDGameState &state);
     Board board;
+    LocalState local_state;
 private:
     int IndexFromAction(int index, int action) const;
     bool InBounds(int index, int action = Directions::kNoop) const;
@@ -244,7 +254,7 @@ private:
     void EndScan();
 
     std::shared_ptr<SharedStateInfo> shared_state_ptr;
-    LocalState local_state;
+
 };
 
 }    // namespace stonesngems

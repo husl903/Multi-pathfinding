@@ -55,6 +55,7 @@ struct State {
   int time;
   std::vector<int8_t> &grid;
   std::vector<int> &need_update_index;
+  LocalState localstate;
 };
 
 namespace std {
@@ -159,15 +160,19 @@ class Environment {
   bool isSolution(const State& s) { return s.x == m_goal.x && s.y == m_goal.y; }
 
 //whether needs const
-  void getNeighbors(State& s,
+void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
-    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size() << std::endl;
-
+    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
+    
     neighbors.clear();
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
     state_game.board.need_update_index.clear();
     sort(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.resetLocalState(s.localstate);
+    // if(s.time  <=3 )
+    // {
+    // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
     // for (int h = 0; h < state_game.board.rows; ++h) {
     //     for (int w = 0; w < state_game.board.cols; ++w) {
     //       std::cout << kCellTypeToElement[state_game.board.grid[h * state_game.board.cols + w] + 1].id;
@@ -194,27 +199,31 @@ class Environment {
     int index1 = -1;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
-
     state_game.apply_action(0);
     if(index == state_game.board.agent_pos){
       State wait(s.x, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       wait.grid.swap(state_game.board.grid);
       wait.need_update_index.swap(state_game.board.need_update_index);
+      wait.localstate = state_game.local_state;
       neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
+      
       // std::cout << "Neighbor  "<< wait.x <<", " << wait.y << ", time " << wait.time << ", " << s.grid.size() << std::endl;
       // num_state++;
-    } 
+    }
 
     state_game.board.grid.assign(s.grid.begin(), s.grid.end());
     state_game.board.need_update_index.clear();
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
+    state_game.resetLocalState(s.localstate);
     state_game.apply_action(1);
-    if ((index - m_dimy) == state_game.board.agent_pos) {
+    if ((index - m_dimy) == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State up(s.x - 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       up.grid.swap(state_game.board.grid);
       up.need_update_index.swap(state_game.board.need_update_index);
+      up.localstate = state_game.local_state;
+      // std::cout << state_game.local_state.gems_collected << " gems " << std::endl;
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
       // std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
       // num_state++;
@@ -225,11 +234,13 @@ class Environment {
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
+    state_game.resetLocalState(s.localstate);
     state_game.apply_action(3);
-    if (index + m_dimy == state_game.board.agent_pos) {
+    if (index + m_dimy == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State down(s.x + 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       down.grid.swap(state_game.board.grid);
       down.need_update_index.swap(state_game.board.need_update_index);
+      down.localstate = state_game.local_state;
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;
       // num_state++;   
@@ -240,11 +251,13 @@ class Environment {
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
+    state_game.resetLocalState(s.localstate);
     state_game.apply_action(4);
-    if (index - 1 == state_game.board.agent_pos) {
+    if (index - 1 == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State left(s.x, s.y - 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       left.grid.swap(state_game.board.grid);
       left.need_update_index.swap(state_game.board.need_update_index);
+      left.localstate = state_game.local_state;
       neighbors.emplace_back(Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
       // num_state++;
@@ -255,17 +268,21 @@ class Environment {
     state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
+    state_game.resetLocalState(s.localstate);
     state_game.apply_action(2);
-    if (index + 1 == state_game.board.agent_pos) {
+    if (index + 1 == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State right(s.x, s.y + 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       right.grid.swap(state_game.board.grid);
       right.need_update_index.swap(state_game.board.need_update_index);
+      right.localstate = state_game.local_state;
       neighbors.emplace_back(Neighbor<State, Action, int>(right, Action::Right, 1));
       // std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
       // num_state++;
     }
+
     gridCache.returnItem(&s.grid);
     indexCache.returnItem(&s.need_update_index);
+    // return 0;
   }
 
 
@@ -298,25 +315,25 @@ int main(int argc, char* argv[]) {
       "goalX,x", po::value<int>(&goalX)->required(), "goal position x-component")(
       "goalY,y", po::value<int>(&goalY)->required(), "goal position y-component");
 
-	try
-	{
-		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, desc), vm);
-		po::notify(vm);
+	  try
+	  {
+		  po::variables_map vm;
+		  po::store(po::parse_command_line(argc, argv, desc), vm);
+		  po::notify(vm);
 
-		if (vm.count("help") != 0u)
-		{
-			std::cout << desc << "\n";
-			return 0;
-		}
-	}
-	catch (po::error &e)
-	{
-		std::cerr << e.what() << std::endl
-				  << std::endl;
-		std::cerr << desc << std::endl;
-		return 1;
-	}
+		  if (vm.count("help") != 0u)
+		  {
+			  std::cout << desc << "\n";
+			  return 0;
+		  }
+	  }
+	  catch (po::error &e)
+	  {
+		  std::cerr << e.what() << std::endl
+			  	  << std::endl;
+		  std::cerr << desc << std::endl;
+		  return 1;
+	  }
       
     std::cout << "Begin test \n";
     const std::string filename="./levels/bd_01_1.txt";
@@ -345,7 +362,6 @@ int main(int argc, char* argv[]) {
               startX = h;
               startY = w;
             }
-
             std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
         }
         std::cout << std::endl;
@@ -376,6 +392,7 @@ int main(int argc, char* argv[]) {
     goals_loc.push_back(Location(8, 27));
     goals_loc.push_back(Location(8, 30));
     goals_loc.push_back(Location(9, 3));
+    // goals_loc.push_back(Location(16, 38));    
     goals_loc.push_back(Location(11, 32));
     goals_loc.push_back(Location(15, 16));
     goals_loc.push_back(Location(17, 28));
@@ -383,59 +400,50 @@ int main(int argc, char* argv[]) {
     goals_loc.push_back(Location(18, 28));
     goals_loc.push_back(Location(19, 28));
     goals_loc.push_back(Location(20, 2));
+    goals_loc.push_back(Location(16, 38));
 
+    Timer total;
     std::vector <PlanResult<State, Action, int>>  solutions;
-    for(int index_g = 0; index_g < goals_loc.size(); index_g++){
+    LocalState localstate;
+    int next_index = goals_loc[0].x * state_p.board.cols + goals_loc[0].y;
+    int index_g = 0;
+    while(1){
+      if(next_index == -1) break;
       if(index_g != 0 ){
-        startX = goals_loc[index_g -1].x;
-        startY = goals_loc[index_g -1].y;
-        // std::cout  << "---------------------------------------" << solutions[index_g - 1].states[0].first.grid.size() << std::endl;
-        // for (int h = 0; h < state_p.board.rows; ++h) {
-        //   for (int w = 0; w < state_p.board.cols; ++w) {
-
-        //       std::cout << kCellTypeToElement[solutions[index_g - 1].states[0].first.grid[h * state_p.board.cols + w] + 1].id;
-        //       // if(h==0) grid[h * state_p.board.cols + w] = 100;
-        //   }
-        //   std::cout << std::endl;
-        // } 
+        startX = solutions[index_g - 1].states[0].first.x;
+        startY = solutions[index_g - 1].states[0].first.y;
 
       }
-      // std::cout << "index_g" << startX << ","
       State start(startX, startY, 0, *gridCache.getItem(), *indexCache.getItem());
       if(index_g == 0){
         start.grid.assign(grid.begin(), grid.end());
         start.need_update_index = state_p.board.need_update_index;
+        start.localstate = localstate;
       }else{
         start.grid.assign(solutions[index_g - 1].states[0].first.grid.begin(), solutions[index_g - 1].states[0].first.grid.end());
         start.need_update_index.assign(solutions[index_g - 1].states[0].first.need_update_index.begin(), solutions[index_g - 1].states[0].first.need_update_index.end());
+        start.localstate = solutions[index_g - 1].states[0].first.localstate;
       }
 
-      // for (int h = 0; h < state_p.board.rows; ++h) {
-      //   for (int w = 0; w < state_p.board.cols; ++w) {
-      //       //printf("%d ", grid[h * state_p.board.cols + w]);
-      //       if(start.grid[h * state_p.board.cols + w] == 0){
-      //         startX = h;
-      //         startY = w;
-      //         std::cout <<  "||" << h << ", " << w;
-      //       }
-      //      if(start.grid[h * state_p.board.cols + w] == 5){
-      //        std::cout <<  "||" << h << ", " << w;
-      //      }
-
-      //       std::cout << kCellTypeToElement[start.grid[h * state_p.board.cols + w] + 1].id;
-      //       // if(h==0) grid[h * state_p.board.cols + w] = 100;
-      //   }
-      //   std::cout << std::endl;
-      // } 
-
       bool success = false;
-
-      Environment env(state_p.board.rows, state_p.board.cols, goals_loc[index_g]);
-
+      goalX = next_index/state_p.board.cols;
+      goalY = next_index%state_p.board.cols;
+      Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY));
+      std::cout << next_index / state_p.board.cols << ", " << next_index%state_p.board.cols << std::endl;
       AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
 
       PlanResult<State, Action, int> solution;
       Timer timer;
+
+
+        for (int h = 0; h < state_p.board.rows; ++h) {
+          for (int w = 0; w < state_p.board.cols; ++w) {
+
+              std::cout << kCellTypeToElement[start.grid[h * state_p.board.cols + w] + 1].id;
+              // if(h==0) grid[h * state_p.board.cols + w] = 100;
+          }
+          std::cout << std::endl;
+        }           
 
       if (env.stateValid(start)) {
         success = astar.search(start, solution);
@@ -445,7 +453,7 @@ int main(int argc, char* argv[]) {
       }
       timer.stop();
       std::cout << timer.elapsedSeconds() <<  ", " << env.num_expand <<std::endl;      
-
+      next_index  = -1;
       if (success) {
         std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " << env.num_expand
                 << std::endl;
@@ -458,20 +466,56 @@ int main(int argc, char* argv[]) {
                 << solution.states.back().first << std::endl;
 
         solutions.push_back(solution);
-        // out << "schedule:" << std::endl;
-        // out << "  agent1:" << std::endl;
-        // for (size_t i = 0; i < solution.states.size(); ++i) {
-        //   out << "    - x: " << solution.states[i].first.x << std::endl
-        //       << "      y: " << solution.states[i].first.y << std::endl
-        //       << "      t: " << i << std::endl;
-        // }
+
+        if(goalX * state_p.board.cols + goalY == 678)
+        {
+
+          for (int h = 0; h < state_p.board.rows; ++h) {
+            for (int w = 0; w < state_p.board.cols; ++w) {
+              std::cout << kCellTypeToElement[solutions[index_g].states[0].first.grid[h * state_p.board.cols + w] + 1].id;
+              // if(h==0) grid[h * state_p.board.cols + w] = 100;
+            }
+            std::cout << std::endl;
+          }
+          std::cout << static_cast<unsigned int>(solutions[index_g].states[0].first.localstate.gems_collected) << std::endl;
+        }
+          std::cout << static_cast<unsigned int>(solutions[index_g].states[0].first.localstate.gems_collected) << std::endl;
+        state_p.board.grid.assign(solutions[index_g].states[0].first.grid.begin(), solutions[index_g].states[0].first.grid.end());
+        if(goalX * state_p.board.cols + goalY == 678) break;
+        if(solutions[index_g].states[0].first.localstate.gems_collected >= state_p.board.gems_required){
+          next_index = 678;
+          index_g++;
+          continue; 
+        }
+        
+        int gem_num = 0;
+        sort(solutions[index_g].states[0].first.need_update_index.begin(), solutions[index_g].states[0].first.need_update_index.end());
+        for(int gem_i = 0; gem_i < solutions[index_g].states[0].first.need_update_index.size(); gem_i++){
+          int index_gem = solutions[index_g].states[0].first.need_update_index[gem_i];
+          switch (state_p.board.item(index_gem))
+          {
+            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
+            if(gem_num == 0) next_index = index_gem;
+            gem_num++;
+            break;
+            case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
+            if(gem_num == 0) next_index = index_gem;
+            gem_num++;
+            break;
+            default:
+            break;
+          }
+        }
+        index_g++;
+        std::cout << "Num_gem " << gem_num << " \n";        
       } else {
         std::cout << "Planning NOT successful!" << std::endl;
         break;
       }
 
     }
-
+      total.stop();
+      std::cout << total.elapsedSeconds() <<std::endl;    
 
     
 
