@@ -316,6 +316,7 @@ bool RNDGameState::HasProperty(int index, int property, int action) const {
 
 void RNDGameState::MoveItem(int index, int action) {
     int new_index = IndexFromAction(index, action);
+    if(curr_gem_index == index) curr_gem_index = new_index;
     board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
     board.item(new_index) = board.item(index);
     board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);

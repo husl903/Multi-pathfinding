@@ -1,0 +1,1 @@
+ls *.yaml | awk '{printf "./cbs -i ../benchmark/mapf-scen-even/Paris/%s -o test.yaml -a 15 -s JPSTA --seed 4\n",$0}'

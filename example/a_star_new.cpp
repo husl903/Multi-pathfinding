@@ -13,6 +13,8 @@
 #include <libMultiRobotPlanning/vectorCache.hpp>
 #include <libMultiRobotPlanning/queueCache.hpp>
 
+#define GemGoal
+
 using namespace stonesngems;
 using namespace stonesngems::util;
 
@@ -30,7 +32,6 @@ std::vector<size_t> rand_y;
 int num_state = 0;
 
 struct State {
-  // State(int x, int y, int time) : x(x), y(y), time(time) {}
   State(int x, int y, int time, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
          time(time), grid(grid), need_update_index(need_update_index) {}  
   // State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
@@ -56,6 +57,12 @@ struct State {
   std::vector<int8_t> &grid;
   std::vector<int> &need_update_index;
   LocalState localstate;
+  bool is_falling = false;
+  bool canRollLeft = false;
+  bool canRollRight = false;
+  int index_gem = -1;
+  int gem_x = -1;
+  int gem_y = -1;
 };
 
 namespace std {
@@ -154,22 +161,32 @@ class Environment {
   {}
 
   int admissibleHeuristic(const State& s) {
+#ifdef GemGoal    
+    if(s.is_falling){
+       if(s.y >= s.gem_y) return std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y)/2;
+       else return std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y) + 1;
+    }else if(s.canRollLeft) { 
+      if(s.x <= s.gem_x) return std::abs(s.x - s.gem_x)/2 + std::abs(s.y - s.gem_y);
+      else return std::abs(s.x - s.gem_x) + 1 + std::abs(s.y - s.gem_y);
+    }else if(s.canRollRight) { 
+      if(s.x >= s.gem_x) return std::abs(s.x - s.gem_x)/2 + std::abs(s.y - s.gem_y);
+      else return std::abs(s.x - s.gem_x) + 1 + std::abs(s.y - s.gem_y);
+    }
+#endif    
     return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
   }
 
-  bool isSolution(const State& s) { return s.x == m_goal.x && s.y == m_goal.y; }
+  bool isSolution(const State& s) { 
+#ifdef GemGoal
+    return s.x == s.index_gem / m_dimy && s.y == s.index_gem % m_dimy; 
+#endif
+    return s.x == m_goal.x && s.y == m_goal.y; 
+  }
 
 //whether needs const
-void getNeighbors(State& s,
+  void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors) {
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
-    
-    neighbors.clear();
-    state_game.board.grid.assign(s.grid.begin(), s.grid.end());
-    state_game.board.need_update_index.clear();
-    sort(s.need_update_index.begin(), s.need_update_index.end());
-    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
-    state_game.resetLocalState(s.localstate);
     // if(s.time  <=3 )
     // {
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
@@ -181,32 +198,33 @@ void getNeighbors(State& s,
     //     std::cout << std::endl;
     // } 
     // }
-    // if((s.x == 13 && s.y == 31 && s.time == 39) 
-    // // || 
-    // // (s.x == 3 && s.y == 3 && s.time == 1) || (s.x == 4 && s.y == 3 && s.time == 2) || 
-    // // (s.x == 4 && s.y == 4 && s.time == 3) || (s.x == 4 && s.y == 5 && s.time == 4) ||
-    // // (s.x == 3 && s.y == 5 && s.time == 5) || (s.x == 2 && s.y == 5 && s.time == 6) ||
-    // // (s.x == 2 && s.y == 4 && s.time == 7) || (s.x == 1 && s.y == 4 && s.time == 8))
-    // )
-    // {
-    //   for(int xx = 0; xx < s.need_update_index.size(); xx ++){
-    //     std::cout << s.need_update_index[xx] << ", ";
-    //   }
-    //   std::cout << std::endl;
-    // }
+
+    neighbors.clear();
+    state_game.board.grid.assign(s.grid.begin(), s.grid.end());
+    state_game.board.need_update_index.clear();
+    sort(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.board.need_update_index.assign(s.need_update_index.begin(), s.need_update_index.end());
+    state_game.resetLocalState(s.localstate);
 
     int index = s.x * m_dimy + s.y;
-    int index1 = -1;
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
+    state_game.curr_gem_index = s.index_gem;
     state_game.apply_action(0);
-    if(index == state_game.board.agent_pos){
+    if(index == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit){
       State wait(s.x, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       wait.grid.swap(state_game.board.grid);
       wait.need_update_index.swap(state_game.board.need_update_index);
       wait.localstate = state_game.local_state;
+#ifdef GemGoal      
+      wait.index_gem =  state_game.curr_gem_index;
+      wait.gem_x = state_game.curr_gem_index / m_dimy;
+      wait.gem_y = state_game.curr_gem_index % m_dimy;
+      wait.canRollLeft = state_game.CanRollLeft(wait.index_gem);
+      wait.canRollRight = state_game.CanRollRight(wait.index_gem);
+      wait.is_falling = state_game.IsType(wait.index_gem, kElEmpty, Directions::kDown);
+#endif      
       neighbors.emplace_back(Neighbor<State, Action, int>(wait, Action::Wait, 1));
-      
       // std::cout << "Neighbor  "<< wait.x <<", " << wait.y << ", time " << wait.time << ", " << s.grid.size() << std::endl;
       // num_state++;
     }
@@ -217,14 +235,23 @@ void getNeighbors(State& s,
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.resetLocalState(s.localstate);
+    state_game.curr_gem_index = s.index_gem;
     state_game.apply_action(1);
     if ((index - m_dimy) == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State up(s.x - 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       up.grid.swap(state_game.board.grid);
       up.need_update_index.swap(state_game.board.need_update_index);
       up.localstate = state_game.local_state;
-      // std::cout << state_game.local_state.gems_collected << " gems " << std::endl;
+#ifdef GemGoal            
+      up.index_gem =  state_game.curr_gem_index;
+      up.gem_x = state_game.curr_gem_index / m_dimy;
+      up.gem_y = state_game.curr_gem_index % m_dimy;      
+      up.canRollLeft = state_game.CanRollLeft(up.index_gem);
+      up.canRollRight = state_game.CanRollRight(up.index_gem);
+      up.is_falling = state_game.IsType(up.index_gem, kElEmpty, Directions::kDown);
+#endif      
       neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
+      // std::cout << state_game.local_state.gems_collected << " gems " << std::endl;
       // std::cout << "Neighbor  "<< up.x <<", " << up.y << ", time " << up.time << ", " << s.grid.size() << std::endl;
       // num_state++;
     }
@@ -235,12 +262,21 @@ void getNeighbors(State& s,
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.resetLocalState(s.localstate);
+    state_game.curr_gem_index = s.index_gem;
     state_game.apply_action(3);
     if (index + m_dimy == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State down(s.x + 1, s.y, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       down.grid.swap(state_game.board.grid);
       down.need_update_index.swap(state_game.board.need_update_index);
       down.localstate = state_game.local_state;
+#ifdef GemGoal      
+      down.index_gem =  state_game.curr_gem_index;
+      down.gem_x = state_game.curr_gem_index / m_dimy;
+      down.gem_y = state_game.curr_gem_index % m_dimy;      
+      down.canRollLeft = state_game.CanRollLeft(down.index_gem);
+      down.canRollRight = state_game.CanRollRight(down.index_gem); 
+      down.is_falling = state_game.IsType(down.index_gem, kElEmpty, Directions::kDown);
+#endif            
       neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
       // std::cout << "Neighbor  "<< down.x <<", " << down.y << ", time " << down.time << ", " << s.grid.size() << std::endl;
       // num_state++;   
@@ -252,12 +288,21 @@ void getNeighbors(State& s,
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.resetLocalState(s.localstate);
+    state_game.curr_gem_index = s.index_gem;
     state_game.apply_action(4);
     if (index - 1 == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State left(s.x, s.y - 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       left.grid.swap(state_game.board.grid);
       left.need_update_index.swap(state_game.board.need_update_index);
       left.localstate = state_game.local_state;
+#ifdef GemGoal      
+      left.index_gem =  state_game.curr_gem_index;
+      left.gem_x = state_game.curr_gem_index / m_dimy;
+      left.gem_y = state_game.curr_gem_index % m_dimy;
+      left.canRollLeft = state_game.CanRollLeft(left.index_gem);
+      left.canRollRight = state_game.CanRollRight(left.index_gem);
+      left.is_falling = state_game.IsType(left.index_gem, kElEmpty, Directions::kDown);
+#endif      
       neighbors.emplace_back(Neighbor<State, Action, int>(left, Action::Left, 1));
       // std::cout << "Neighbor  "<< left.x <<", " << left.y << ", time " << left.time << ", " << s.grid.size() << std::endl;
       // num_state++;
@@ -269,12 +314,21 @@ void getNeighbors(State& s,
     state_game.board.agent_pos = index;
     state_game.board.agent_idx = index;
     state_game.resetLocalState(s.localstate);
+    state_game.curr_gem_index = s.index_gem;
     state_game.apply_action(2);
     if (index + 1 == state_game.board.agent_pos || state_game.board.agent_pos == kAgentPosExit) {
       State right(s.x, s.y + 1, s.time + 1, *gridCache.getItem(), *indexCache.getItem());
       right.grid.swap(state_game.board.grid);
       right.need_update_index.swap(state_game.board.need_update_index);
       right.localstate = state_game.local_state;
+#ifdef GemGoal      
+      right.index_gem =  state_game.curr_gem_index;
+      right.gem_x = state_game.curr_gem_index / m_dimy;
+      right.gem_y = state_game.curr_gem_index % m_dimy;
+      right.canRollLeft = state_game.CanRollLeft(right.index_gem);
+      right.canRollRight = state_game.CanRollRight(right.index_gem);
+      right.is_falling = state_game.IsType(right.index_gem, kElEmpty, Directions::kDown);
+#endif      
       neighbors.emplace_back(Neighbor<State, Action, int>(right, Action::Right, 1));
       // std::cout << "Neighbor  "<< right.x <<", " << right.y << ", time " << right.time << ", " << s.grid.size() << std::endl;
       // num_state++;
@@ -357,32 +411,31 @@ int main(int argc, char* argv[]) {
     int startX, startY;  
 
     for (int h = 0; h < state_p.board.rows; ++h) {
-        for (int w = 0; w < state_p.board.cols; ++w) {
-            if(grid[h * state_p.board.cols + w] == 0){
-              startX = h;
-              startY = w;
-            }
-            std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+      for (int w = 0; w < state_p.board.cols; ++w) {
+        if(grid[h * state_p.board.cols + w] == 0){
+          startX = h;
+          startY = w;
         }
-        std::cout << std::endl;
+          std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+      }
+      std::cout << std::endl;
     }
 
     for (int h = 0; h < state_p.board.rows; ++h) {
-        for (int w = 0; w < state_p.board.cols; ++w) {
-            //printf("%d ", grid[h * state_p.board.cols + w]);
-            if(grid[h * state_p.board.cols + w] == 0){
-              startX = h;
-              startY = w;
-              std::cout <<  "||" << h << ", " << w;
-            }
-           if(grid[h * state_p.board.cols + w] == 5){
-             std::cout <<  "||" << h << ", " << w;
-           }
-
-            std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
-            // if(h==0) grid[h * state_p.board.cols + w] = 100;
+      for (int w = 0; w < state_p.board.cols; ++w) {
+        //printf("%d ", grid[h * state_p.board.cols + w]);
+        if(grid[h * state_p.board.cols + w] == 0){
+          startX = h;
+          startY = w;
+          std::cout <<  "||" << h << ", " << w;
         }
-        std::cout << std::endl;
+        if(grid[h * state_p.board.cols + w] == 5){
+          std::cout <<  "||" << h << ", " << w;
+        }
+        std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+        // if(h==0) grid[h * state_p.board.cols + w] = 100;
+      }
+      std::cout << std::endl;
     }
 
     std::vector<Location> goals_loc;
@@ -407,12 +460,12 @@ int main(int argc, char* argv[]) {
     LocalState localstate;
     int next_index = goals_loc[0].x * state_p.board.cols + goals_loc[0].y;
     int index_g = 0;
+    bool is_falling = false;
     while(1){
       if(next_index == -1) break;
       if(index_g != 0 ){
         startX = solutions[index_g - 1].states[0].first.x;
         startY = solutions[index_g - 1].states[0].first.y;
-
       }
       State start(startX, startY, 0, *gridCache.getItem(), *indexCache.getItem());
       if(index_g == 0){
@@ -429,12 +482,19 @@ int main(int argc, char* argv[]) {
       goalX = next_index/state_p.board.cols;
       goalY = next_index%state_p.board.cols;
       Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY));
-      std::cout << next_index / state_p.board.cols << ", " << next_index%state_p.board.cols << std::endl;
       AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
+      start.index_gem = next_index;
+      start.gem_x = goalX;
+      start.gem_y = goalY;
+      state_game.board.grid.assign(start.grid.begin(), start.grid.end());
+      start.is_falling = is_falling;
+      start.canRollLeft = state_game.CanRollLeft(next_index);
+      start.canRollRight = state_game.CanRollRight(next_index);
+    
+      std::cout << next_index / state_p.board.cols << ", " << next_index % state_p.board.cols << std::endl;
 
       PlanResult<State, Action, int> solution;
       Timer timer;
-
 
         for (int h = 0; h < state_p.board.rows; ++h) {
           for (int w = 0; w < state_p.board.cols; ++w) {
@@ -466,7 +526,6 @@ int main(int argc, char* argv[]) {
                 << solution.states.back().first << std::endl;
 
         solutions.push_back(solution);
-
         if(goalX * state_p.board.cols + goalY == 678)
         {
 
@@ -479,7 +538,7 @@ int main(int argc, char* argv[]) {
           }
           std::cout << static_cast<unsigned int>(solutions[index_g].states[0].first.localstate.gems_collected) << std::endl;
         }
-          std::cout << static_cast<unsigned int>(solutions[index_g].states[0].first.localstate.gems_collected) << std::endl;
+        std::cout << static_cast<unsigned int>(solutions[index_g].states[0].first.localstate.gems_collected) << std::endl;
         state_p.board.grid.assign(solutions[index_g].states[0].first.grid.begin(), solutions[index_g].states[0].first.grid.end());
         if(goalX * state_p.board.cols + goalY == 678) break;
         if(solutions[index_g].states[0].first.localstate.gems_collected >= state_p.board.gems_required){
@@ -489,21 +548,23 @@ int main(int argc, char* argv[]) {
         }
         
         int gem_num = 0;
+        is_falling = false;
         sort(solutions[index_g].states[0].first.need_update_index.begin(), solutions[index_g].states[0].first.need_update_index.end());
         for(int gem_i = 0; gem_i < solutions[index_g].states[0].first.need_update_index.size(); gem_i++){
           int index_gem = solutions[index_g].states[0].first.need_update_index[gem_i];
           switch (state_p.board.item(index_gem))
           {
             case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
-            if(gem_num == 0) next_index = index_gem;
-            gem_num++;
-            break;
+              if(gem_num == 0) next_index = index_gem;
+              gem_num++;
+              break;
             case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
-            if(gem_num == 0) next_index = index_gem;
-            gem_num++;
-            break;
+              if(gem_num == 0) next_index = index_gem;
+              is_falling = true;
+              gem_num++;
+              break;
             default:
-            break;
+              break;
           }
         }
         index_g++;
@@ -514,12 +575,8 @@ int main(int argc, char* argv[]) {
       }
 
     }
-      total.stop();
-      std::cout << total.elapsedSeconds() <<std::endl;    
-
-    
-
-
+    total.stop();
+    std::cout << total.elapsedSeconds() <<std::endl;    
 
   // namespace po = boost::program_options;
   // Declare the supported options.

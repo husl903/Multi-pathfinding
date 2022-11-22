@@ -210,22 +210,24 @@ public:
         return {kNumVisibleCellType, rows, cols};
     }
 
+    bool CanRollLeft(int index) const;
+    bool CanRollRight(int index) const;
+    bool IsType(int index, const Element &element, int action = Directions::kNoop) const;
 
     friend std::ostream &operator<<(std::ostream &os, const RNDGameState &state);
     Board board;
     LocalState local_state;
+    int curr_gem_index  = -1;
 private:
     int IndexFromAction(int index, int action) const;
     bool InBounds(int index, int action = Directions::kNoop) const;
-    bool IsType(int index, const Element &element, int action = Directions::kNoop) const;
     bool HasProperty(int index, int property, int action = Directions::kNoop) const;
     void MoveItem(int index, int action);
     void SetItem(int index, const Element &element, int id, int action = Directions::kNoop);
     const Element &GetItem(int index, int action = Directions::kNoop) const;
     bool IsTypeAdjacent(int index, const Element &element) const;
 
-    bool CanRollLeft(int index) const;
-    bool CanRollRight(int index) const;
+
     void RollLeft(int index, const Element &element);
     void RollRight(int index, const Element &element);
     void Push(int index, const Element &stationary, const Element &falling, int action);
