@@ -77,6 +77,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/example/shortest_path_heuristic.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/sipp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/JPSSIPP.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/JPSSIPP_rnd.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/timer.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/online_jump_point_locator2.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/jpst_gridmap.cpp
@@ -224,6 +225,19 @@ add_executable(JPSSIPP
   example/JPSSIPP.cpp 
 )
 target_link_libraries(JPSSIPP
+  ${Boost_LIBRARIES}
+  yaml-cpp
+)
+
+## jpssipprnd
+add_executable(JPSSIPP_rnd
+  example/gridmap.cpp
+  example/gm_parser.cpp
+  example/online_jump_point_locator2.cpp
+  example/jpst_gridmap.cpp
+  example/JPSSIPP_rnd.cpp 
+)
+target_link_libraries(JPSSIPP_rnd
   ${Boost_LIBRARIES}
   yaml-cpp
 )
