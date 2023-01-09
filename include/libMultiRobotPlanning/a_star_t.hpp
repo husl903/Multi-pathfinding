@@ -137,14 +137,14 @@ class AStar {
             // << (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
-              gc.returnItem(&neighbor.state.grid);
+              // gc.returnItem(&neighbor.state.grid);
               ic.returnItem(&neighbor.state.need_update_index);
               continue;
             }
 
             if (tentative_gScore == (*handle).gScore) {
             	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
-              gc.returnItem(&neighbor.state.grid);
+              // gc.returnItem(&neighbor.state.grid);
               ic.returnItem(&neighbor.state.need_update_index);              
                continue;
             }
@@ -171,7 +171,7 @@ class AStar {
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
         }else{
-            gc.returnItem(&neighbor.state.grid);
+            // gc.returnItem(&neighbor.state.grid);
             ic.returnItem(&neighbor.state.need_update_index);
         }
       }

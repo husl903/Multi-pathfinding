@@ -334,7 +334,7 @@ class Environment {
       // num_state++;
     }
 
-    gridCache.returnItem(&s.grid);
+    // gridCache.returnItem(&s.grid);
     indexCache.returnItem(&s.need_update_index);
     // return 0;
   }
@@ -440,20 +440,20 @@ int main(int argc, char* argv[]) {
 
     std::vector<Location> goals_loc;
     goals_loc.push_back(Location(1, 10));
-    goals_loc.push_back(Location(2, 22));
-    goals_loc.push_back(Location(8, 9));
-    goals_loc.push_back(Location(8, 27));
-    goals_loc.push_back(Location(8, 30));
-    goals_loc.push_back(Location(9, 3));
+    // goals_loc.push_back(Location(2, 22));
+    // goals_loc.push_back(Location(8, 9));
+    // goals_loc.push_back(Location(8, 27));
+    // goals_loc.push_back(Location(8, 30));
+    // goals_loc.push_back(Location(9, 3));
     // goals_loc.push_back(Location(16, 38));    
-    goals_loc.push_back(Location(11, 32));
-    goals_loc.push_back(Location(15, 16));
-    goals_loc.push_back(Location(17, 28));
-    goals_loc.push_back(Location(18, 6));
-    goals_loc.push_back(Location(18, 28));
-    goals_loc.push_back(Location(19, 28));
-    goals_loc.push_back(Location(20, 2));
-    goals_loc.push_back(Location(16, 38));
+    // goals_loc.push_back(Location(11, 32));
+    // goals_loc.push_back(Location(15, 16));
+    // goals_loc.push_back(Location(17, 28));
+    // goals_loc.push_back(Location(18, 6));
+    // goals_loc.push_back(Location(18, 28));
+    // goals_loc.push_back(Location(19, 28));
+    // goals_loc.push_back(Location(20, 2));
+    // goals_loc.push_back(Location(16, 38));
 
     Timer total;
     std::vector <PlanResult<State, Action, int>>  solutions;
@@ -463,6 +463,7 @@ int main(int argc, char* argv[]) {
     bool is_falling = false;
     while(1){
       if(next_index == -1) break;
+      if(index_g  == 2) break;
       if(index_g != 0 ){
         startX = solutions[index_g - 1].states[0].first.x;
         startY = solutions[index_g - 1].states[0].first.y;
@@ -517,14 +518,58 @@ int main(int argc, char* argv[]) {
       if (success) {
         std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " << env.num_expand
                 << std::endl;
-        for (size_t i = 0; i < solution.actions.size(); ++i) {
-          std::cout << solution.states[i].second << ": " << solution.states[i].first
-                  << "->" << solution.actions[i].first
+        // std::cout << solution.states.back().second << ": "
+        //         << solution.states.back().first;
+        // std::cout << solution.actions.size() - 1 << std::endl;
+         for (int i = solution.actions.size() - 1; i > 0; i--) {
+          
+             if(i == solution.actions.size() - 1)   std::cout << solution.states.back().second << ": "
+                << solution.states.back().first <<  "->" << solution.actions[i].first
                   << "(cost: " << solution.actions[i].second << ")" << std::endl;
+            std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i - 1].first
+                  << "(cost: " << solution.actions[i - 1].second << ")" << std::endl;                  
         }
-        std::cout << solution.states.back().second << ": "
-                << solution.states.back().first << std::endl;
+     std::cout << solution.states[0].second << ": "
+                << solution.states[0].first;       
+        std::cout << std::endl;
 
+         for (int i = solution.actions.size() - 1; i > 0; i--) {
+          
+             if(i == solution.actions.size() - 1) {
+              std::cout << solution.states.back().second << ": "
+                << solution.states.back().first <<  "->" << solution.actions[i].first
+                  << "(cost: " << solution.actions[i].second << ")" << std::endl;
+              for (int h = 0; h < state_p.board.rows; ++h) {
+                for (int w = 0; w < state_p.board.cols; ++w) {
+
+                  std::cout << kCellTypeToElement[solution.states.back().first.grid[h * state_p.board.cols + w] + 1].id;
+                  // if(h==0) grid[h * state_p.board.cols + w] = 100;
+                }
+                std::cout << std::endl;
+              }                    
+            }
+            std::cout << solution.states[i].second << ": " << solution.states[i].first << "->" << solution.actions[i - 1].first
+                  << "(cost: " << solution.actions[i - 1].second << ")" << std::endl;
+           for (int h = 0; h < state_p.board.rows; ++h) {
+            for (int w = 0; w < state_p.board.cols; ++w) {
+
+              std::cout << kCellTypeToElement[solution.states[i].first.grid[h * state_p.board.cols + w] + 1].id;
+              // if(h==0) grid[h * state_p.board.cols + w] = 100;
+            }
+            std::cout << std::endl;
+          }                        
+        }
+     std::cout << solution.states[0].second << ": "
+                << solution.states[0].first;       
+        std::cout << std::endl;
+        // std::cout << "---------------------------------\n";               
+        // for (size_t i = 0; i < solution.actions.size(); ++i) {
+        //   std::cout << solution.states[i].second << ": " << solution.states[i].first
+        //           << "->" << solution.actions[i].first
+        //           << "(cost: " << solution.actions[i].second << ")" << std::endl;
+        // }
+        // std::cout << solution.states.back().second << ": "
+        //         << solution.states.back().first << std::endl;
         solutions.push_back(solution);
         if(goalX * state_p.board.cols + goalY == 678)
         {
