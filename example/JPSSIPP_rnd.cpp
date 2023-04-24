@@ -17,7 +17,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include <libMultiRobotPlanning/JPSSIPP.hpp>
+// #include <libMultiRobotPlanning/JPSSIPP.hpp>
+#include <libMultiRobotPlanning/JPSSIPP_rnd.hpp>
 #include <libMultiRobotPlanning/JPSSIPP_BIT_rnd.hpp>
 #include <libMultiRobotPlanning/JPSSIPP_BITCBS.hpp>
 #include <libMultiRobotPlanning/JPSSIPPNEWGEN.hpp>
@@ -89,6 +90,7 @@ struct State
 	int x;
 	int y;
 	int time;
+    uint64_t zorb_hash;	
 	std::vector<int8_t> grid;
 	std::vector<int> need_update_index;
 	LocalState localstate;
@@ -143,6 +145,7 @@ namespace std
 			size_t seed = 0;
 			boost::hash_combine(seed, s.x);
 			boost::hash_combine(seed, s.y);
+			boost::hash_combine(seed, s.zorb_hash);
 			// boost::hash_combine(seed, s.time)
 			return seed;
 		}
@@ -522,6 +525,8 @@ int main(int argc, char *argv[])
     assert(infile.is_open());
     std::string board_str;
     getline(infile,board_str);
+	std::cout << board_str << std::endl;
+	std::cout << "input board_str " << std::endl;
     params["game_board_str"] = GameParameter(board_str);
     RNDGameState state_p(params);
     state_game = state_p;
@@ -555,26 +560,26 @@ int main(int argc, char *argv[])
           std::cout <<  "||" << h << ", " << w;
         }
         std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
-        // if(h==0) grid[h * state_p.board.cols + w] = 100;
       }
       std::cout << std::endl;
     }	
     std::vector<Location> goals_loc;
     goals_loc.push_back(Location(10, 1));
-    goals_loc.push_back(Location(2, 22));
-    goals_loc.push_back(Location(8, 9));
-    goals_loc.push_back(Location(8, 27));
-    goals_loc.push_back(Location(8, 30));
-    goals_loc.push_back(Location(9, 3));
+    goals_loc.push_back(Location(22, 2));
+    goals_loc.push_back(Location(9, 8));
+    goals_loc.push_back(Location(27, 8));
+    goals_loc.push_back(Location(30, 8));
+    goals_loc.push_back(Location(3, 9));
     // goals_loc.push_back(Location(16, 38));    
-    goals_loc.push_back(Location(11, 32));
-    goals_loc.push_back(Location(15, 16));
-    goals_loc.push_back(Location(17, 28));
-    goals_loc.push_back(Location(18, 6));
-    goals_loc.push_back(Location(18, 28));
-    goals_loc.push_back(Location(19, 28));
-    goals_loc.push_back(Location(20, 2));
-    goals_loc.push_back(Location(16, 38));
+    goals_loc.push_back(Location(32, 11));
+    goals_loc.push_back(Location(16, 15));
+    goals_loc.push_back(Location(28, 17));
+    goals_loc.push_back(Location(6, 18));
+    goals_loc.push_back(Location(28, 18));
+    goals_loc.push_back(Location(28, 19));
+	
+    goals_loc.push_back(Location(2, 20));
+    goals_loc.push_back(Location(38, 16));
 
 
 	std::unordered_set<State> obstacles;
@@ -679,7 +684,6 @@ int main(int argc, char *argv[])
 	std::map<State, std::vector<jpst_old2::interval>> allCollisionIntervals_jpstold2;
 	std::map<State, std::vector<jpst_old2::edgeCollision>> allEdgeCollisions_jpstold2;
 
-
 	std::map<State, std::vector<sipp_t::interval>> allCollisionIntervals_sipp;
 	std::map<State, std::vector<sipp_t::edgeCollision>> allEdgeCollisions_sipp;
 
@@ -741,13 +745,18 @@ int main(int argc, char *argv[])
 		env.setJumpLimit(jumpLimit2);
 		env.setFI(isF);
 		jps_sipp jpssipp(env);
+		jpst_old1 jpst(env, state_game);
 		PlanResult<State, Action, int>  solution;
 		Timer timer;
-	    bool success = jpssipp.search(start, Action::Wait, solution);
+	    // bool success = jpssipp.search(start, Action::Wait, solution);
+		
+		
+		PlanResult<State, Action, int>  solution1;
+		bool success = jpst.search(start, Action::Wait, solution, state_game);
 		timer.stop();
 		solutions.push_back(solution);
-
-      	if (success) {
+      	
+		if (success) {
         	std::cout << "Planning successful! Total cost: " << solution.cost << ", " << timer.elapsedSeconds() << ", " 
 			// << env.num_expand
                	 << std::endl;
@@ -758,6 +767,15 @@ int main(int argc, char *argv[])
         	}
         	std::cout << solution.states.back().second << ": "
                 << solution.states.back().first << std::endl;
+
+
+        	// for (size_t i = 0; i < solution1.actions.size(); ++i) {
+          	// 	std::cout << solution1.states[i].second << ": " << solution1.states[i].first
+            //       << "->" << solution1.actions[i].first
+            //       << "(cost: " << solution1.actions[i].second << ")" << std::endl;
+        	// }
+        	// std::cout << solution1.states.back().second << ": "
+            //     << solution1.states.back().first << std::endl;				
 
         	solutions.push_back(solution);
         	if(goalX * state_p.board.cols + goalY == 678)
