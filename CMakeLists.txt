@@ -65,6 +65,7 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/queueCache.hpp 
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/ca_star.cpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/assignment.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/cbs.cpp
@@ -139,6 +140,16 @@ target_link_libraries(a_star_new
   PUBLIC stonesngems
   ${Boost_LIBRARIES}
 )
+
+## ca_star
+add_executable(ca_star
+  example/ca_star.cpp
+)
+target_link_libraries(ca_star
+  PUBLIC stonesngems
+  ${Boost_LIBRARIES}
+)
+
 
 ## a_star_epsilon
 add_executable(a_star_epsilon
