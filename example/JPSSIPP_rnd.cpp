@@ -520,13 +520,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
     std::cout << "Begin test \n";
-    const std::string filename="./levels/bd_01_1.txt";
+    const std::string filename="./levels/bd_02_1.txt";
     std::ifstream infile(filename.c_str());
     assert(infile.is_open());
     std::string board_str;
     getline(infile,board_str);
-	std::cout << board_str << std::endl;
-	std::cout << "input board_str " << std::endl;
+	// std::cout << board_str << std::endl;
+	// std::cout << "input board_str " << std::endl;
     params["game_board_str"] = GameParameter(board_str);
     RNDGameState state_p(params);
     state_game = state_p;
@@ -554,17 +554,18 @@ int main(int argc, char *argv[])
         if(grid[h * state_p.board.cols + w] == 0){
           startX = w;
           startY = h;
-          std::cout <<  "||" << h << ", " << w;
+        //   std::cout <<  "||" << h << ", " << w;
         }
-        if(grid[h * state_p.board.cols + w] == 5){
-          std::cout <<  "||" << h << ", " << w;
-        }
-        std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+        // if(grid[h * state_p.board.cols + w] == 5){
+        //   std::cout <<  "||" << h << ", " << w;
+        // }
+        // std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
       }
-      std::cout << std::endl;
+    //   std::cout << std::endl;
     }	
     std::vector<Location> goals_loc;
-    goals_loc.push_back(Location(10, 1));
+    goals_loc.push_back(Location(4, 3));
+    goals_loc.push_back(Location(14, 4));
     goals_loc.push_back(Location(22, 2));
     goals_loc.push_back(Location(9, 8));
     goals_loc.push_back(Location(27, 8));
@@ -626,9 +627,9 @@ int main(int argc, char *argv[])
         // if(grid[h * state_p.board.cols + w] == 5){
         //   std::cout <<  "||" << h << ", " << w;
         // }
-        std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
+        // std::cout << kCellTypeToElement[grid[h * state_p.board.cols + w] + 1].id;
       }
-      std::cout << std::endl;
+    //   std::cout << std::endl;
     }	
 	jpst_gridmap jpst_gm_(&gm);
 
@@ -699,7 +700,7 @@ int main(int argc, char *argv[])
 
 	std::unordered_map<State, std::vector<std::vector<int>>> eHeuristic;
 	
-	std::cout << " Test size " << std::endl;
+	// std::cout << " Test size " << std::endl;
 	std::cout << goals.size() << std::endl;
 	Timer total;
     std::vector <PlanResult<State, Action, int>>  solutions;

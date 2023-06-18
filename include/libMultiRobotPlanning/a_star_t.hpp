@@ -10,6 +10,7 @@
 
 #include "neighbor.hpp"
 #include "planresult.hpp"
+#include "timer.hpp"
 
 namespace libMultiRobotPlanning {
 
@@ -83,11 +84,34 @@ class AStar {
     std::vector<Neighbor<State, Action, Cost> > neighbors;
     neighbors.reserve(10);
     int max_size_open = 0;
+    int num_have_been = 0;
+    int num_same_config = 0;
+    Timer timer;
     while (!openSet.empty()) {
+      timer.stop();
+      double duration1 = timer.elapsedSeconds();
+      if(duration1 > 50){
+        std::cout << "Time out\n";
+        break;
+      }
       Node current = openSet.top();
       if(openSet.size() > max_size_open) max_size_open = openSet.size();
       // std::cout << "size " << max_size_open << std::endl;
       m_env.onExpandNode(current.state, current.fScore, current.gScore);
+        int num_same_loc = 0;
+        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+          // std::cout << (*it).grid[0] << "----\n";
+          if(current.state.x == (*it).x && current.state.y == (*it).y && current.state.time == (*it).time) num_same_loc++;
+          // is_equal = true;
+          // for (int h = 0; h < neighbor.state.grid.size(); ++h) {              
+          //   if((*it).grid[h] != neighbor.state.grid[h]){
+          //     is_equal = false;
+          //     break;
+          //   }
+          // }
+          // if(is_equal) num_same_config++;
+        }      
+        // std::cout << "num_same_loc " << num_same_loc << std::endl;
       // std::cout << current.state.x << ", " << current.state.y << ",f, "<< current.fScore << ",g, " << current.gScore  << "--------------------"<< std::endl;
       if (m_env.isSolution(current.state)) {
         solution.states.clear();
@@ -105,7 +129,8 @@ class AStar {
         // std::reverse(solution.actions.begin(), solution.actions.end());
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
-        std::cout << "max size of open list: " << max_size_open << "\n";
+        std::cout << "max size of open list, " << max_size_open << ", number of states have been, " << num_have_been  << 
+        ", closed, " << closedSet.size()  << ",open, " << stateToHeap.size() << " , sum, " << closedSet.size() + stateToHeap.size() << ", sameconfig " << num_same_config << "\n";
         return true;
       }
 
@@ -117,6 +142,31 @@ class AStar {
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
+
+        bool  is_equal = true;
+        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+          // std::cout << (*it).grid[0] << "----\n";
+          is_equal = true;
+          for (int h = 0; h < neighbor.state.grid.size(); ++h) {              
+            if((*it).grid[h] != neighbor.state.grid[h]){
+              is_equal = false;
+              break;
+            }
+          }
+          if(is_equal) num_same_config++;
+        }
+        
+        for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
+          is_equal = true;
+          for (int h = 0; h < neighbor.state.grid.size(); ++h) {              
+            if((*it).first.grid[h] != neighbor.state.grid[h]){
+              is_equal = false;
+              break;
+            }
+          }
+          if(is_equal) num_same_config++;
+        }        
+
         if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
@@ -132,6 +182,7 @@ class AStar {
           //  std::cout << "  this is a new node " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " <<
           //   tentative_gScore << std::endl;
           } else {
+            num_have_been++;
             auto handle = iter->second;
             // std::cout << "  this is an old node: " << tentative_gScore + m_env.admissibleHeuristic(neighbor.state) << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
             // << (*handle).gScore << std::endl;
@@ -171,6 +222,8 @@ class AStar {
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
         }else{
+           num_have_been++;
+ 
             // gc.returnItem(&neighbor.state.grid);
             ic.returnItem(&neighbor.state.need_update_index);
         }

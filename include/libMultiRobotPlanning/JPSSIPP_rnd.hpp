@@ -298,7 +298,7 @@ public:
       		  Cost end_t = sis_s.at(s.interval).end;
       		  flag_is_solution = false;
       		  std::vector<startTime> re_start;
-      		  if(m_env.isDebug) std::cout << "Current State " << s.state.x << "  " << s.state.y <<" Gscore" << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
+      		  if(m_env.isDebug) std::cout << "Current State " << s.state.x << "  " << s.state.y <<" , gCost, " << m_lastGScore << " interval " << s.interval << " Direction " << s.dir << "  ********************************\n";
 /*      		  flag_curr_i.resize(3); flag_next_i.resize(3);
       		  flag_curr_w.resize(3); flag_next_w.resize(3);
       		  for( int i = 0;i < 3; i++){
@@ -602,7 +602,7 @@ public:
   						  JPSSIPPState(m.state.state, m.state.interval, m.state.dir,  m_lastGScore + m.cost, m.state.flag_wait),
 						  	  JPSSIPPAction(m.action, m.cost), m.cost));
           			  Cost hvalue = (Cost)m_env.admissibleHeuristic(m.state.state);
- 				  	 if(m_env.isDebug) std::cout << "Successor-: " << m.state.state.x << " "<< m.state.state.y << " ,gCost: " << m.cost + m_lastGScore << " hCost: " << hvalue << " fCost: " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
+ 				  	 if(m_env.isDebug) std::cout << "Successor: " << m.state.state.x << " "<< m.state.state.y << " ,gCost: " << m.cost + m_lastGScore << " hCost: " << hvalue << " fCost: " << hvalue + m.cost + m_lastGScore  << " flag " << m.state.flag_wait  << " dir " << m.state.dir << "\n";
           	  }
           }
        }
@@ -656,7 +656,9 @@ public:
     						if(m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y + 1))){
     							if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y + 1))
 								   || (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x] == 2 && 
-								      (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x - 1] == 1)))
+								       m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x - 1] == 1)
+								   || (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x - 1] == 2 && 
+								       m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x - 1 ] == 1))
     									// || IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y + 1),
             							// 		edgeCollision(m_lastGScore + current_cost_l, Action::Down))
     									// || isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1))
@@ -665,6 +667,7 @@ public:
         									edgeCollision(m_lastGScore + current_cost_l + 1, Action::Down))){
         								up_start_t = m_lastGScore + current_cost_l + 1;
         								re_start.push_back(startTime(up_start_t, Action::Up, 0x04, false));
+										// std::cout << "restart up " << std::endl; 
         							}
     							} else {
        								isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1, up_left_t);
@@ -678,7 +681,9 @@ public:
     						if(m_env.stateValid(State(temp_s.state.x - 1, temp_s.state.y - 1))){
     							if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y - 1))
 								    || (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x] == 2 && 
-									   (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x - 1] == 1)))
+									   m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x - 1] == 1) 
+									|| (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x -1] == 2 &&
+									    m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x - 1] == 1))
     									// || IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y - 1),
             									// edgeCollision(m_lastGScore + current_cost_l, Action::Up))
     									// || isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1))
@@ -686,7 +691,7 @@ public:
         							if(!IsEdgeCollisions(State(temp_s.state.x -1, temp_s.state.y - 1),
         									edgeCollision(m_lastGScore + current_cost_l + 1, Action::Up))){
         								down_start_t = m_lastGScore + current_cost_l + 1;
-        								re_start.push_back(startTime(down_start_t, Action::Up, 0x08, false));
+        								re_start.push_back(startTime(down_start_t, Action::Down, 0x08, false));
         							}
     							} else {
        								isTemporalObstacleAfterT(State(temp_s.state.x - 1, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1, down_left_t);
@@ -817,8 +822,8 @@ public:
     							if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y + 1))
 								    || (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x] == 2 && 
 									   (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x + 1] == 1))
-									|| (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x + 1] != 
-									    m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 1]))
+									|| (m_game_state.board.grid[(temp_s.state.y + 1)*m_game_state.board.cols + temp_s.state.x + 1] == 2 && 
+									    m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 1] == 1))
     									// || IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y + 1),
             									// edgeCollision(m_lastGScore + current_cost_l, Action::Down))
     									// || isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y + 1), m_lastGScore + current_cost_l + 1))
@@ -841,8 +846,8 @@ public:
     							if(m_env.isObstacle(State(temp_s.state.x, temp_s.state.y - 1))
 								    || (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x] == 2 && 
 									   (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x + 1] == 1))
-									|| (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x + 1] != 
-									    m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 1]))									   								
+									|| (m_game_state.board.grid[(temp_s.state.y - 1)*m_game_state.board.cols + temp_s.state.x + 1] == 2
+									    && m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 1] == 1))									   								
     									// || IsEdgeCollisions(State(temp_s.state.x, temp_s.state.y - 1),
             									// edgeCollision(m_lastGScore + current_cost_l, Action::Up))
     									// || isTemporalObstacleAtT(State(temp_s.state.x, temp_s.state.y - 1), m_lastGScore + current_cost_l + 1))
@@ -881,7 +886,7 @@ public:
 						   (m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 1] == 2 && 
 						   m_game_state.board.grid[(temp_s.state.y)*m_game_state.board.cols + temp_s.state.x + 2] == 1))
 						{
-							re_start.push_back(startTime(m_lastGScore + current_cost_l + 1, Action::Left, 0x01, true));
+							re_start.push_back(startTime(m_lastGScore + current_cost_l + 1, Action::Left, 0x02, true));
 						}
 												
     					std::sort(re_start.begin(), re_start.end()); //For the re-start direction, choose the minimum re-start time.
