@@ -90,7 +90,7 @@ class AStar {
     while (!openSet.empty()) {
       timer.stop();
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 50){
+      if(duration1 > 1800){
         std::cout << "Time out\n";
         break;
       }
@@ -112,7 +112,7 @@ class AStar {
           // if(is_equal) num_same_config++;
         }      
         // std::cout << "num_same_loc " << num_same_loc << std::endl;
-      // std::cout << current.state.x << ", " << current.state.y << ",f, "<< current.fScore << ",g, " << current.gScore  << "--------------------"<< std::endl;
+      // std::cout <<"Current state " <<  current.state.x << ", " << current.state.y << ",fcore, "<< current.fScore << ",gscore, " << current.gScore  << ",dir, " <<current.state.dir <<  ",hash," << current.state. zorb_hash << ",--------------------"<< std::endl;
       if (m_env.isSolution(current.state)) {
         solution.states.clear();
         solution.actions.clear();
@@ -129,13 +129,25 @@ class AStar {
         // std::reverse(solution.actions.begin(), solution.actions.end());
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
-        std::cout << "max size of open list, " << max_size_open << ", number of states have been, " << num_have_been  << 
-        ", closed, " << closedSet.size()  << ",open, " << stateToHeap.size() << " , sum, " << closedSet.size() + stateToHeap.size() << ", sameconfig " << num_same_config << "\n";
+        int num_less_f = 0;
+        int num_less_f_wait = 0;
+        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+          if ((*it).f < solution.cost){
+            assert(solution.cost==solution.fmin);
+            num_less_f++;
+            if((*it).is_wait) num_less_f_wait++;
+            std::cout <<  "LESS F, (" <<  (*it).x << "," << (*it).y << "), time " <<(*it).time  << ", f, " << (*it).f << ", hash," << (*it).zorb_hash << " \n"; 
+          }
+        }
+
+        std::cout << "startState, " << startState.x  << "," << startState.y << ",num_less_f, " << num_less_f << ",num_less_wait, " << num_less_f_wait << ", max size of open list, " << max_size_open << ", number of states have been, " << num_have_been  << 
+        ", closed, " << closedSet.size()  << ",open, " << stateToHeap.size() << " , sum, " << closedSet.size() + stateToHeap.size() << ", sameconfig " << num_same_config << ",";
         return true;
       }
 
       openSet.pop();
       stateToHeap.erase(current.state);
+      current.state.f = current.fScore;
       closedSet.insert(current.state);
 
       // traverse neighbors
@@ -164,12 +176,24 @@ class AStar {
               break;
             }
           }
+          // auto handle_t = it->second; 
+          // auto temp = (*handle_t).fScore;
+          // std::cout << (*handle_t).gScore  << "," << (*handle_t).fScore << " ------------1111111111\n";
+          // (*handle_t).fScore = 0;
+          // auto handle_tt = it->second;
+          // std::cout << (*handle_tt).gScore  << "," << (*handle_tt).fScore << " ----------2222222222\n";
+          // (*handle_tt).fScore = temp;
+          // auto handle_ttt = it->second;
+          // std::cout << (*handle_ttt).gScore  << "," << (*handle_ttt).fScore << " ----------33333333\n";     
+          
           if(is_equal) num_same_config++;
+
         }        
 
         if (closedSet.find(neighbor.state) == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
+          int flag = -1;
           if (iter == stateToHeap.end()) {  // Discover a new node
             Cost fScore =
                 tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
@@ -178,14 +202,33 @@ class AStar {
             (*handle).handle = handle;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
-            if(openSet.size() > max_size_open) max_size_open = openSet.size();            
-          //  std::cout << "  this is a new node " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " <<
-          //   tentative_gScore << std::endl;
+            if(openSet.size() > max_size_open) max_size_open = openSet.size();
+
+          //   if(flag != -1){
+          //     for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
+          //       int f_re = m_env.admissibleHeuristicRe((*it).first, neighbor.state.gem_x, neighbor.state.gem_y, flag);
+          //       auto handle_t = it->second; 
+          //       auto temp = (*handle_t).fScore;
+          //       // std::cout << f_re  <<", " << temp << ", " << flag << "  111111111111111111*********************---------------------------\n";
+          // // std::cout << (*handle_t).gScore  << "," << (*handle_t).fScore << " ------------1111111111\n";
+          //       if(f_re < temp) (*handle_t).fScore = f_re;
+          //       // std::cout << f_re  <<", " << (*handle_t).fScore << ", " << flag << " 222222222222222222*********************---------------------------\n";
+
+          // // auto handle_tt = it->second;
+          // // std::cout << (*handle_tt).gScore  << "," << (*handle_tt).fScore << " ----------2222222222\n";
+          // // (*handle_tt).fScore = temp;
+          // // auto handle_ttt = it->second;
+          // // std::cout << (*handle_ttt).gScore  << "," << (*handle_ttt).fScore << " ----------33333333\n";     
+
+          //     }
+          //   }           
+          //  std::cout << "  this is a new node, fscore " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " 
+          //   << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g," << tentative_gScore << std::endl;
           } else {
             num_have_been++;
             auto handle = iter->second;
-            // std::cout << "  this is an old node: " << tentative_gScore + m_env.admissibleHeuristic(neighbor.state) << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
-            // << (*handle).gScore << std::endl;
+            // std::cout << "  this is an old node: fscore, " << tentative_gScore + m_env.admissibleHeuristic(neighbor.state) << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
+            // << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g,"<< (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
               // gc.returnItem(&neighbor.state.grid);
@@ -248,7 +291,7 @@ class AStar {
         return fScore > other.fScore;
       } else if(gScore != other.gScore){
     	  return gScore < other.gScore;
-      }/*else if(state.x != other.state.x){
+      }/* else if(state.x != other.state.x){
         return state.x < other.state.x;
       } else return state.y < other.state.y;*/
 /*      else if(gScore != other.gScore){
