@@ -1,6 +1,7 @@
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <iostream>
 #include <vector>
 
 #include "definitions.h"
@@ -13,15 +14,19 @@ Board parse_board_str(const std::string &board_str) {
     std::string segment;
     std::vector<std::string> seglist;
     // string split on |
-    while (std::getline(board_ss, segment, '|')) {
-        seglist.push_back(segment);
+   {
+        // std::cout <<"EOF\n";
+        while (std::getline(board_ss, segment, '|')) {
+            // std::cout <<segment <<"\n";
+            seglist.push_back(segment);
+        }
     }
 
     assert(seglist.size() >= 2);
 
     // Get general info
-    int rows = std::stoi(seglist[0]);
-    int cols = std::stoi(seglist[1]);
+    int rows = std::stoi(seglist[1]);
+    int cols = std::stoi(seglist[0]);
     assert((int)seglist.size() == rows * cols + 4);
     int max_steps = std::stoi(seglist[2]);
     int max_gems = std::stoi(seglist[3]);

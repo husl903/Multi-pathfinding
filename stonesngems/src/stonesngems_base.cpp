@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "definitions.h"
+#define NoHashDirt 
 
 namespace stonesngems {
 
@@ -61,10 +62,27 @@ void RNDGameState::reset() {
     }
 }
 
+void RNDGameState::init_hash(){
+
+    // std::mt19937 gen(shared_state_ptr->rng_seed);
+    // std::uniform_int_distribution<uint64_t> dist(0);
+    // for (int channel = 0; channel < kNumHiddenCellType; ++channel) {
+    //     for (int i = 0; i < board.cols * board.rows; ++i) {
+    //         shared_state_ptr->zrbht[(channel * board.cols * board.rows) + i] = dist(gen);
+    //     }
+    // }
+
+    board.zorb_hash = 0;
+    // Set initial hash
+    for (int i = 0; i < board.cols * board.rows; ++i) {
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+    }
+}
+
 void RNDGameState::apply_action(int action) {
     assert(action >= 0 && action < kNumActions);
     StartScan();
-
+    num_apply_action++;
     int old_index = board.agent_idx;
     // Handle agent first
     UpdateAgent(board.agent_idx, static_cast<Directions>(action));
@@ -808,7 +826,7 @@ void RNDGameState::StartScan() {
     local_state.blob_size = 0;
     local_state.blob_enclosed = true;
     local_state.reward_signal = 0;
-    board.reset_updated();
+    if(!board.is_opt_queue_event) board.reset_updated();
 }
 
 void RNDGameState::EndScan() {

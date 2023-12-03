@@ -104,6 +104,7 @@ public:
      */
     void reset();
 
+    void init_hash();
 
     /**
      * Reset the environment to the state as given by the GameParameters
@@ -218,6 +219,7 @@ public:
     Board board;
     LocalState local_state;
     int curr_gem_index  = -1;
+    int num_apply_action = 0;
 private:
     int IndexFromAction(int index, int action) const;
     bool InBounds(int index, int action = Directions::kNoop) const;

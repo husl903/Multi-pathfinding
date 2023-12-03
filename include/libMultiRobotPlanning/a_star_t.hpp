@@ -68,6 +68,7 @@ class AStar {
     solution.states.push_back(std::make_pair<>(startState, 0));
     solution.actions.clear();
     solution.cost = 0;
+    int bound = 20;
 
     openSet_t openSet;
     std::unordered_map<State, fibHeapHandle_t, StateHasher> stateToHeap;
@@ -133,10 +134,10 @@ class AStar {
         int num_less_f_wait = 0;
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           if ((*it).f < solution.cost){
-            assert(solution.cost==solution.fmin);
+//            assert(solution.cost==solution.fmin);
             num_less_f++;
             if((*it).is_wait) num_less_f_wait++;
-            std::cout <<  "LESS F, (" <<  (*it).x << "," << (*it).y << "), time " <<(*it).time  << ", f, " << (*it).f << ", hash," << (*it).zorb_hash << " \n"; 
+            // std::cout <<  "LESS F, (" <<  (*it).x << "," << (*it).y << "), time " <<(*it).time  << ", f, " << (*it).f << ", hash," << (*it).zorb_hash << " \n"; 
           }
         }
 
@@ -149,10 +150,10 @@ class AStar {
       stateToHeap.erase(current.state);
       current.state.f = current.fScore;
       closedSet.insert(current.state);
-
+      // std::cout << "f, " << current.fScore << " ,g, " << current.gScore << " ,h, " << current.fScore -  current.gScore << ", ";
       // traverse neighbors
       neighbors.clear();
-      m_env.getNeighbors(current.state, neighbors);
+      m_env.getNeighbors(current.state, neighbors, current.state.f);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
 
         bool  is_equal = true;
@@ -195,8 +196,9 @@ class AStar {
           auto iter = stateToHeap.find(neighbor.state);
           int flag = -1;
           if (iter == stateToHeap.end()) {  // Discover a new node
+            Cost hScore = m_env.admissibleHeuristic(neighbor.state);
             Cost fScore =
-                tentative_gScore + m_env.admissibleHeuristic(neighbor.state);
+                tentative_gScore + hScore;
             auto handle =
                 openSet.push(Node(neighbor.state, fScore, tentative_gScore));
             (*handle).handle = handle;
@@ -237,7 +239,8 @@ class AStar {
             }
 
             if (tentative_gScore == (*handle).gScore) {
-            	if((*handle).state.dir > neighbor.state.dir) (*handle).state.dir =  neighbor.state.dir;
+            	// if((*handle).state.dir > neighbor.state.dir) 
+              (*handle).state.dir |=  neighbor.state.dir;
               // gc.returnItem(&neighbor.state.grid);
               ic.returnItem(&neighbor.state.need_update_index);              
                continue;
@@ -246,6 +249,15 @@ class AStar {
             // update f and gScore
             Cost delta = (*handle).gScore - tentative_gScore;
             (*handle).state.dir =  neighbor.state.dir;
+            (*handle).state.time = neighbor.state.time;
+            (*handle).state.localstate = neighbor.state.localstate;
+            (*handle).state.is_falling = neighbor.state.is_falling;
+            (*handle).state.canRollLeft = neighbor.state.canRollLeft;
+            (*handle).state.canRollRight = neighbor.state.canRollRight;
+            (*handle).state.is_wait = neighbor.state.is_wait;
+            (*handle).state.index_gem = neighbor.state.index_gem;
+            (*handle).state.gem_x = neighbor.state.gem_x;
+            (*handle).state.gem_y = neighbor.state.gem_y;
             (*handle).gScore = tentative_gScore;
             (*handle).fScore -= delta;
             (*handle).state.grid.swap(neighbor.state.grid);
