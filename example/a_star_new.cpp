@@ -33,6 +33,7 @@ static vectorCache<int> indexCache;
 std::vector<size_t> rand_x;
 std::vector<size_t> rand_y;
 std::vector<int8_t> grid_temp;
+std::vector<std::vector<int8_t>> goal_locations;
 
 int num_state = 0;
 
@@ -113,6 +114,30 @@ struct Location {
   }
 };
 
+struct StateLight {
+  StateLight(int x, int y) : x(x), y(y) {}
+  StateLight(int x, int y, int time) : x(x), y(y), time(time){}
+  int x;
+  int y;
+  int time;
+  unsigned int dir = 0xff;
+
+  bool operator<(const StateLight& other) const {
+    return std::tie(x, y) < std::tie(other.x, other.y);
+  }
+
+  bool operator!=(const StateLight& other) const {
+	 return std::tie(x, y) != std::tie(other.x, other.y);
+  }
+  bool operator==(const StateLight& other) const {
+    return std::tie(x, y) == std::tie(other.x, other.y);
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const StateLight& c) {
+    return os << "(" << c.x << "," << c.y << ")";
+  }
+};
+
 namespace std {
 template <>
 struct hash<Location> {
@@ -159,12 +184,14 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 class Environment {
  public:
   Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles,
-              Location goal, std::vector<std::vector<int>> m_eHeuristic)
+              Location goal, std::vector<std::vector<int>> m_eHeuristic,
+              std::vector<std::vector<StateLight>> m_goal_location_table)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
         m_goal(std::move(goal)),
-        m_eHeuristic(std::move(m_eHeuristic))  // NOLINT
+        m_eHeuristic(std::move(m_eHeuristic)),
+        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
   {}
     Environment(size_t dimx, size_t dimy,
               Location goal, std::vector<std::vector<int>> m_eHeuristic)
@@ -173,6 +200,15 @@ class Environment {
         m_goal(std::move(goal)),
         m_eHeuristic(std::move(m_eHeuristic))  // NOLINT
   {}
+    Environment(size_t dimx, size_t dimy,
+              Location goal, std::vector<std::vector<int>> m_eHeuristic,
+              std::vector<std::vector<StateLight>> m_goal_location_table)
+      : m_dimx(dimx),
+        m_dimy(dimy),
+        m_goal(std::move(goal)),
+        m_eHeuristic(std::move(m_eHeuristic)),
+        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
+  {}  
 
   int admissibleHeuristic(const State& s) {
 //        else return std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y) + 1;
@@ -193,6 +229,26 @@ class Environment {
 //     return std::abs(s.x - m_goal.x) + std::abs(s.y - m_goal.y);
 
 #ifdef GemGoal
+
+    int time_step = s.time;
+    // std::cout <<"Size " << m_goal_location_table.size() << "\n";
+    /*if(s.time < m_goal_location_table.size()){
+      int min_heuristic = 0;
+      for(int ii = 0; ii < m_goal_location_table[s.time].size(); ii++){
+        int md = (std::abs(s.x - m_goal_location_table[s.time][ii].x) + std::abs(s.y - m_goal_location_table[s.time][ii].y));
+        if(ii == 0) min_heuristic = md;
+        else if(md < min_heuristic) min_heuristic = md;
+      }
+      // std::cout << "Heuristic \n";
+      return min_heuristic;
+    }else*/{
+      int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
+      // return md;
+      // return md/2;
+      if(md%2 == 1) return md/2+1;
+      else return md/2;      
+    }
+    
     int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
     // return md;
     // return md/2;
@@ -264,14 +320,16 @@ class Environment {
 #endif
     // if( s.x == 3 && s.y == 25)
     // {
-    //   // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
-    //   for (int h = 0; h < state_game.board.rows; ++h) {
-    //     for (int w = 0; w < state_game.board.cols; ++w) {
+    //   std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
+    //   for (int h = 0; h < state_game.board.rows; ++h)
+    //   {
+    //     for (int w = 0; w < state_game.board.cols; ++w) 
+    //     {
     //       std::cout << kCellTypeToElement[s.grid[h * state_game.board.cols + w] + 1].id;
-    //         // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+    //       // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
     //     }
     //     std::cout << std::endl;
-    //   } 
+    //   }
     // }
     // if(s.zorb_hash != zorb_hash_temp) std::cout << "ERROR \n";
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", hash, " << s.zorb_hash  << ", new-hash " << zorb_hash_temp << ", size, " << s.grid.size()  << "----------------------------------"<< std::endl;
@@ -302,7 +360,18 @@ class Environment {
       wait.canRollLeft = state_game.CanRollLeft(wait.index_gem);
       wait.canRollRight = state_game.CanRollRight(wait.index_gem);
       wait.is_falling = state_game.IsType(wait.index_gem, kElEmpty, Directions::kDown);
-      if(s.goal_roll || wait.canRollLeft || wait.canRollRight || wait.is_falling) wait.goal_roll = true;
+      if(s.index_gem != wait.index_gem && (abs(s.x - s.gem_x) + abs(s.y - s.gem_y)) != 1){
+        wait.goal_roll = true;
+        //   std::cout << s.x << ", " << s.y << ", time " << s.time << ",wait gemxy, " << s.gem_x << ", " << s.gem_y<< "\n";
+        // for (int h = 0; h < state_game.board.rows; ++h) {
+        //   for (int w = 0; w < state_game.board.cols; ++w) {
+        //     std::cout << kCellTypeToElement[wait.grid[h * state_game.board.cols + w] + 1].id;
+        //     // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+        //   }
+        //   std::cout << std::endl;
+        // }       
+      }
+      else wait.goal_roll = false;
 #endif      
       // if(wait.zorb_hash != zorb_hash_temp)
       wait.is_wait = true;
@@ -338,7 +407,18 @@ class Environment {
         up.canRollLeft = state_game.CanRollLeft(up.index_gem);
         up.canRollRight = state_game.CanRollRight(up.index_gem);
         up.is_falling = state_game.IsType(up.index_gem, kElEmpty, Directions::kDown);
-        if(s.goal_roll || up.canRollLeft || up.canRollRight || up.is_falling) up.goal_roll = true;        
+        if(s.index_gem != up.index_gem && (abs(s.x - s.gem_x) + abs(s.y - s.gem_y)) != 1) {
+          up.goal_roll = true;
+          // std::cout << s.x << ", " << s.y << ", time " << s.time << ",up gemxy, " << s.gem_x << ", " << s.gem_y<< "\n";
+          // for (int h = 0; h < state_game.board.rows; ++h) {
+          //   for (int w = 0; w < state_game.board.cols; ++w) {
+          //     std::cout << kCellTypeToElement[up.grid[h * state_game.board.cols + w] + 1].id;
+          //   // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+          //   }
+          //   std::cout << std::endl;
+          // }              
+        }
+        else up.goal_roll = false;        
   #endif      
         neighbors.emplace_back(Neighbor<State, Action, int>(up, Action::Up, 1));
         num_generated++;
@@ -375,7 +455,18 @@ class Environment {
         down.canRollLeft = state_game.CanRollLeft(down.index_gem);
         down.canRollRight = state_game.CanRollRight(down.index_gem); 
         down.is_falling = state_game.IsType(down.index_gem, kElEmpty, Directions::kDown);
-        if(s.goal_roll || down.canRollLeft || down.canRollRight || down.is_falling) down.goal_roll = true;        
+        if(s.index_gem != down.index_gem && (abs(s.x - s.gem_x) + abs(s.y - s.gem_y)) != 1){
+          down.goal_roll = true;
+          // std::cout << s.x << ", " << s.y << ", time " << s.time << ",down gemxy, " << s.gem_x << ", " << s.gem_y<< "\n";
+          // for (int h = 0; h < state_game.board.rows; ++h) {
+          //   for (int w = 0; w < state_game.board.cols; ++w) {
+          //     std::cout << kCellTypeToElement[down.grid[h * state_game.board.cols + w] + 1].id;
+          //   // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+          //   }
+          //   std::cout << std::endl;
+          // }            
+        }  
+        else down.goal_roll = false;
 #endif            
         neighbors.emplace_back(Neighbor<State, Action, int>(down, Action::Down, 1));
         num_generated++;
@@ -409,7 +500,18 @@ class Environment {
         left.canRollLeft = state_game.CanRollLeft(left.index_gem);
         left.canRollRight = state_game.CanRollRight(left.index_gem);
         left.is_falling = state_game.IsType(left.index_gem, kElEmpty, Directions::kDown);
-        if(s.goal_roll || left.canRollLeft || left.canRollRight || left.is_falling) left.goal_roll = true;        
+        if(s.index_gem != left.index_gem && (abs(s.x - s.gem_x) + abs(s.y - s.gem_y)) != 1){
+          left.goal_roll = true;
+          // std::cout << s.x << ", " << s.y << ", time " << s.time << ",left gemxy, " << s.gem_x << ", " << s.gem_y<< "\n";
+          // for (int h = 0; h < state_game.board.rows; ++h) {
+          //   for (int w = 0; w < state_game.board.cols; ++w) {
+          //     std::cout << kCellTypeToElement[left.grid[h * state_game.board.cols + w] + 1].id;
+          //   // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+          //   }
+          //   std::cout << std::endl;
+          // }            
+        }
+        else left.goal_roll = false;        
 #endif      
         neighbors.emplace_back(Neighbor<State, Action, int>(left, Action::Left, 1));
         num_generated++;
@@ -442,7 +544,18 @@ class Environment {
         right.canRollLeft = state_game.CanRollLeft(right.index_gem);
         right.canRollRight = state_game.CanRollRight(right.index_gem);
         right.is_falling = state_game.IsType(right.index_gem, kElEmpty, Directions::kDown);
-        if(s.goal_roll || right.canRollLeft || right.canRollRight || right.is_falling) right.goal_roll = true;
+        if(s.index_gem != right.index_gem && (abs(s.x - s.gem_x) + abs(s.y - s.gem_y)) != 1) {
+          right.goal_roll = true;
+          // std::cout << s.x << ", " << s.y << ", time " << s.time << ",right gemxy, " << s.gem_x << ", " << s.gem_y<< "\n";
+          // for (int h = 0; h < state_game.board.rows; ++h) {
+          //   for (int w = 0; w < state_game.board.cols; ++w) {
+          //     std::cout << kCellTypeToElement[right.grid[h * state_game.board.cols + w] + 1].id;
+          //   // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+          //   }
+          //   std::cout << std::endl;
+          // }              
+        }
+        else right.goal_roll = false;
 #endif      
         neighbors.emplace_back(Neighbor<State, Action, int>(right, Action::Right, 1));
         num_generated++;
@@ -477,16 +590,17 @@ class Environment {
     return s.x >= 0 && s.x < m_dimx && s.y >= 0 && s.y < m_dimy &&
            m_obstacles.find(s) == m_obstacles.end();
   }
- int  num_expand = 0;
- int num_generated = 0;
- bool isExact = false;
- bool is_roll_fall = false;
+  int num_expand = 0;
+  int num_generated = 0;
+  bool isExact = false;
+  bool is_roll_fall = false;
  private:
   int m_dimx;
   int m_dimy;
   std::unordered_set<State> m_obstacles;
   Location m_goal;
   std::vector<std::vector<int>> m_eHeuristic;
+  std::vector<std::vector<StateLight>> m_goal_location_table;
 };
 
 
@@ -552,6 +666,63 @@ void PowerLocation(int goalX, int goalY, const std::vector<int8_t>& grid, int di
     std::cout << ele.properties << "\n";
     // if(ele.properties )
   }
+}
+
+void StimulateTest(std::vector<std::vector<StateLight>> &goal_location_table, int goalX, int goalY, int m_dimy, int m_dimx, const std::vector<int8_t>& grid){
+ 
+//  std::vector<std::vector<StateLight>> goal_location_table;
+  std::vector<StateLight> current_time_step;
+  int time_step = 0;
+  current_time_step.push_back(StateLight(goalX, goalY, 0));
+  goal_location_table.push_back(current_time_step);
+  current_time_step.clear();
+  while(1){
+    for(int i = 0; i < goal_location_table[time_step].size(); i++){
+      StateLight temp = goal_location_table[time_step][i];
+      // std::cout <<"Current   :" <<  temp.x << ", " << temp.y << ", " << ",time," << temp.time << " ******************************\n";
+      if(temp.dir & 0x10){ // wait
+        StateLight succ_temp(temp.x, temp.y, temp.time + 1);
+        succ_temp.dir = 0xff;
+        current_time_step.push_back(succ_temp);
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      }
+      if(temp.dir & 0x02){ // down
+        StateLight succ_temp(temp.x + 1,  temp.y, temp.time + 1);
+        succ_temp.dir = 0x10;
+        if(grid[(temp.x + 2) * m_dimy + temp.y] != 18 && grid[(temp.x + 1) * m_dimy + temp.y] != 19) 
+        succ_temp.dir |= 0x02;
+        if(grid[(temp.x + 1) * m_dimy + temp.y - 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y] != 19)
+        succ_temp.dir |= 0x04;
+        if(grid[(temp.x + 1) * m_dimy + temp.y + 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y] != 19)
+        succ_temp.dir |= 0x08;
+        current_time_step.push_back(succ_temp);     
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << ", dir, " << succ_temp.dir << "\n";
+      }
+      if(temp.dir & 0x04){ // left
+        StateLight succ_temp(temp.x,  temp.y - 1, temp.time + 1);
+        succ_temp.dir = 0x02;
+        current_time_step.push_back(succ_temp);  
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      }
+      if(temp.dir & 0x08){ // right
+        StateLight succ_temp(temp.x,  temp.y + 1, temp.time + 1);
+        succ_temp.dir = 0x02;
+        current_time_step.push_back(succ_temp);   
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      }      
+    }
+    goal_location_table.push_back(current_time_step);
+    current_time_step.clear();
+    time_step++;
+    if(time_step == 10) break;
+  }
+
+  // for(int i = 0; i < goal_location_table.size(); i++){
+  //   for(int ii = 0; ii < goal_location_table[i].size(); ii++){
+  //     std::cout << goal_location_table[i][ii].x << ", " << goal_location_table[i][ii].y << ", time, " << goal_location_table[i][ii].time << std::endl;
+  //   }
+  // }
+
 }
 
 int main(int argc, char* argv[]) {
@@ -638,7 +809,8 @@ int main(int argc, char* argv[]) {
       std::cout << std::endl;
     }
 
-    PowerLocation(goalXD, goalYD, grid, state_p.board.rows, state_p.board.cols);
+    //PowerLocation(goalXD, goalYD, grid, state_p.board.rows, state_p.board.cols);
+    
 
     Timer total;
     std::vector <PlanResult<State, Action, int>>  solutions;
@@ -667,6 +839,7 @@ int main(int argc, char* argv[]) {
       state_game.board.grid.assign(grid.begin(), grid.end());
       state_game.init_hash();
       state_game.num_apply_action = 0;
+      state_game.is_hash_dirt = false;
 
       State start(startX, startY, 0, state_game.board.zorb_hash, *gridCache.getItem(), *indexCache.getItem());
       // if(index_g == 0){
@@ -678,22 +851,27 @@ int main(int argc, char* argv[]) {
       //   start.need_update_index.assign(solutions[index_g - 1].states[0].first.need_update_index.begin(), solutions[index_g - 1].states[0].first.need_update_index.end());
       //   start.localstate = solutions[index_g - 1].states[0].first.localstate;
       // }
-        start.grid.assign(grid.begin(), grid.end());
-        start.need_update_index = state_p.board.need_update_index;
-        start.localstate = localstate;
-
+      start.grid.assign(grid.begin(), grid.end());
+      start.need_update_index = state_p.board.need_update_index;
+      start.localstate = localstate;
       bool success = false;
       goalX = next_index/state_p.board.cols;
       goalY = next_index%state_p.board.cols;
       
-      if(index_g == 0){
-       goalX = goalXD;
-       goalY = goalYD; 
-      } else if(!(goalX == goalXD && goalY == goalYD)){
+      /*if(index_g == 0){
+        std::cout << "Test 111\n";
+        goalX = goalXD;
+        goalY = goalYD; 
+        next_index = goalX * state_p.board.cols + goalY;
+      } else*/ if(!(goalX == goalXD && goalY == goalYD)){
+        std::cout << "Test 222\n";
         index_g++;
         continue;
       }
       std::cout << startX << ", " << startY << ", " << goalX << ", " << goalY << " \n";
+
+      std::vector<std::vector<StateLight>> goal_location_table;
+      StimulateTest(goal_location_table, goalXD, goalYD, state_p.board.cols, state_p.board.rows, grid);
 
       std::vector<std::vector<int>> eHeuristicGoal(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
       getExactHeuristic(eHeuristicGoal, map_obstacle, goalX, goalY, state_p.board.rows, state_p.board.cols);
@@ -705,7 +883,7 @@ int main(int argc, char* argv[]) {
       //   std::cout << std::endl;
       // }
       std::cout << "Goal " << goalX << ", " << goalY << std::endl;
-      Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal);
+      Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal, goal_location_table);
       AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
       start.index_gem = next_index;
       start.gem_x = goalX;
@@ -714,7 +892,7 @@ int main(int argc, char* argv[]) {
       start.is_falling = state_game.IsType(next_index, kElEmpty, Directions::kDown);;
       start.canRollLeft = state_game.CanRollLeft(next_index);
       start.canRollRight = state_game.CanRollRight(next_index);
-      if(start.is_falling || start.canRollLeft || start.canRollRight) start.goal_roll = true;
+      // if(start.is_falling || start.canRollLeft || start.canRollRight) start.goal_roll = true;
     
       std::cout << next_index / state_p.board.cols << ", " << next_index % state_p.board.cols << std::endl;
 
@@ -722,18 +900,54 @@ int main(int argc, char* argv[]) {
       Timer timer;       
 
       if (env.stateValid(start)) {
+        // state_game.is_hash_dirt = true;
+        astar.is_second = false;
         success = astar.search(start, solution);
+        timer.stop();
         if(success){
           std::cout << ",Pathfinding success !,";
           if(solution.states[0].first.x == goalX && solution.states[0].first.y == goalY) std::cout << ",same,";
           else std::cout << ",diff,";
+          getrusage(RUSAGE_SELF, &r_usage);
+          if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+          else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+        }else if(astar.is_goal_move){
+          getrusage(RUSAGE_SELF, &r_usage);
+          std::cout << "The goal is move, ";
+          std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl; 
+          state_game.is_hash_dirt = true;
+          state_game.board.grid.assign(grid.begin(), grid.end());
+          state_game.init_hash();
+          state_game.num_apply_action = 0;
+          Environment env1(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal, goal_location_table);
+          AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar1(env1, gridCache, indexCache);
+          astar1.is_second = true;
+
+          State start(startX, startY, 0, state_game.board.zorb_hash, *gridCache.getItem(), *indexCache.getItem());
+          start.grid.assign(grid.begin(), grid.end());
+          start.need_update_index = state_p.board.need_update_index;
+          start.localstate = localstate;          
+          start.index_gem = next_index;
+          start.gem_x = goalX;
+          start.gem_y = goalY;
+          state_game.board.grid.assign(start.grid.begin(), start.grid.end());
+          start.is_falling = state_game.IsType(next_index, kElEmpty, Directions::kDown);;
+          start.canRollLeft = state_game.CanRollLeft(next_index);
+          start.canRollRight = state_game.CanRollRight(next_index);
+          Timer timer2;
+          success = astar1.search(start, solution);
+          timer2.stop();
+          if(success){
+            std::cout << ",Pathfinding success !,";            
+          }
+          getrusage(RUSAGE_SELF, &r_usage);
+          if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer2.elapsedSeconds() <<  ", Expansion, " << env1.num_expand << ", generation, " << env1.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+          else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer2.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+
         }
       }
       timer.stop();
       
-      getrusage(RUSAGE_SELF, &r_usage);
-      if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
-      else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
 
       index_g++;
       if(success){

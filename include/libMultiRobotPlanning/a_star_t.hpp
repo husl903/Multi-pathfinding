@@ -61,7 +61,8 @@ template <typename State, typename Action, typename Cost, typename Environment, 
 class AStar {
  public:
   AStar(Environment& environment, vectorCache1& gc, vectorCache2& ic) : m_env(environment), gc(gc), ic(ic) {}
-
+  bool is_second = false;
+  bool is_goal_move = false;
   bool search(const State& startState,
               PlanResult<State, Action, Cost>& solution, Cost initialCost = 0) {
     solution.states.clear();
@@ -155,7 +156,11 @@ class AStar {
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors, current.state.f);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
-
+        if(!is_second && (neighbor.state.goal_roll)){
+          is_goal_move = true;
+          std::cout << neighbor.state.x << ", " << neighbor.state.y << ", time, " << neighbor.state.time << " \n";
+          return false;
+        }
         bool  is_equal = true;
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           // std::cout << (*it).grid[0] << "----\n";
@@ -192,6 +197,7 @@ class AStar {
         }        
 
         if (closedSet.find(neighbor.state) == closedSet.end()) {
+          
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
           int flag = -1;
@@ -303,9 +309,9 @@ class AStar {
         return fScore > other.fScore;
       } else if(gScore != other.gScore){
     	  return gScore < other.gScore;
-      }/* else if(state.x != other.state.x){
-        return state.x < other.state.x;
-      } else return state.y < other.state.y;*/
+      } else if(state.y != other.state.y){
+        return state.y < other.state.y;
+      }/* else return state.y < other.state.y;
 /*      else if(gScore != other.gScore){
         return gScore < other.gScore;
       } else {
@@ -332,7 +338,7 @@ class AStar {
         handle;
 #endif
   };
-
+  
 #ifdef USE_FIBONACCI_HEAP
   typedef typename boost::heap::fibonacci_heap<Node> openSet_t;
   typedef typename openSet_t::handle_type fibHeapHandle_t;

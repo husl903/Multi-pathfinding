@@ -220,6 +220,7 @@ public:
     LocalState local_state;
     int curr_gem_index  = -1;
     int num_apply_action = 0;
+    bool is_hash_dirt = true;
 private:
     int IndexFromAction(int index, int action) const;
     bool InBounds(int index, int action = Directions::kNoop) const;

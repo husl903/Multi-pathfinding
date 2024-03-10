@@ -37,7 +37,19 @@ void RNDGameState::reset() {
 
     // Set initial hash
     for (int i = 0; i < board.cols * board.rows; ++i) {
+#ifdef NoHashDirt
+        if(!is_hash_dirt){
+            if(board.item(i) == 2)
+                board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + i);
+            else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+        }else{
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+        }
+//        std::cout << static_cast<int>(board.item(i))  << "," << static_cast<int>((board.item(i) * board.cols * board.rows) + i) << std::endl;    
+//        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+#else
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+#endif
     }
 
     // In bounds fast access
@@ -75,7 +87,17 @@ void RNDGameState::init_hash(){
     board.zorb_hash = 0;
     // Set initial hash
     for (int i = 0; i < board.cols * board.rows; ++i) {
+#ifdef NoHashDirt
+        if(!is_hash_dirt){
+            if(board.item(i) == 2)
+                board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + i);
+            else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+        }else{
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+        }
+#else        
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+#endif
     }
 }
 
@@ -335,12 +357,45 @@ bool RNDGameState::HasProperty(int index, int property, int action) const {
 void RNDGameState::MoveItem(int index, int action) {
     int new_index = IndexFromAction(index, action);
     if(curr_gem_index == index) curr_gem_index = new_index;
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
-    board.item(new_index) = board.item(index);
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
-    // grid_.ids[new_index] = grid_.ids[index];
 
+#ifdef NoHashDirt
+    if(!is_hash_dirt){
+        if(board.item(new_index) == 2)
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + new_index);
+        else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }else{
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }
+#else    
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+#endif
+
+    board.item(new_index) = board.item(index);
+
+ #ifdef NoHashDirt
+    if(!is_hash_dirt){
+        if(board.item(new_index) == 2)
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + new_index);
+        else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }else{
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }
+#else       
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+#endif    
+    // grid_.ids[new_index] = grid_.ids[index];
+#ifdef NoHashDirt
+    if(!is_hash_dirt){
+        if(board.item(index) == 2)
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + index);
+        else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
+    }else{
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
+    }
+#else    
     board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
+#endif    
+
     board.item(index) = ElementToItem(kElEmpty);
     board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(kElEmpty) * board.cols * board.rows) + index);
     board.has_updated[new_index] = true;
@@ -350,9 +405,31 @@ void RNDGameState::MoveItem(int index, int action) {
 void RNDGameState::SetItem(int index, const Element &element, int id, int action) {
     (void)id;
     int new_index = IndexFromAction(index, action);
+#ifdef NoHashDirt
+    if(!is_hash_dirt){
+        if(board.item(new_index) == 2)
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + new_index);
+        else board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }else{
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+    }
+#else    
     board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+#endif
+
     board.item(new_index) = ElementToItem(element);
+
+#ifdef NoHashDirt
+    if(!is_hash_dirt){
+        if(board.item(new_index) == 2)
+            board.zorb_hash ^= shared_state_ptr->zrbht.at((1 * board.cols * board.rows) + new_index);
+        else board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
+    }else{
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
+    }
+#else    
     board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
+#endif    
     // grid_.ids[new_index] = id;
     board.has_updated[new_index] = true;
 }
