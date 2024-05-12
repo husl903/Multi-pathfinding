@@ -114,7 +114,8 @@ class AStar {
           // if(is_equal) num_same_config++;
         }      
         // std::cout << "num_same_loc " << num_same_loc << std::endl;
-      // std::cout <<"Current state " <<  current.state.x << ", " << current.state.y << ",fcore, "<< current.fScore << ",gscore, " << current.gScore  << ",dir, " <<current.state.dir <<  ",hash," << current.state. zorb_hash << ",--------------------"<< std::endl;
+      // std::cout <<"Current state " <<  current.state.x << ", " << current.state.y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " <<current.fScore - current.gScore <<  ",hash," << current.state. zorb_hash << ",--------------------"<< std::endl;
+  
       if (m_env.isSolution(current.state)) {
         solution.states.clear();
         solution.actions.clear();
@@ -156,11 +157,11 @@ class AStar {
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors, current.state.f);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
-        if(!is_second && (neighbor.state.goal_roll)){
-          is_goal_move = true;
-          std::cout << neighbor.state.x << ", " << neighbor.state.y << ", time, " << neighbor.state.time << " \n";
-          return false;
-        }
+        // if(!is_second && (neighbor.state.goal_roll)){
+        //   is_goal_move = true;
+        //   std::cout << neighbor.state.x << ", " << neighbor.state.y << ", time, " << neighbor.state.time << " \n";
+        //   return false;
+        // }
         bool  is_equal = true;
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           // std::cout << (*it).grid[0] << "----\n";

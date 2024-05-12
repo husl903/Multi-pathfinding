@@ -12,6 +12,7 @@
 #include <boost/program_options.hpp>
 
 #include <libMultiRobotPlanning/a_star_t.hpp>
+#include <libMultiRobotPlanning/a_star_t_1.hpp>
 #include <libMultiRobotPlanning/timer.hpp>
 #include <libMultiRobotPlanning/vectorCache.hpp>
 #include <libMultiRobotPlanning/queueCache.hpp>
@@ -21,8 +22,8 @@
 
 using namespace stonesngems;
 using namespace stonesngems::util;
-
 using libMultiRobotPlanning::AStar;
+using libMultiRobotPlanning::AStarT;
 using libMultiRobotPlanning::Neighbor;
 using libMultiRobotPlanning::PlanResult;
 
@@ -32,10 +33,9 @@ static vectorCache<int8_t> gridCache;
 static vectorCache<int> indexCache;
 std::vector<size_t> rand_x;
 std::vector<size_t> rand_y;
-std::vector<int8_t> grid_temp;
-std::vector<std::vector<int8_t>> goal_locations;
-
-int num_state = 0;
+// std::vector<int8_t> grid_temp;
+// std::vector<std::vector<int8_t>> goal_locations;
+// int num_state = 0;
 
 struct State {
   State(int x, int y, int time, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
@@ -116,11 +116,16 @@ struct Location {
 
 struct StateLight {
   StateLight(int x, int y) : x(x), y(y) {}
+  StateLight(int x, int y, int time, unsigned int dir) : x(x), y(y), time(time), dir(dir){}
   StateLight(int x, int y, int time) : x(x), y(y), time(time){}
+
   int x;
   int y;
   int time;
-  unsigned int dir = 0xff;
+  unsigned int dir = 0x00;
+  int f = 0;
+  uint64_t zorb_hash;
+  std::vector<int8_t> grid;
 
   bool operator<(const StateLight& other) const {
     return std::tie(x, y) < std::tie(other.x, other.y);
@@ -147,6 +152,20 @@ struct hash<Location> {
     // boost::hash_combine(seed, s.y);
     seed^=rand_x[s.x];
     seed^=rand_y[s.y];
+    return seed;
+  }
+};
+}  // namespace std
+
+namespace std {
+template <>
+struct hash<StateLight> {
+  size_t operator()(const StateLight& s) const {
+    size_t seed = 0;
+    boost::hash_combine(seed, s.x);
+    boost::hash_combine(seed, s.y);
+    // seed^=rand_x[s.x];
+    // seed^=rand_y[s.y];
     return seed;
   }
 };
@@ -184,14 +203,14 @@ std::ostream& operator<<(std::ostream& os, const Action& a) {
 class Environment {
  public:
   Environment(size_t dimx, size_t dimy, std::unordered_set<State> obstacles,
-              Location goal, std::vector<std::vector<int>> m_eHeuristic,
-              std::vector<std::vector<StateLight>> m_goal_location_table)
+              Location goal, std::vector<std::vector<int>> m_eHeuristic)
+              // std::vector<std::vector<StateLight>> m_goal_location_table)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_obstacles(std::move(obstacles)),
         m_goal(std::move(goal)),
-        m_eHeuristic(std::move(m_eHeuristic)),
-        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
+        m_eHeuristic(std::move(m_eHeuristic))
+        // m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
   {}
     Environment(size_t dimx, size_t dimy,
               Location goal, std::vector<std::vector<int>> m_eHeuristic)
@@ -202,13 +221,33 @@ class Environment {
   {}
     Environment(size_t dimx, size_t dimy,
               Location goal, std::vector<std::vector<int>> m_eHeuristic,
-              std::vector<std::vector<StateLight>> m_goal_location_table)
+              std::vector<std::vector<int>>m_eHeuristic_overall_borders, 
+              std::vector<std::vector<int>>m_eHeuristic_overall_border_location, 
+              std::vector<std::vector<int>>m_eHeuristic_goalArea,std::vector<int8_t> m_grid)
+//              std::vector<std::vector<StateLight>> m_goal_location_table)
       : m_dimx(dimx),
         m_dimy(dimy),
         m_goal(std::move(goal)),
         m_eHeuristic(std::move(m_eHeuristic)),
-        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
+        m_eHeuristic_overall_borders(std::move(m_eHeuristic_overall_borders)),
+        m_eHeuristic_overall_border_location(std::move(m_eHeuristic_overall_border_location)),
+        m_eHeuristic_goalArea(std::move(m_eHeuristic_goalArea)),
+        m_grid(std::move(m_grid))
+//        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
   {}  
+    Environment(size_t dimx, size_t dimy,
+              Location goal, std::vector<std::vector<int>> m_eHeuristic, std::vector<int8_t> m_grid)
+//              std::vector<std::vector<StateLight>> m_goal_location_table)
+      : m_dimx(dimx),
+        m_dimy(dimy),
+        m_goal(std::move(goal)),
+        m_eHeuristic(std::move(m_eHeuristic)),
+        m_grid(std::move(m_grid))
+//        m_goal_location_table(std::move(m_goal_location_table))  // NOLINT
+  {}    
+  int admissibleHeuristic(const StateLight& s) {
+    return 0;
+  }
 
   int admissibleHeuristic(const State& s) {
 //        else return std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y) + 1;
@@ -241,12 +280,120 @@ class Environment {
       }
       // std::cout << "Heuristic \n";
       return min_heuristic;
-    }else*/{
+    }else*/
+    if(is_manhattan_distance)
+    {
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
       // return md;
-      // return md/2;
+      // std::cout << "admiss\n";
+        int boarder_x = m_eHeuristic_overall_border_location[s.x][s.y] / m_dimy;
+        int boarder_y = m_eHeuristic_overall_border_location[s.x][s.y] % m_dimy;
+
+        int dist_1 = abs(m_goal.x - boarder_x) + abs(m_goal.y - boarder_y);
+        int dist_2 = abs(s.gem_x - boarder_x) + abs(s.gem_y - boarder_y);
+        int temp_res = 0;
+        if((m_eHeuristic_goalArea[boarder_x- 1][boarder_y] != -1 && m_eHeuristic_goalArea[boarder_x + 1][boarder_y]
+          && m_eHeuristic_goalArea[boarder_x][boarder_y + 1] != -1 && m_eHeuristic_goalArea[boarder_x][boarder_y - 1] != -1) 
+          || (boarder_x == m_goal.x && boarder_y == m_goal.y)){
+            temp_res = md;
+        }else{
+          temp_res = m_eHeuristic_overall_borders[s.x][s.y] + dist_2 - dist_1;
+        }
+        int temp = abs(s.gem_x - m_goal.x) + abs(s.gem_y - m_goal.y);
+        // std::cout << "boarder x,y " << boarder_x << ", " << boarder_y << ", dist1, " << dist_1 << ", dist2, " << dist_2 << " \n";
+        // std::cout <<"state Man, x: " << s.x << ", y: " << s.y <<", oriG, " << m_goal.x << ", " << m_goal.y << ", currG, " << s.gem_x << ", " << s.gem_y << ",dist1," << dist_1 << ",dist2," << dist_2 << ", res, "  << (md + 1)/2  << ", overall borders, " << (temp_res + 1)/2 << ", "<< m_eHeuristic_overall_borders[s.x][s.y]  << ", move, " << temp << "\n";
+      return (md +1)/2;
       if(md%2 == 1) return md/2+1;
       else return md/2;      
+    }else{
+
+
+
+      // if(s.x == 10 && s.y == 15){
+      //   for(int i = 0; i < m_eHeuristic.size(); i++){
+      //     for(int j = 0; j < m_eHeuristic[i].size(); j++){
+      //       std::cout << std::setw(2) << m_eHeuristic[i][j] << " ,";
+      //     }
+      //     std::cout << "\n";
+      //   }
+      // }
+//      m_eHeuristic the distance from the current location to the closest border
+//      m_eHeuristic_border_goal the distance from the closest border to the target 
+//                   dist(bt) < dist(sb) 
+      if(m_eHeuristic_overall_borders[s.x][s.y] != -1){
+
+        int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
+      // return md;
+      // std::cout << "admiss\n";
+        std::cout << "s.x," << s.x << ", " << s.y << ",time,  " << s.time << ", oriG, " << m_goal.x << ", " << m_goal.y << ", currG, " << s.gem_x << ", " << s.gem_y << ", " ;
+        int boarder_x = m_eHeuristic_overall_border_location[s.x][s.y] / m_dimy;
+        int boarder_y = m_eHeuristic_overall_border_location[s.x][s.y] % m_dimy;
+        if(m_eHeuristic_goalArea[s.x][s.y] != -1){
+            std::cout << m_eHeuristic[s.x][s.y] << "," << m_eHeuristic_overall_borders[s.x][s.y] << ", Man, " << (md + 1)/2 <<  ", newres, " <<  (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2 << " --111111\n";
+          return (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y])) / 2;
+        }else{
+          if(s.gem_x == m_goal.x && s.gem_y == m_goal.y) {
+            std::cout << m_eHeuristic[s.x][s.y] << "," << m_eHeuristic_overall_borders[s.x][s.y] << ", Man, " << (md + 1)/2 <<  ", newres, " << (m_eHeuristic_overall_borders[s.x][s.y] + 1) / 2 << "---22222\n";
+            return (m_eHeuristic_overall_borders[s.x][s.y]) / 2;
+          }else{
+            int dist_1 = (m_eHeuristic_overall_borders[s.x][s.y] - m_eHeuristic_goalArea[boarder_x][boarder_y]) + abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[boarder_x][boarder_y]);
+//            int temp_diff = abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[boarder_x][boarder_y]);
+//            if(temp_diff > m_eHeuristic[s.x][s.y]) temp_res = m_eHeuristic[s.x][s.y] + (temp_diff - m_eHeuristic[s.x][s.y] + 1)/2;
+//            else temp_res = m_eHeuristic[s.x][s.y];
+            std::cout << m_eHeuristic[s.x][s.y] << "," << m_eHeuristic_overall_borders[s.x][s.y] << ", border_x, " << boarder_x << ", border_y, " << boarder_y  << ",tb, " << m_eHeuristic_goalArea[boarder_x][boarder_y] << ", Man, " << (md + 1)/2 <<  ", newres, " <<  (dist_1 + 1)/2 << "---33333\n";
+            // std::cout << "333333\n";
+            return (dist_1)/2;
+          }          
+        }
+
+//        int dist_1 = abs(m_goal.x - boarder_x) + abs(m_goal.y - boarder_y);
+//        int dist_2 = abs(s.gem_x - boarder_x) + abs(s.gem_y - boarder_y);
+        int temp_res = 0;
+        if(m_eHeuristic_goalArea[s.x][s.y] != -1){
+            temp_res = (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2;
+            std::cout << "11111\n";
+        }else{
+          // temp_res = m_eHeuristic_overall_borders[s.x][s.y] + m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[boarder_x][boarder_y];
+          if(s.gem_x == m_goal.x && s.gem_y == m_goal.y) {
+            temp_res = m_eHeuristic[s.x][s.y] + m_eHeuristic_overall_borders[s.x][s.y]; 
+            std::cout << m_eHeuristic[s.x][s.y] << "," << m_eHeuristic_overall_borders[s.x][s.y] << "22222\n";
+          }else{
+            int temp_diff = abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[boarder_x][boarder_y]);
+            if(temp_diff > m_eHeuristic[s.x][s.y]) temp_res = m_eHeuristic[s.x][s.y] + (temp_diff - m_eHeuristic[s.x][s.y] + 1)/2;
+            else temp_res = m_eHeuristic[s.x][s.y];
+            std::cout << "333333\n";
+          }
+        }
+        std::cout <<"state Man, x: " << s.x << ", y: " << s.y << ", closet," << m_eHeuristic[s.x][s.y] << ", oriG, " << m_goal.x << ", " << m_goal.y << ", currG, " << s.gem_x << ", " << s.gem_y << ", Manres, "  << (md + 1)/2  << ", overall borders, " << temp_res << "\n";
+       // int temp = abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y);
+        return temp_res; 
+        //m_eHeuristic_overall_borders[s.x][s.y] - (temp + 1) / 2;
+        // int res = (m_eHeuristic_border_goal[s.x][s.y] + m_eHeuristic[s.x][s.y] + 1)/2;
+        // std::cout <<"state1111, x: " << s.x << ", y: " << s.y << ", bg, " << m_eHeuristic_border_goal[s.x][s.y] << ",sb," << m_eHeuristic[s.x][s.y] << ",res, " <<res << ", m, " << (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y)) << ", h, " << res - (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y))<< " TEST111-------------\n";
+        // return abs(res - (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y)));
+      }else{
+        std::cout << "x,y" << s.x << ", y, " << s.y << "\n"; 
+        return 1000000;    
+        // std::cout <<"state2222, x: " << s.x << ", y: " << s.y << ", bg, "  << m_eHeuristic_border_goal[s.x][s.y] << ", sb, " <<  m_eHeuristic[s.x][s.y] << ", m, " << (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y)) << ", h, " <<  m_eHeuristic_border_goal[s.x][s.y] -  (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y))<<" TEST222 -------------\n";
+        // return abs(m_eHeuristic_border_goal[s.x][s.y] - (abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y)));
+      }
+
+      int md = ((std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y)) + 1) /2;
+/*      if(m_goal.x != s.gem_x || m_goal.y != s.gem_y){
+        std::cout << s.x << ", " << s.y << ", ----------------\n";
+        int g_goal = abs(m_goal.x - s.gem_x) + abs(m_goal.y - s.gem_y);
+        int h_g = abs(m_eHeuristic[s.x][s.y] - g_goal);
+        // int res = h_g > md ? h_g : md;
+        return h_g; 
+        // std::cout << "res, " << res << ",h_g, " << h_g << ", md, " << md << "\n";
+        // return h_g > md ? h_g : md;
+      }else{
+        std::cout << s.x << ", " << s.y << ", **********************\n";
+        // int res = m_eHeuristic[s.x][s.y] > md ? m_eHeuristic[s.x][s.y] : md;
+        // std::cout << "res, " << res << ",h_g, " << m_eHeuristic[s.x][s.y] << ", md, " << md << "\n";     
+        return m_eHeuristic[s.x][s.y];
+        // return m_eHeuristic[s.x][s.y] > md ? m_eHeuristic[s.x][s.y] : md;
+      }*/
     }
     
     int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
@@ -302,6 +449,10 @@ class Environment {
     return 0;
   }      
 
+  bool isSolution(const StateLight& s) { 
+    return false;
+  }
+
   bool isSolution(const State& s) { 
 #ifdef GemGoal
     // return s.x == m_goal.x && s.y == m_goal.y; 
@@ -314,13 +465,14 @@ class Environment {
   void getNeighbors(State& s,
                     std::vector<Neighbor<State, Action, int> >& neighbors, int f_value) {
     neighbors.clear();
+    // if(num_expand > 12000) return;
 #ifdef DEBUG    
     std::cout << "Current state "<< s.x <<", " << s.y  << ", hash, " << s.zorb_hash << ", size, " << s.grid.size()  << "----------------------------------"<< std::endl;
     // << ", f, " << f_value << ", g , " << s.time << ", h , " << f_value - s.time <<
 #endif
     // if( s.x == 3 && s.y == 25)
     // {
-    //   std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
+    //   // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
     //   for (int h = 0; h < state_game.board.rows; ++h)
     //   {
     //     for (int w = 0; w < state_game.board.cols; ++w) 
@@ -577,6 +729,46 @@ class Environment {
 
     indexCache.returnItem(&s.need_update_index);
   }
+  
+void getNeighborsT(StateLight& s,
+                    std::vector<Neighbor<StateLight, Action, int> >& neighbors, int f_value) {
+    neighbors.clear();
+#ifdef DEBUG    
+    std::cout << "Current state "<< s.x <<", " << s.y  << ", hash, " << s.zorb_hash << ", size, " << s.grid.size()  << "----------------------------------"<< std::endl;
+    // << ", f, " << f_value << ", g , " << s.time << ", h , " << f_value - s.time <<
+#endif
+
+    int index = s.x * m_dimy  + s.y;
+    if(s.dir & 0x10){
+      StateLight succ_temp(s.x, s.y, s.time + 1);
+      succ_temp.dir = 0xff;
+      neighbors.emplace_back(Neighbor<StateLight, Action, int>(succ_temp, Action::Wait, 1));      
+    }
+    if(s.dir & 0x02){ //down
+      StateLight succ_temp(s.x + 1, s.y, s.time + 1);
+      succ_temp.dir = 0x10;
+      if(m_grid[(s.x + 2) * m_dimy + s.y] != 18 && m_grid[(s.x + 2) * m_dimy + s.y] != 19) 
+        succ_temp.dir |= 0x02;
+      if(m_grid[(s.x + 1) * m_dimy + s.y - 1] != 18 && m_grid[(s.x + 1) * m_dimy + s.y - 1] != 19)
+        succ_temp.dir |= 0x04;
+      if(m_grid[(s.x + 1) * m_dimy + s.y + 1] != 18 && m_grid[(s.x + 1) * m_dimy + s.y + 1] != 19)
+        succ_temp.dir |= 0x08;
+      neighbors.emplace_back(Neighbor<StateLight, Action, int>(succ_temp, Action::Down, 1));
+    }
+    if(s.dir & 0x04){//
+      StateLight succ_temp(s.x,  s.y - 1, s.time + 1);
+      if(m_grid[(s.x + 1) * m_dimy + s.y - 1] != 18 && m_grid[(s.x + 1) * m_dimy + s.y - 1] != 19)
+        succ_temp.dir = 0x02;
+      neighbors.emplace_back(Neighbor<StateLight, Action, int>(succ_temp, Action::Left, 1));
+    }
+    if(s.dir & 0x08){//
+      StateLight succ_temp(s.x,  s.y + 1, s.time + 1);
+      if(m_grid[(s.x + 1) * m_dimy + s.y + 1] != 18 && m_grid[(s.x + 1) * m_dimy + s.y + 1] != 19)
+        succ_temp.dir = 0x02;
+      neighbors.emplace_back(Neighbor<StateLight, Action, int>(succ_temp, Action::Right, 1));
+    }
+
+  }
 
 
   void onExpandNode(const State& /*s*/, int /*fScore*/, int /*gScore*/) {
@@ -594,22 +786,28 @@ class Environment {
   int num_generated = 0;
   bool isExact = false;
   bool is_roll_fall = false;
+  bool is_manhattan_distance = false;
  private:
   int m_dimx;
   int m_dimy;
   std::unordered_set<State> m_obstacles;
   Location m_goal;
   std::vector<std::vector<int>> m_eHeuristic;
-  std::vector<std::vector<StateLight>> m_goal_location_table;
+  std::vector<std::vector<int>> m_eHeuristic_overall_borders;
+  std::vector<std::vector<int>> m_eHeuristic_overall_border_location;
+  std::vector<std::vector<int>> m_eHeuristic_goalArea;
+
+//  std::vector<std::vector<StateLight>> m_goal_location_table;
+  std::vector<int8_t> m_grid;
 };
 
 
-void getExactHeuristic(std::vector<std::vector<int>> &eHeuristic, const std::vector<std::vector<bool>> map_obstacle, int goalX, int goalY, int dimx, int dimy)
+void getShortestPathHeuristic(std::vector<std::vector<int>> &eHeuristic, const std::vector<std::vector<bool>> map_obstacle, int goalX, int goalY, int dimx, int dimy)
 {
 	int xx[5] = {0, 0, -1, 1};
 	int yy[5] = {1, -1, 0, 0};
 
-  std::cout <<eHeuristic.size() <<  "Test" << goalX << ", " << goalY << std::endl;
+//  std::cout <<eHeuristic.size() <<  "Test" << goalX << ", " << goalY << std::endl;
 	eHeuristic[goalX][goalY] = 0;
   Location goal(goalX, goalY);
 	std::queue<Location> que;
@@ -673,22 +871,22 @@ void StimulateTest(std::vector<std::vector<StateLight>> &goal_location_table, in
 //  std::vector<std::vector<StateLight>> goal_location_table;
   std::vector<StateLight> current_time_step;
   int time_step = 0;
-  current_time_step.push_back(StateLight(goalX, goalY, 0));
+  current_time_step.push_back(StateLight(goalX, goalY, 0, 0xff));
   goal_location_table.push_back(current_time_step);
   current_time_step.clear();
   while(1){
     for(int i = 0; i < goal_location_table[time_step].size(); i++){
       StateLight temp = goal_location_table[time_step][i];
       // std::cout <<"Current   :" <<  temp.x << ", " << temp.y << ", " << ",time," << temp.time << " ******************************\n";
-      if(temp.dir & 0x10){ // wait
-        StateLight succ_temp(temp.x, temp.y, temp.time + 1);
-        succ_temp.dir = 0xff;
-        current_time_step.push_back(succ_temp);
-        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
-      }
+      // if(temp.dir & 0x10){ // wait
+      //   StateLight succ_temp(temp.x, temp.y, temp.time + 1);
+      //   succ_temp.dir = 0xff;
+      //   current_time_step.push_back(succ_temp);
+      //   // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      // }
       if(temp.dir & 0x02){ // down
         StateLight succ_temp(temp.x + 1,  temp.y, temp.time + 1);
-        succ_temp.dir = 0x10;
+        // succ_temp.dir = 0x10;
         if(grid[(temp.x + 2) * m_dimy + temp.y] != 18 && grid[(temp.x + 1) * m_dimy + temp.y] != 19) 
         succ_temp.dir |= 0x02;
         if(grid[(temp.x + 1) * m_dimy + temp.y - 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y] != 19)
@@ -716,6 +914,72 @@ void StimulateTest(std::vector<std::vector<StateLight>> &goal_location_table, in
     time_step++;
     if(time_step == 10) break;
   }
+
+  // for(int i = 0; i < goal_location_table.size(); i++){
+  //   for(int ii = 0; ii < goal_location_table[i].size(); ii++){
+  //     std::cout << goal_location_table[i][ii].x << ", " << goal_location_table[i][ii].y << ", time, " << goal_location_table[i][ii].time << std::endl;
+  //   }
+  // }
+
+}
+
+void StimulateTest2(std::vector<std::vector<int>> &eHeuristic, int goalX, int goalY, int m_dimy, int m_dimx, const std::vector<int8_t>& grid){
+ 
+//  std::vector<std::vector<StateLight>> goal_location_table;
+  std::cout <<eHeuristic.size() <<  "Test" << goalX << ", " << goalY << std::endl;
+  std::cout << "StimulateTest2\n";
+	eHeuristic[goalX][goalY] = 0;
+  StateLight goal(goalX, goalY, 0, 0xff);
+	std::queue<StateLight> que;
+	que.push(goal);
+
+  while(!que.empty()){
+    StateLight temp = que.front();
+    que.pop();
+      std::cout << temp.x << ", " << temp.y << ", time, " << temp.time << ", " << temp.dir << "\n";
+      if(temp.dir & 0x02){ // down
+        StateLight succ_temp(temp.x + 1,  temp.y, temp.time + 1);
+        if(eHeuristic[temp.x + 1][temp.y] != -1) continue;
+        eHeuristic[temp.x + 1][temp.y] = temp.time + 1;
+        std::cout << eHeuristic[temp.x + 1][temp.y] <<  ", " << temp.x + 1 << temp.y << " Test\n";
+        if(grid[(temp.x + 2) * m_dimy + temp.y] != 18 && grid[(temp.x + 2) * m_dimy + temp.y] != 19) 
+        succ_temp.dir |= 0x02;
+        if(grid[(temp.x + 1) * m_dimy + temp.y - 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y - 1] != 19)
+        succ_temp.dir |= 0x04;
+        if(grid[(temp.x + 1) * m_dimy + temp.y + 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y + 1] != 19)
+        succ_temp.dir |= 0x08;
+
+        que.push(succ_temp);     
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << ", dir, " << succ_temp.dir << "\n";
+      }
+      if(temp.dir & 0x04){ // left
+        StateLight succ_temp(temp.x,  temp.y - 1, temp.time + 1);
+        if(eHeuristic[temp.x][temp.y - 1] != -1) continue;
+        eHeuristic[temp.x][temp.y - 1] = temp.time + 1;      
+        std::cout << eHeuristic[temp.x][temp.y - 1] << " Test\n";  
+        if(grid[(temp.x + 1) * m_dimy + temp.y - 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y - 1] != 19) 
+        succ_temp.dir |= 0x02;
+        que.push(succ_temp);  
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      }
+      if(temp.dir & 0x08){ // right
+        StateLight succ_temp(temp.x,  temp.y + 1, temp.time + 1);
+        if(eHeuristic[temp.x][temp.y + 1] != -1) continue;
+        eHeuristic[temp.x][temp.y + 1] = temp.time + 1;        
+        std::cout << eHeuristic[temp.x][temp.y + 1] << " Test\n";
+        if(grid[(temp.x + 1) * m_dimy + temp.y + 1] != 18 && grid[(temp.x + 1) * m_dimy + temp.y - 1] != 19) 
+        succ_temp.dir |= 0x02;
+        que.push(succ_temp);
+        // std::cout <<"Successor  :" <<  succ_temp.x << ", " << succ_temp.y << ", " << ",time," << succ_temp.time << "\n";
+      }      
+    }
+
+    for(int i = 0; i < eHeuristic.size(); i++){
+      for(int j = 0; j < eHeuristic[i].size(); j++){
+        std::cout << eHeuristic[i][j] << ", ";
+      }
+      std::cout<< "\n";
+    }
 
   // for(int i = 0; i < goal_location_table.size(); i++){
   //   for(int ii = 0; ii < goal_location_table[i].size(); ii++){
@@ -767,10 +1031,6 @@ int main(int argc, char* argv[]) {
     assert(infile.is_open());
     std::string board_str;
     getline(infile,board_str);
-//    std::cout << board_str << std::endl;
-//    getline(infile,board_str);
-//    std::cout << board_str << std::endl;
-
     params["game_board_str"] = GameParameter(board_str);
     RNDGameState state_p(params);
     state_game = state_p;
@@ -810,8 +1070,6 @@ int main(int argc, char* argv[]) {
     }
 
     //PowerLocation(goalXD, goalYD, grid, state_p.board.rows, state_p.board.cols);
-    
-
     Timer total;
     std::vector <PlanResult<State, Action, int>>  solutions;
     LocalState localstate;
@@ -870,11 +1128,15 @@ int main(int argc, char* argv[]) {
       }
       std::cout << startX << ", " << startY << ", " << goalX << ", " << goalY << " \n";
 
-      std::vector<std::vector<StateLight>> goal_location_table;
-      StimulateTest(goal_location_table, goalXD, goalYD, state_p.board.cols, state_p.board.rows, grid);
+      // std::vector<std::vector<StateLight>> goal_location_table;
+      // StimulateTest(goal_location_table, goalXD, goalYD, state_p.board.cols, state_p.board.rows, grid);
 
       std::vector<std::vector<int>> eHeuristicGoal(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
-      getExactHeuristic(eHeuristicGoal, map_obstacle, goalX, goalY, state_p.board.rows, state_p.board.cols);
+      getShortestPathHeuristic(eHeuristicGoal, map_obstacle, goalX, goalY, state_p.board.rows, state_p.board.cols);
+      
+      // std::vector<std::vector<int>> eHeuristicGoalArea(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      // StimulateTest2(eHeuristicGoalArea, goalX, goalY, state_p.board.rows, state_p.board.cols, grid);
+      
       // std::cout << "goal " << goalX << ", " << goalY << std::endl;
       // for(int test_i = 0; test_i < eHeuristicGoal.size(); test_i++){
       //   for(int test_j = 0; test_j < eHeuristicGoal[test_i].size(); test_j++){
@@ -883,8 +1145,177 @@ int main(int argc, char* argv[]) {
       //   std::cout << std::endl;
       // }
       std::cout << "Goal " << goalX << ", " << goalY << std::endl;
-      Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal, goal_location_table);
-      AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env, gridCache, indexCache);
+      Environment env(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal, grid);
+      
+      AStarT<StateLight, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar_1(env, gridCache, indexCache);
+      PlanResult<StateLight, Action, int> solution_t;
+      StateLight start_t(goalX, goalY, 0, 0xff);
+      std::vector<std::vector<int>> eHeuristicGoalArea(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::unordered_set<StateLight, std::hash<StateLight>> closedSet;
+      
+      astar_1.search(start_t, solution_t, closedSet);
+      std::vector<std::vector<int>> min_heuristic_from_border_target(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::vector<std::vector<int>> min_heuristic_overall_border(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::vector<std::vector<int>> min_heuristic_overall_border_location(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::vector<std::vector<int>> min_heuristic_closest_border_location(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::vector<std::vector<int>> min_heuristic_closest_border(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      std::vector<std::vector<int>> min_heuristic_diff_tb_sb(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+      
+      for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+        eHeuristicGoalArea[(*it).x][(*it).y] = (*it).time;
+      }
+
+      int first_flag = 0;
+      for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+         std::cout << (*it).x << ", " << (*it).y << ", time, " << (*it).time << "----\n";
+          std::vector<std::vector<int>> min_heuristic_from_state_border(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));
+          min_heuristic_overall_border[(*it).x][(*it).y] = (*it).time;
+          min_heuristic_overall_border_location[(*it).x][(*it).y] = (*it).x * state_p.board.cols + (*it).y;
+          min_heuristic_from_border_target[(*it).x][(*it).y] = (*it).time;
+          // std::cout << (*it).x << ", " << (*it).y << ", "<< eHeuristicGoalArea[(*it).x][(*it).y] << "\n";
+          //choose the border, exclude the cells inside the goal area
+          if(eHeuristicGoalArea[(*it).x - 1][(*it).y] != -1 && eHeuristicGoalArea[(*it).x + 1][(*it).y] != -1 
+              && eHeuristicGoalArea[(*it).x][(*it).y + 1] != -1 && eHeuristicGoalArea[(*it).x][(*it).y - 1] != -1) continue;
+          if(first_flag == 0){
+            getShortestPathHeuristic(min_heuristic_from_state_border, map_obstacle, (*it).x, (*it).y, state_p.board.rows, state_p.board.cols);
+            for(int i = 0; i < min_heuristic_from_state_border.size(); i++){
+              for(int j = 0; j < min_heuristic_from_state_border[i].size(); j++){
+                if(min_heuristic_from_state_border[i][j] != -1) {
+//                   min_heuristic_from_border_target[i][j] = (*it).time;
+                   min_heuristic_overall_border[i][j] = min_heuristic_from_state_border[i][j] + (*it).time;
+                   min_heuristic_overall_border_location[i][j] = (*it).x * state_p.board.cols + (*it).y;
+                   min_heuristic_closest_border[i][j] = min_heuristic_from_state_border[i][j];
+                   
+                   int temp_diff = ((*it).time - min_heuristic_from_state_border[i][j] + 1)/2;
+                   if(temp_diff > 0){
+                     if(min_heuristic_diff_tb_sb[i][j] == -1 || min_heuristic_diff_tb_sb[i][j] < temp_diff){
+                      min_heuristic_diff_tb_sb[i][j] = temp_diff;
+                        if(i == 10 && j == 17) std::cout << (*it).x << ", " << (*it).y << ",time, " << (*it).time << ",sb, " <<  min_heuristic_from_state_border[i][j] << " , 10, 17 \n";
+
+                      // min_heuristic_overall_border_location[i][j] = (*it).x * state_p.board.cols + (*it).y;
+                     }
+                   }
+                }
+                // min_heuristic_from_location[i][j] = (*it).time;
+                // min_heuristic_from_goalarea[i][j] += (*it).time;
+              }
+              // std::cout <<"\n";
+            }
+          }else{
+              getShortestPathHeuristic(min_heuristic_from_state_border, map_obstacle, (*it).x, (*it).y, state_p.board.rows, state_p.board.cols);
+
+              for(int i = 0; i < min_heuristic_from_state_border.size(); i++){
+                for(int j = 0; j < min_heuristic_from_state_border[i].size(); j++){
+                  if(min_heuristic_from_state_border[i][j] != -1){
+                    int temp = min_heuristic_from_state_border[i][j] + (*it).time;
+                    if(temp < min_heuristic_overall_border[i][j]) {
+                      min_heuristic_overall_border[i][j] = temp;
+                      min_heuristic_overall_border_location[i][j] = (*it).x * state_p.board.cols + (*it).y;
+                    }
+                    if(min_heuristic_from_state_border[i][j] < min_heuristic_closest_border[i][j] 
+                       || (min_heuristic_closest_border[i][j] == -1 && min_heuristic_from_border_target[i][j] != -1) ){
+                      min_heuristic_closest_border[i][j] = min_heuristic_from_state_border[i][j];
+                      min_heuristic_closest_border_location[i][j] = (*it).x * state_p.board.cols + (*it).y;                      
+                    }
+                    int temp_diff = ((*it).time - min_heuristic_from_state_border[i][j] + 1)/2;
+                    if(temp_diff > 0 ){
+                      if(min_heuristic_diff_tb_sb[i][j] == -1 || min_heuristic_diff_tb_sb[i][j] < temp_diff){
+                        min_heuristic_diff_tb_sb[i][j] = temp_diff;
+                        if(i == 10 && j == 17) std::cout << (*it).x << ", " << (*it).y << ",time, " << (*it).time << ",sb, " <<  min_heuristic_from_state_border[i][j] << " , 10, 17 \n";
+                        // min_heuristic_overall_border_location[i][j] = (*it).x * state_p.board.cols + (*it).y;
+                      }
+                    }
+                  }
+                  // if(((min_heuristic_from_state_border[i][j] > eHeuristic[i][j]) || 
+                  //     ( min_heuristic_from_state_border[i][j] == eHeuristic[i][j] && min_heuristic_from_border_target[i][j] > (*it).time) )
+                  //     && eHeuristic[i][j] != -1){
+                  //   if(i == 10 && j == 17) std::cout << "goal L, " << (*it).x << ", " << (*it).y << ",d, " << (*it).time <<", shortest d, " << eHeuristic[i][j] << "\n";
+                  //   min_heuristic_from_state_border[i][j] = eHeuristic[i][j];
+                  //   min_heuristic_from_border_target[i][j] = (*it).time;
+                  // }
+                }
+              }              
+
+          }
+          first_flag++;
+          min_heuristic_from_border_target[(*it).x][(*it).y] = (*it).time;
+      }
+      for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+//          std::cout << (*it).x << ", " << (*it).y << ", time, " << (*it).time << "----\n";
+//          min_heuristic_from_state_border[(*it).x][(*it).y] =  (*it).time;
+//          min_heuristic_from_border_target[(*it).x][(*it).y] = 0;
+          min_heuristic_overall_border[(*it).x][(*it).y] = (*it).time;
+          min_heuristic_closest_border[(*it).x][(*it).y] = 0;
+      }
+
+      for(int i = 0; i < eHeuristicGoalArea.size(); i++){
+        for(int j = 0; j < eHeuristicGoalArea[i].size(); j++){
+          std::cout <<  std::setw(2) << min_heuristic_closest_border[i][j] << ",";
+          // if(min_heuristic_overall_border_location[i][j] == -1 && min_heuristic_closest_border_location[i][j] != -1){
+          //   min_heuristic_overall_border_location[i][j] = min_heuristic_closest_border_location[i][j];
+          // }
+          if(min_heuristic_diff_tb_sb[i][j] == -1) min_heuristic_diff_tb_sb[i][j] = 0;
+          // if(min_heuristic_closest_border[i][j] > (min_heuristic_overall_border[i][j] + 1)/2){
+          //   min_heuristic_overall_border[i][j] = min_heuristic_closest_border[i][j] * 2;
+          //   min_heuristic_overall_border_location[i][j] = min_heuristic_closest_border_location[i][j];
+          // }
+        }
+        std::cout <<"\n";
+      }
+
+
+      std::cout << min_heuristic_closest_border[10][17] << ", " << min_heuristic_diff_tb_sb[10][17] << ",d, " << min_heuristic_overall_border[10][17] << ", "<< min_heuristic_overall_border_location[10][17] / state_p.board.cols  << ", y, " << min_heuristic_overall_border_location[10][17] % state_p.board.cols << "\n";
+
+      std::cout << "--------------------------\n";
+      for(int i = 0; i < eHeuristicGoalArea.size(); i++){
+        for(int j = 0; j < eHeuristicGoalArea[i].size(); j++){
+          std::cout <<  std::setw(2) << min_heuristic_closest_border[i][j] << ",";
+          // if(min_heuristic_overall_border_location[i][j] == -1 && min_heuristic_closest_border_location[i][j] != -1){
+          //   min_heuristic_overall_border_location[i][j] = min_heuristic_closest_border_location[i][j];
+          // }
+          if(min_heuristic_diff_tb_sb[i][j] == -1) min_heuristic_diff_tb_sb[i][j] = 0;
+          // if(min_heuristic_closest_border[i][j] > (min_heuristic_overall_border[i][j] + 1)/2){
+          //   min_heuristic_overall_border[i][j] = min_heuristic_closest_border[i][j] * 2;
+          //   min_heuristic_overall_border_location[i][j] = min_heuristic_closest_border_location[i][j];
+          // }
+        }
+        std::cout <<"\n";
+      }         
+
+      for(int i = 0; i < eHeuristicGoalArea.size(); i++){
+        for(int j = 0; j < eHeuristicGoalArea[i].size(); j++){
+          std::cout <<  std::setw(2) << min_heuristic_diff_tb_sb[i][j] << ",";
+        }
+        std::cout <<"\n";
+      }         
+      std::cout << "111111111111111111111111--------------------------\n";
+
+
+      // for(int i = 0; i < eHeuristicGoalArea.size(); i++){
+      //   for(int j = 0; j < eHeuristicGoalArea[i].size(); j++){
+      //     std::cout <<  std::setw(2) << min_heuristic_from_border_target[i][j] << ",";
+      //   }
+      //   std::cout <<"\n";
+      // }         
+      std::cout << "--------------------------\n";
+
+      for(int i = 0; i < eHeuristicGoalArea.size(); i++){
+        for(int j = 0; j < eHeuristicGoalArea[i].size(); j++){
+          std::cout <<  std::setw(2) << eHeuristicGoalArea[i][j] << ",";
+        }
+        std::cout <<"\n";
+      }         
+      std::cout << "--------------------------\n";
+
+      // return 0;
+      Environment env_1(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), 
+                        min_heuristic_closest_border, min_heuristic_overall_border, min_heuristic_overall_border_location, eHeuristicGoalArea, grid);
+
+      // Environment env_1(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), 
+      //                   min_heuristic_closest_border, min_heuristic_diff_tb_sb, min_heuristic_overall_border_location, eHeuristicGoalArea, grid);
+
+      AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar(env_1, gridCache, indexCache);
+
       start.index_gem = next_index;
       start.gem_x = goalX;
       start.gem_y = goalY;
@@ -900,8 +1331,10 @@ int main(int argc, char* argv[]) {
       Timer timer;       
 
       if (env.stateValid(start)) {
-        // state_game.is_hash_dirt = true;
-        astar.is_second = false;
+        state_game.is_hash_dirt = true;
+        // astar.is_second = false;
+        env_1.num_expand = 0; 
+        env_1.num_generated = 0;  
         success = astar.search(start, solution);
         timer.stop();
         if(success){
@@ -909,17 +1342,19 @@ int main(int argc, char* argv[]) {
           if(solution.states[0].first.x == goalX && solution.states[0].first.y == goalY) std::cout << ",same,";
           else std::cout << ",diff,";
           getrusage(RUSAGE_SELF, &r_usage);
-          if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
-          else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
-        }else if(astar.is_goal_move){
-          getrusage(RUSAGE_SELF, &r_usage);
-          std::cout << "The goal is move, ";
+          if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+          else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
+        }else{
+          std::cout<< "Pathfinding not success\n";
+        }/*else if(astar.is_goal_move){
+          // getrusage(RUSAGE_SELF, &r_usage);
+          // std::cout << "The goal is move, ";
           std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl; 
           state_game.is_hash_dirt = true;
           state_game.board.grid.assign(grid.begin(), grid.end());
           state_game.init_hash();
           state_game.num_apply_action = 0;
-          Environment env1(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal, goal_location_table);
+          Environment env1(state_p.board.rows, state_p.board.cols, Location(goalX, goalY), eHeuristicGoal);
           AStar<State, Action, int, Environment, vectorCache<int8_t>, vectorCache<int>> astar1(env1, gridCache, indexCache);
           astar1.is_second = true;
 
@@ -944,7 +1379,7 @@ int main(int argc, char* argv[]) {
           if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer2.elapsedSeconds() <<  ", Expansion, " << env1.num_expand << ", generation, " << env1.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
           else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ", time, " <<  timer2.elapsedSeconds() <<  ", Expansion, " << env.num_expand << ", generation, " << env.num_generated << ",num_action," << state_game.num_apply_action <<std::endl;    
 
-        }
+        }*/
       }
       timer.stop();
       
