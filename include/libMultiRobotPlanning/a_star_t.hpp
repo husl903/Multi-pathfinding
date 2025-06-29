@@ -7,10 +7,12 @@
 #include <boost/heap/d_ary_heap.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <malloc.h>
 
 #include "neighbor.hpp"
 #include "planresult.hpp"
 #include "timer.hpp"
+#include "vectorCache.hpp"
 
 namespace libMultiRobotPlanning {
 
@@ -63,45 +65,106 @@ class AStar {
   AStar(Environment& environment, vectorCache1& gc, vectorCache2& ic) : m_env(environment), gc(gc), ic(ic) {}
   bool is_second = false;
   bool is_goal_move = false;
+  bool is_weighted = false;
+  bool isXDP = false;
+  bool ispwXDP = false;
+  bool isRegu =  false;
+  bool isdebug = false;
+  double w = 1.5;
+  int bound  = 0.0;
   bool search(const State& startState,
-              PlanResult<State, Action, Cost>& solution, Cost initialCost = 0) {
+              PlanResult<State, Action, Cost>& solution, int is_wei = 0, int wa_version = 0, Cost initialCost = 0 ) { // wa_version = 1, xdp, wa_version = 2, pwxdp, wa_version = 3, regular
+    if(is_wei !=0 )is_weighted = true;
+    
     solution.states.clear();
     solution.states.push_back(std::make_pair<>(startState, 0));
     solution.actions.clear();
     solution.cost = 0;
-    int bound = 20;
-
+    int reopen = 0;
+    std::vector<int> count_h(1000,0);
+    int minimum_h_open = -1;
     openSet_t openSet;
     std::unordered_map<State, fibHeapHandle_t, StateHasher> stateToHeap;
+    std::unordered_map<State, fibHeapHandle_t, StateHasher> stateToHeapEmpty;
     std::unordered_set<State, StateHasher> closedSet;
+    std::unordered_set<State, StateHasher> closedSetEmpty;
     std::unordered_map<State, std::tuple<State, Action, Cost, Cost>,
                        StateHasher>
         cameFrom;
-
+    std::cout << "Search 11111\n";
     auto handle = openSet.push(
-        Node(startState, m_env.admissibleHeuristic(startState), initialCost));
+        Node(startState, m_env.admissibleHeuristic(startState), initialCost, m_env.admissibleHeuristic(startState)));
     stateToHeap.insert(std::make_pair<>(startState, handle));
     (*handle).handle = handle;
+    std::cout << "Search 22222\n";
 
-    std::vector<Neighbor<State, Action, Cost> > neighbors;
+    minimum_h_open = m_env.admissibleHeuristic(startState);
+    std::cout << "Search 3333333\n";
+    std::cout << minimum_h_open << "\n";
+    if(minimum_h_open == 1000000000){
+        std::cout << "0.00" <<",num:h=g," << ",numh<g," << ",reopen, " << ", Unreachable,";
+        if(!is_weighted) std::cout <<",unweighted,";
+        else if(wa_version == 1) std::cout<< ",weightedXDP,";
+        else if(wa_version == 2) std::cout << ",weightedpuXDP,";
+        else if(wa_version == 3) std::cout << ", weightedRegu,";
+        return false;
+    }
+    count_h[minimum_h_open]++;
+    
+    std::cout << "Search 444444\n";
+
+    std::vector<Neighbor<State, Action, Cost>> neighbors;
     neighbors.reserve(10);
     int max_size_open = 0;
     int num_have_been = 0;
+    int num_closed = 0;
     int num_same_config = 0;
     Timer timer;
     while (!openSet.empty()) {
+      std::cout << "Begin search\n";
       timer.stop();
+        // int minimum_test = 10000;
+        // for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
+        //     auto handle = it->second;
+        //     if((*handle).hScore < minimum_test && (*handle).hScore != -1){
+        //       minimum_test = (*handle).hScore;
+        //     }       
+        // }        
+        // std::cout << "minimutest " << minimum_test << ", " << minimum_h_open << "\n";
+        //assert(minimum_test == minimum_h_open);      
       double duration1 = timer.elapsedSeconds();
-      if(duration1 > 1800){
-        std::cout << "Time out\n";
+      if(duration1 > 10){
+        int num_less_f = 0;
+        int num_less_f_wait = 0;
+        int num_h_less_g = 0;
+        int num_h_equal_g = 0;
+        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+          if ((*it).f < solution.cost){
+            num_less_f++;
+            if((*it).is_wait) num_less_f_wait++;
+            // std::cout <<  "LESS F, (" <<  (*it).x << "," << (*it).y << "), time " <<(*it).time  << ", f, " << (*it).f << ", hash," << (*it).zorb_hash << " \n"; 
+          }
+          if((*it).h == (*it).time) num_h_equal_g++;
+          if((*it).h < (*it).time) num_h_less_g++;
+        }
+
+        std::cout << duration1 <<",num:h=g," << num_h_equal_g << ",numh<g," << num_h_less_g << ",reopen, " << reopen << ", Time out,";
+        if(!is_weighted) std::cout <<",unweighted,";
+        else if(wa_version == 1) std::cout<< ",weightedXDP,";
+        else if(wa_version == 2) std::cout << ",weightedpuXDP,";
+        else if(wa_version == 3) std::cout << ", weightedRegu,";
+        stateToHeap.swap(stateToHeapEmpty);
+        closedSet.swap(closedSetEmpty);
+//        cameFrom.swap(std::unordered_map<State, std::tuple<State, Action, Cost, Cost>, StateHasher>());
         break;
       }
+      std::cout <<"Search 555555\n";
       Node current = openSet.top();
       if(openSet.size() > max_size_open) max_size_open = openSet.size();
       // std::cout << "size " << max_size_open << std::endl;
       m_env.onExpandNode(current.state, current.fScore, current.gScore);
-        int num_same_loc = 0;
-        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
+      int num_same_loc = 0;
+      for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           // std::cout << (*it).grid[0] << "----\n";
           if(current.state.x == (*it).x && current.state.y == (*it).y && current.state.time == (*it).time) num_same_loc++;
           // is_equal = true;
@@ -112,9 +175,10 @@ class AStar {
           //   }
           // }
           // if(is_equal) num_same_config++;
-        }      
+       }      
         // std::cout << "num_same_loc " << num_same_loc << std::endl;
-      // std::cout <<"Current state " <<  current.state.x << ", " << current.state.y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " <<current.fScore - current.gScore <<  ",hash," << current.state. zorb_hash << ",--------------------"<< std::endl;
+
+       if(isdebug) std::cout <<"Current state " <<  current.state.x << ", " << current.state.y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state.zorb_hash <<",minimum_h, " << minimum_h_open <<", " << ",--------------------"<< std::endl;
   
       if (m_env.isSolution(current.state)) {
         solution.states.clear();
@@ -128,43 +192,65 @@ class AStar {
           iter = cameFrom.find(std::get<0>(iter->second));
         }
         solution.states.push_back(std::make_pair<>(startState, initialCost));
-        // std::reverse(solution.states.begin(), solution.states.end());
-        // std::reverse(solution.actions.begin(), solution.actions.end());
+        
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
         int num_less_f = 0;
         int num_less_f_wait = 0;
+        int num_h_less_g = 0;
+        int num_h_equal_g = 0;
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           if ((*it).f < solution.cost){
-//            assert(solution.cost==solution.fmin);
             num_less_f++;
             if((*it).is_wait) num_less_f_wait++;
             // std::cout <<  "LESS F, (" <<  (*it).x << "," << (*it).y << "), time " <<(*it).time  << ", f, " << (*it).f << ", hash," << (*it).zorb_hash << " \n"; 
           }
+          if((*it).h == (*it).time) num_h_equal_g++;
+          if((*it).h < (*it).time) num_h_less_g++;
         }
 
-        std::cout << "startState, " << startState.x  << "," << startState.y << ",num_less_f, " << num_less_f << ",num_less_wait, " << num_less_f_wait << ", max size of open list, " << max_size_open << ", number of states have been, " << num_have_been  << 
-        ", closed, " << closedSet.size()  << ",open, " << stateToHeap.size() << " , sum, " << closedSet.size() + stateToHeap.size() << ", sameconfig " << num_same_config << ",";
+        std::cout << ",SearchTime," << duration1 <<",num:h=g," << num_h_equal_g << ",numh<g," << num_h_less_g << ",startState, " << startState.x  << "," << startState.y <<",reopen, " << reopen << ",num_less_f, " << num_less_f << ",num_less_wait, " << num_less_f_wait << ", max size of open list, " << max_size_open << ", number of states have been, " << num_have_been  << 
+        ", closed, " << closedSet.size() << ", clsed_num " << num_closed << ",open, " << stateToHeap.size() << " , sum, " << closedSet.size() + stateToHeap.size() << ", sameconfig " << num_same_config << ",";
+        
+        if(!is_weighted) std::cout <<",unweighted,";
+        else if(wa_version == 1) std::cout<< ",weightedXDP,";
+        else if(wa_version == 2) std::cout << ",weightedpuXDP,";
+        else if(wa_version == 3) std::cout << ", weightedRegu,";
+        stateToHeap.swap(stateToHeapEmpty);
+        closedSet.swap(closedSetEmpty);
         return true;
+      }
+
+      count_h[current.hScore]--;
+      assert(count_h[current.hScore] >= 0);
+      if(current.hScore == minimum_h_open && count_h[current.hScore] == 0){
+        minimum_h_open = count_h.size() + 1;
+        for(int index_h = 0; index_h < count_h.size(); index_h++){
+          if(count_h[index_h] != 0){
+            minimum_h_open = index_h;
+            break;
+          }
+        }
       }
 
       openSet.pop();
       stateToHeap.erase(current.state);
       current.state.f = current.fScore;
+      current.state.h = current.hScore;
+
       closedSet.insert(current.state);
       // std::cout << "f, " << current.fScore << " ,g, " << current.gScore << " ,h, " << current.fScore -  current.gScore << ", ";
       // traverse neighbors
       neighbors.clear();
       m_env.getNeighbors(current.state, neighbors, current.state.f);
       for (const Neighbor<State, Action, Cost>& neighbor : neighbors) {
-        // if(!is_second && (neighbor.state.goal_roll)){
-        //   is_goal_move = true;
-        //   std::cout << neighbor.state.x << ", " << neighbor.state.y << ", time, " << neighbor.state.time << " \n";
-        //   return false;
-        // }
+
+
+        Cost hScore_t = m_env.admissibleHeuristic(neighbor.state);
+        if(hScore_t == 10000000000) continue;
+        
         bool  is_equal = true;
-        for(auto it = closedSet.begin(); it != closedSet.end(); it++){
-          // std::cout << (*it).grid[0] << "----\n";
+        /*for(auto it = closedSet.begin(); it != closedSet.end(); it++){
           is_equal = true;
           for (int h = 0; h < neighbor.state.grid.size(); ++h) {              
             if((*it).grid[h] != neighbor.state.grid[h]){
@@ -173,42 +259,48 @@ class AStar {
             }
           }
           if(is_equal) num_same_config++;
-        }
+        }*/
         
-        for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
+        /*for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
           is_equal = true;
           for (int h = 0; h < neighbor.state.grid.size(); ++h) {              
             if((*it).first.grid[h] != neighbor.state.grid[h]){
               is_equal = false;
               break;
             }
-          }
-          // auto handle_t = it->second; 
-          // auto temp = (*handle_t).fScore;
-          // std::cout << (*handle_t).gScore  << "," << (*handle_t).fScore << " ------------1111111111\n";
-          // (*handle_t).fScore = 0;
-          // auto handle_tt = it->second;
-          // std::cout << (*handle_tt).gScore  << "," << (*handle_tt).fScore << " ----------2222222222\n";
-          // (*handle_tt).fScore = temp;
-          // auto handle_ttt = it->second;
-          // std::cout << (*handle_ttt).gScore  << "," << (*handle_ttt).fScore << " ----------33333333\n";     
-          
+          }          
           if(is_equal) num_same_config++;
-
-        }        
-
-        if (closedSet.find(neighbor.state) == closedSet.end()) {
-          
+        }*/        
+        auto iterClosed = closedSet.find(neighbor.state);
+        if (iterClosed == closedSet.end()) {
           Cost tentative_gScore = current.gScore + neighbor.cost;
           auto iter = stateToHeap.find(neighbor.state);
           int flag = -1;
           if (iter == stateToHeap.end()) {  // Discover a new node
-            Cost hScore = m_env.admissibleHeuristic(neighbor.state);
-            Cost fScore =
-                tentative_gScore + hScore;
+            Cost hScore = hScore_t;
+//            std::cout << "hScore" << hScore << " Test Hscore\n";
+            double fScore = 0.0;
+            if(!is_weighted) fScore = tentative_gScore + hScore;//unweighted
+            else{
+	            if(wa_version == 1){ //XDP
+              	  double temp_t = std::sqrt((tentative_gScore - hScore)*(tentative_gScore - hScore) + 4*w*tentative_gScore*hScore);
+                   fScore = (1.0/(2*w))*(tentative_gScore + (2*w - 1)*hScore + temp_t);
+                }else if(wa_version == 2){ //pwXDP
+                  if(hScore > tentative_gScore) {
+                    fScore = tentative_gScore + hScore;
+                  }else {
+                    fScore = (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
+                  }
+               }else if(wa_version == 3){//regular weighted Astar
+           	      fScore = (tentative_gScore + 1.0 * w * hScore);
+               }
+           }
+            
             auto handle =
-                openSet.push(Node(neighbor.state, fScore, tentative_gScore));
+                openSet.push(Node(neighbor.state, fScore, tentative_gScore, hScore));
             (*handle).handle = handle;
+            if(minimum_h_open > hScore) minimum_h_open = hScore;
+            count_h[hScore]++;
             stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
             m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
             if(openSet.size() > max_size_open) max_size_open = openSet.size();
@@ -231,25 +323,19 @@ class AStar {
 
           //     }
           //   }           
-          //  std::cout << "  this is a new node, fscore " << fScore << ",gScore, " <<  tentative_gScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " 
-          //   << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g," << tentative_gScore << std::endl;
+            if(isdebug) std::cout << "  this is a new node, fscore 333, " << fScore << ",gScore, " <<  tentative_gScore << ", hScore, " << hScore << ", " << neighbor.state.x << ", " << neighbor.state.y << ", " 
+            << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g," << tentative_gScore << std::endl;
           } else {
             num_have_been++;
             auto handle = iter->second;
-            // std::cout << "  this is an old node: fscore, " << tentative_gScore + m_env.admissibleHeuristic(neighbor.state) << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
-            // << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g,"<< (*handle).gScore << std::endl;
             // We found this node before with a better path
             if (tentative_gScore > (*handle).gScore) {
-              // gc.returnItem(&neighbor.state.grid);
-              ic.returnItem(&neighbor.state.need_update_index);
               continue;
             }
 
             if (tentative_gScore == (*handle).gScore) {
             	// if((*handle).state.dir > neighbor.state.dir) 
               (*handle).state.dir |=  neighbor.state.dir;
-              // gc.returnItem(&neighbor.state.grid);
-              ic.returnItem(&neighbor.state.need_update_index);              
                continue;
             }
 
@@ -266,9 +352,24 @@ class AStar {
             (*handle).state.gem_x = neighbor.state.gem_x;
             (*handle).state.gem_y = neighbor.state.gem_y;
             (*handle).gScore = tentative_gScore;
-            (*handle).fScore -= delta;
-            (*handle).state.grid.swap(neighbor.state.grid);
-            (*handle).state.need_update_index.swap(neighbor.state.need_update_index);
+            Cost hScore = (*handle).hScore;
+            if(!is_weighted) (*handle).fScore -= delta; //unweighted
+            else{
+                if(wa_version == 1){ //xdp
+                  (*handle).fScore = (1.0/(2*w))*(tentative_gScore + (2*w - 1)*hScore + std::sqrt((tentative_gScore - hScore)*(tentative_gScore - hScore) + 4*w*tentative_gScore*hScore));
+                }else if(wa_version == 2){ //pwxdp
+                  if(hScore > tentative_gScore) (*handle).fScore = tentative_gScore + hScore;
+                  else (*handle).fScore = (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
+                }else if(wa_version == 3){ //regular weighted Astar
+           	      (*handle).fScore = tentative_gScore + 1.0 * w  * hScore;
+                }
+             }
+
+            if(isdebug) std::cout << "  this is an old node: fscore 111, " << (*handle).fScore << ", gScore, " << tentative_gScore << " Hscore," << hScore << ", "<< neighbor.state.x << ", " << neighbor.state.y << ", "
+            << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g,"<< (*handle).gScore << std::endl;
+
+            (*handle).state.grid.assign(neighbor.state.grid.begin(), neighbor.state.grid.end());
+            (*handle).state.need_update_index.assign(neighbor.state.need_update_index.begin(), neighbor.state.need_update_index.end());
             
             openSet.increase(handle);
             m_env.onDiscover(neighbor.state, (*handle).fScore,
@@ -284,10 +385,43 @@ class AStar {
               std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
                                 tentative_gScore)));
         }else{
-           num_have_been++;
- 
-            // gc.returnItem(&neighbor.state.grid);
-            ic.returnItem(&neighbor.state.need_update_index);
+           if((*iterClosed).time > current.gScore + neighbor.cost){
+              reopen++;
+              num_closed++;
+              closedSet.erase(iterClosed);
+              Cost tentative_gScore = current.gScore + neighbor.cost;
+              int flag = -1;
+              Cost hScore = hScore_t;
+              double fScore = 0.0;
+              if(!is_weighted) fScore = tentative_gScore + hScore;
+              else {
+                if(wa_version == 1){
+                  fScore = (1.0/(2*w))*(tentative_gScore + (2*w - 1)*hScore + sqrt((tentative_gScore - hScore)*(tentative_gScore - hScore) + 4*w*tentative_gScore*hScore));
+                }else if(wa_version == 2){
+                  if(hScore > tentative_gScore) fScore = tentative_gScore + hScore;
+                  else fScore = (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
+                }else if(wa_version == 3){
+                  fScore = (tentative_gScore + 1.0 * w * hScore);
+                }
+              }
+
+             if(isdebug) std::cout << "  this is an old node 2222: fscore, " << fScore << ", gScore, " << tentative_gScore << "," << neighbor.state.x << ", " << neighbor.state.y << ", "
+             << ",dir," << neighbor.state.dir << ",hash, " << neighbor.state.zorb_hash << ",g,"<< (*handle).gScore << std::endl;
+            
+                auto handle =
+                    openSet.push(Node(neighbor.state, fScore, tentative_gScore, hScore));
+                (*handle).handle = handle;
+                if(minimum_h_open > hScore) minimum_h_open = hScore;
+                count_h[hScore]++;
+                stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
+                m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
+                if(openSet.size() > max_size_open) max_size_open = openSet.size();
+              cameFrom.erase(neighbor.state);
+              cameFrom.insert(std::make_pair<>(
+                  neighbor.state,
+                  std::make_tuple<>(current.state, neighbor.action, neighbor.cost,
+                                    tentative_gScore)));
+           }
         }
       }
     }
@@ -297,8 +431,8 @@ class AStar {
 
  private:
   struct Node {
-    Node(const State& state, Cost fScore, Cost gScore)
-        : state(state), fScore(fScore), gScore(gScore) {}
+    Node(const State& state, double fScore, Cost gScore, Cost hScore)
+        : state(state), fScore(fScore), gScore(gScore), hScore(hScore) {}
 
     bool operator<(const Node& other) const {
       // Sort order
@@ -306,8 +440,9 @@ class AStar {
       // 2. highest gScore
 
       // Our heap is a maximum heap, so we invert the comperator function here
-      if (fScore != other.fScore) {
-        return fScore > other.fScore;
+      if (std::fabs(fScore - other.fScore) >= 0.000001) {
+        if(fScore - other.fScore > 0.000001) return true;
+        else return false;
       } else if(gScore != other.gScore){
     	  return gScore < other.gScore;
       } else if(state.y != other.state.y){
@@ -328,8 +463,9 @@ class AStar {
 
     State state;
 
-    Cost fScore;
+    double fScore;
     Cost gScore;
+    Cost hScore;
 
 #ifdef USE_FIBONACCI_HEAP
     typename boost::heap::fibonacci_heap<Node>::handle_type handle;

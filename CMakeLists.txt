@@ -65,6 +65,8 @@ set(ALL_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/libMultiRobotPlanning/queueCache.hpp 
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new_test_open.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_new_goal_area.cpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/example/ca_star.cpp  
   ${CMAKE_CURRENT_SOURCE_DIR}/example/a_star_epsilon.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/example/assignment.cpp
@@ -101,9 +103,9 @@ add_custom_target(everything
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -w -O3 -pg -Wextra")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -w -O3 -g -pg -Wextra")
 
-#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -pg")
+#set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -g -pg")
 
 #link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so")
 #link_libraries("/usr/lib/x86_64-linux-gnu/libboost_program_options.so.1.74.0")
@@ -137,6 +139,42 @@ add_executable(a_star_new
   example/a_star_new.cpp
 )
 target_link_libraries(a_star_new
+  PUBLIC stonesngems
+  ${Boost_LIBRARIES}
+)
+
+## a_star_new_test_open
+add_executable(a_star_new_test_open
+  example/a_star_new_test_open.cpp
+)
+target_link_libraries(a_star_new_test_open
+  PUBLIC stonesngems
+  ${Boost_LIBRARIES}
+)
+
+## a_star_new_goal_area
+add_executable(a_star_new_goal_area
+  example/a_star_new_goal_area.cpp
+)
+target_link_libraries(a_star_new_goal_area
+  PUBLIC stonesngems
+  ${Boost_LIBRARIES}
+)
+
+## a_star_new
+add_executable(a_star_collect_all
+  example/a_star_new_collect_all.cpp
+)
+target_link_libraries(a_star_collect_all
+  PUBLIC stonesngems
+  ${Boost_LIBRARIES}
+)
+
+## a_star_new
+add_executable(a_star_dhm_collect_all
+  example/a_star_dhm_collect_all.cpp
+)
+target_link_libraries(a_star_dhm_collect_all
   PUBLIC stonesngems
   ${Boost_LIBRARIES}
 )

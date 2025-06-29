@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "definitions.h"
-#define NoHashDirt 
+// #define NoHashDirt
 
 namespace stonesngems {
 
@@ -399,6 +399,8 @@ void RNDGameState::MoveItem(int index, int action) {
     board.item(index) = ElementToItem(kElEmpty);
     board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(kElEmpty) * board.cols * board.rows) + index);
     board.has_updated[new_index] = true;
+
+    // std::cout << board.zorb_hash <<" move Index " << index << ",new, " << new_index << "\n";
     // grid_.ids[index] = ++id_counter_;
 }
 
@@ -432,6 +434,7 @@ void RNDGameState::SetItem(int index, const Element &element, int id, int action
 #endif    
     // grid_.ids[new_index] = id;
     board.has_updated[new_index] = true;
+    // std::cout << board.zorb_hash <<"set Index " << index << ",new, " << new_index << "\n";
 }
 
 const Element &RNDGameState::GetItem(int index, int action) const {
