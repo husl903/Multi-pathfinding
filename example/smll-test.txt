@@ -1,0 +1,25 @@
+Exp 6, Gen 24  (GoalLocationTable)
+Exp 11, Gen 47 (ManhattanDistance/2)
+
+SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+S..           ..... . .      *....o....S
+S         . ..*..           oo...... ..S
+S.        o*..o..          oo.....o....S
+So.oo.........o..         oo.o...o.....S
+So. o*........o..        oo.......o.oo.S
+S... ..o......o..       oo........o.oo.S
+SHHHHHHHHHHHHHoHH      oo.HHHHHHHHoHHo.S
+S. ...o..*. ..o..     *o...*.o*...... .S
+S..*.....o.......    oo.oo o..o....o...S
+S...o..o.o...    @. oo..o .o..o........S
+S.o.....            o......o.. .*....o.S
+S                   ...*....o...o..*. .S
+S.                  o..o........*.....oS
+S........HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHS
+S o.........o...*....o.....o...o.......S
+S o......... o..o........o......o.oo..CS
+S. ..o........o.....o.  ....*...o.oo...S
+S....o*..o........o......o.o*......o...S
+S... ..o. ..o.oo.........o.o*...... ..oS
+S.*.... ..... ......... .o..o....o...o.S
+SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS

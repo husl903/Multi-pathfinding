@@ -121,7 +121,7 @@ class AStar {
     int num_same_config = 0;
     Timer timer;
     while (!openSet.empty()) {
-      std::cout << "Begin search\n";
+      // std::cout << "Begin search\n";
       timer.stop();
         // int minimum_test = 10000;
         // for(auto it = stateToHeap.begin(); it != stateToHeap.end(); it++){
@@ -158,7 +158,7 @@ class AStar {
 //        cameFrom.swap(std::unordered_map<State, std::tuple<State, Action, Cost, Cost>, StateHasher>());
         break;
       }
-      std::cout <<"Search 555555\n";
+      // std::cout <<"Search 555555\n";
       Node current = openSet.top();
       if(openSet.size() > max_size_open) max_size_open = openSet.size();
       // std::cout << "size " << max_size_open << std::endl;

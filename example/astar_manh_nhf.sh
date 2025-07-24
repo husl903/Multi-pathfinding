@@ -1,0 +1,41 @@
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_0.txt >>a_star_nhf_5m_bd_01_1_0.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_1.txt >>a_star_nhf_5m_bd_01_1_1.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_2.txt >>a_star_nhf_5m_bd_01_1_2.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_3.txt >>a_star_nhf_5m_bd_01_1_3.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_4.txt >>a_star_nhf_5m_bd_01_1_4.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_5.txt >>a_star_nhf_5m_bd_01_1_5.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_6.txt >>a_star_nhf_5m_bd_01_1_6.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_7.txt >>a_star_nhf_5m_bd_01_1_7.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_8.txt >>a_star_nhf_5m_bd_01_1_8.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_9.txt >>a_star_nhf_5m_bd_01_1_9.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_10.txt >>a_star_nhf_5m_bd_01_1_10.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_11.txt >>a_star_nhf_5m_bd_01_1_11.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_12.txt >>a_star_nhf_5m_bd_01_1_12.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_13.txt >>a_star_nhf_5m_bd_01_1_13.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_14.txt >>a_star_nhf_5m_bd_01_1_14.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_15.txt >>a_star_nhf_5m_bd_01_1_15.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_16.txt >>a_star_nhf_5m_bd_01_1_16.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_17.txt >>a_star_nhf_5m_bd_01_1_17.txt
+./a_start_nhf_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_18.txt >>a_star_nhf_5m_bd_01_1_18.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_0.txt >>a_star_manh_5m_bd_01_1_0.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_1.txt >>a_star_manh_5m_bd_01_1_1.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_2.txt >>a_star_manh_5m_bd_01_1_2.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_3.txt >>a_star_manh_5m_bd_01_1_3.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_4.txt >>a_star_manh_5m_bd_01_1_4.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_5.txt >>a_star_manh_5m_bd_01_1_5.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_6.txt >>a_star_manh_5m_bd_01_1_6.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_7.txt >>a_star_manh_5m_bd_01_1_7.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_8.txt >>a_star_manh_5m_bd_01_1_8.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_9.txt >>a_star_manh_5m_bd_01_1_9.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_10.txt >>a_star_manh_5m_bd_01_1_10.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_11.txt >>a_star_manh_5m_bd_01_1_11.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_12.txt >>a_star_manh_5m_bd_01_1_12.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_13.txt >>a_star_manh_5m_bd_01_1_13.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_14.txt >>a_star_manh_5m_bd_01_1_14.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_15.txt >>a_star_manh_5m_bd_01_1_15.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_16.txt >>a_star_manh_5m_bd_01_1_16.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_17.txt >>a_star_manh_5m_bd_01_1_17.txt
+./a_start_manh_5m -x 6 -y 8 -r 0 -c 0 -f ./levels/bd_01_1_18.txt >>a_star_manh_5m_bd_01_1_18.txt
+
+
+
