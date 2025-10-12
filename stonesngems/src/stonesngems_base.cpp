@@ -541,10 +541,11 @@ void RNDGameState::UpdateStone(int index) {
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
         RollLeft(index, kElStoneFalling);
         // std::cout << "roll left " << index  << std::endl;
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElStoneFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else{
         if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index);
     }
@@ -555,7 +556,7 @@ void RNDGameState::UpdateStoneFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);        
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);        
     } else if (HasProperty(index, ElementProperties::kCanExplode, Directions::kDown)) {
         // Falling stones can cause elements to explode
         auto it = kElementToExplosion.find(GetItem(index, Directions::kDown));
@@ -563,21 +564,21 @@ void RNDGameState::UpdateStoneFalling(int index) {
     } else if (IsType(index, kElWallMagicOn, Directions::kDown) ||
                IsType(index, kElWallMagicDormant, Directions::kDown)) {
         MoveThroughMagic(index, kMagicWallConversion.at(GetItem(index)));
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);
     } else if (IsType(index, kElNut, Directions::kDown)) {
         // Falling on a nut, crack it open to reveal a diamond!
         SetItem(index, kElDiamond, -1, Directions::kDown);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);
     } else if (IsType(index, kElNut, Directions::kDown)) {
         // Falling on a bomb, explode!
         auto it = kElementToExplosion.find(GetItem(index));
         Explode(index, (it == kElementToExplosion.end()) ? kElExplosionEmpty : it->second);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElStoneFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElStoneFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else {
         // Default options is for falling stones to become stationary
         SetItem(index, kElStone, -1);
@@ -597,10 +598,10 @@ void RNDGameState::UpdateDiamond(int index) {
         UpdateDiamondFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
         RollLeft(index, kElDiamondFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElDiamondFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else {
         if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index);
     }
@@ -610,7 +611,7 @@ void RNDGameState::UpdateDiamondFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);        
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);        
     } else if (HasProperty(index, ElementProperties::kCanExplode, Directions::kDown) &&
                !IsType(index, kElBomb, Directions::kDown) && !IsType(index, kElBombFalling, Directions::kDown)) {
         // Falling diamonds can cause elements to explode (but not bombs)
@@ -619,13 +620,13 @@ void RNDGameState::UpdateDiamondFalling(int index) {
     } else if (IsType(index, kElWallMagicOn, Directions::kDown) ||
                IsType(index, kElWallMagicDormant, Directions::kDown)) {
         MoveThroughMagic(index, kMagicWallConversion.at(GetItem(index)));
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElDiamondFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElDiamondFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else {
         // Default options is for falling diamond to become stationary
         SetItem(index, kElDiamond, -1);
@@ -645,10 +646,10 @@ void RNDGameState::UpdateNut(int index) {
         UpdateNutFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElNutFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElNutFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     }
 }
 
@@ -656,12 +657,12 @@ void RNDGameState::UpdateNutFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElNutFalling);
     } else if (CanRollRight(index)) {
         RollRight(index, kElNutFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else {
         // Default options is for falling nut to become stationary
         SetItem(index, kElNut, -1);
@@ -681,10 +682,10 @@ void RNDGameState::UpdateBomb(int index) {
         UpdateBombFalling(index);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElBomb);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElBomb);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     }
 }
 
@@ -692,13 +693,13 @@ void RNDGameState::UpdateBombFalling(int index) {
     // Continue to fall as normal
     if (IsType(index, kElEmpty, Directions::kDown)) {
         MoveItem(index, Directions::kDown);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + board.cols);
+        if(board.is_opt_queue_event && index + board.cols < board.rows * board.cols) board.need_update_index_temp.push_back(index + board.cols);
     } else if (CanRollLeft(index)) {    // Roll left/right
         RollLeft(index, kElBombFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index - 1);
+        if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
         RollRight(index, kElBombFalling);
-        if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index + 1);
+        if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else {
         // Default options is for bomb to explode if stopped falling
         auto it = kElementToExplosion.find(GetItem(index));

@@ -38,9 +38,9 @@ std::vector<size_t> rand_y;
 // int num_state = 0;
 
 struct State {
-  State(int x, int y, int time, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
+  State(int x, int y, int time, std::vector<int8_t>grid, std::vector<int>need_update_index) : x(x), y(y), 
          time(time), grid(grid), need_update_index(need_update_index) {}  
-  State(int x, int y, int time, uint64_t zorb_hash, std::vector<int8_t>&grid, std::vector<int>&need_update_index) : x(x), y(y), 
+  State(int x, int y, int time, uint64_t zorb_hash, std::vector<int8_t>grid, std::vector<int>need_update_index) : x(x), y(y), 
          time(time), grid(grid), zorb_hash(zorb_hash), need_update_index(need_update_index) {}      
   State(int x, int y, int time, uint64_t zorb_hash) : x(x), y(y), 
          time(time), zorb_hash(zorb_hash) {}

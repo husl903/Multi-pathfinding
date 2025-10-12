@@ -65,7 +65,7 @@ class AStarT {
 
   bool search(const State& startState,
               PlanResult<State, Action, Cost>& solution,
-              std::unordered_set<State, StateHasher>& closedSet, int num_pass = 2147483647, Cost initialCost = 0) {
+              std::unordered_set<State, StateHasher>& closedSet, int num_pass = INT32_MAX, Cost initialCost = 0) {
     // std::cout << startState.x << ", " << startState.y << ", " << startState.time <<" astar test\n";
     solution.states.clear();
     solution.states.push_back(std::make_pair<>(startState, 0));
@@ -99,7 +99,7 @@ class AStarT {
         break;
       }
       if(num_exp > num_pass){
-        std::cout << "Exp num.\n";
+        std::cout << " Exp num out.\n";
         break;
       }
       Node current = openSet.top();
