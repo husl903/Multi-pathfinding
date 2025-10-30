@@ -44,7 +44,7 @@ struct State {
          time(time), grid(grid), zorb_hash(zorb_hash), need_update_index(need_update_index) {}           
   // State(int x, int y, int time, std::vector<int8_t>&grid) : x(x), y(y), time(time), grid(grid) {}           
   // State(int x, int y) : x(x), y(y) {}
-
+  ~State(){}
   State(const State&) = default;
   State(State&&) = default;
   State& operator=(const State&) = default;

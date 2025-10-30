@@ -377,6 +377,7 @@ class Environment {
       if(m_eHeuristic_goalArea[s.x][s.y] != -1){ // max(TD(s,b),TDBD)
           // int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
           return max_td_md;
+
       }else{      
         int closest_s_b = m_eHeuristic[s.x][s.y];
         int index = -1;
@@ -417,7 +418,8 @@ class Environment {
       int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
       if(m_eHeuristic_goalArea[s.x][s.y] != -1){
           int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
-          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);        
+          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);
+          return max_td_md;  
           return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
       }else{
         int closest_s_b = -1;
@@ -430,10 +432,10 @@ class Environment {
         //     }
         //   }
         // }
-        closest_s_b = m_eHeuristic[s.x][s.y];
+        // closest_s_b = m_eHeuristic[s.x][s.y];
         int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
         int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
-        return std::max((md + 1)/2 ,std::max(closest_s_b, (distance_goal_s + 1)/2));
+        return std::max((md + 1)/2 ,(distance_goal_s + 1)/2);
       }
     }else if(is_manhattan_distance == 6){//TD-2*goal_dia
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
@@ -451,10 +453,36 @@ class Environment {
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
       int temp =(md + 1)/2;
       for(int i = 0; i < m_border_distance.size(); i++){
-        if(m_border_distance[i][s.gem_x][s.gem_y] != -1 && m_border_distance[i][s.x][s.y] != -1)
-          temp = std::max(temp, (abs(m_border_distance[i][s.gem_x][s.gem_y] - m_border_distance[i][s.x][s.y]) + 1)/2);
+        if(m_border_distance[i][s.gem_x][s.gem_y] != -1 && m_border_distance[i][s.x][s.y] != -1){
+          // std::cout << temp << ", ----, " << m_border_distance[i][s.gem_x][s.gem_y] << ", " << m_border_distance[i][s.x][s.y] << ", df, "<< (abs(m_border_distance[i][s.gem_x][s.gem_y] - m_border_distance[i][s.x][s.y]) + 1)/2 << " ---\n";
+          temp = std::max(temp, (abs(m_border_distance[i][s.gem_x][s.gem_y] - m_border_distance[i][s.x][s.y]) + 1)/2);          
+        }
       }
       return std::max(temp, (md + 1)/2);      
+    }else if(is_manhattan_distance == 8){ //max(TD(s,b), TD(s,g)/2)->TD
+      int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
+      int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
+      if(m_eHeuristic_goalArea[s.x][s.y] != -1){
+          int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
+          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);    
+          return max_td_md;    
+          return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
+      }else{
+        int closest_s_b = -1;
+        int index = -1;
+        // for(int i = 0; i < m_border_distance.size(); i++){
+        //   if(m_border_distance[i][s.x][s.y] != -1){
+        //     if(closest_s_b == -1) closest_s_b = m_border_distance[i][s.x][s.y];
+        //     else if(m_border_distance[i][s.x][s.y] < closest_s_b){
+        //       closest_s_b = m_border_distance[i][s.x][s.y];
+        //     }
+        //   }
+        // }
+        closest_s_b = m_eHeuristic[s.x][s.y];
+        int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
+        int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
+        return std::max((md + 1)/2 ,std::max(closest_s_b, (distance_goal_s + 1)/2));
+      }
     }
     
 #endif    
@@ -1296,6 +1324,38 @@ std::vector<std::vector<std::vector<int>>> select_pivots_f(int num_pivots, const
   return border_distance_dh;
 }
 
+std::vector<std::vector<std::vector<int>>> select_pivots_const(int num_pivots, const std::vector<std::vector<bool>> map_obstacle){
+  int rows = map_obstacle.size();
+  int cols = map_obstacle[0].size();
+	int xx[5] = {0, 0, -1, 1};
+	int yy[5] = {1, -1, 0, 0};  
+  std::mt19937_64 rng;
+  std::uniform_int_distribution<int> dist_x(0, rows - 1);
+  std::uniform_int_distribution<int> dist_y(0, cols - 1); 
+  std::vector<std::vector<std::vector<int>>> border_distance_dh;
+  std::vector<Location> landmark;
+  landmark.push_back(Location(20, 38));
+  landmark.push_back(Location(1, 1)); 
+  landmark.push_back(Location(8, 17)); 
+  landmark.push_back(Location(1, 38)); 
+  landmark.push_back(Location(20, 1)); 
+  for(auto L: landmark){
+    std::cout << "landmark " << L.x << ", " << L.y << std::endl;
+      std::vector<std::vector<int>> min_shortest_from_pivot(rows, std::vector<int>(cols + 1, -1));
+      getShortestPathHeuristic(min_shortest_from_pivot, map_obstacle, L.x, L.y, rows, cols);
+      for(int i = 0; i < rows; i++){
+        for(int j = 0; j < cols; j++){
+          std::cout <<std::setw(2) <<  min_shortest_from_pivot[i][j] << ", ";
+        }
+        std::cout<<std::endl;
+      }
+      std::cout<<"-----------------------------------\n";
+      border_distance_dh.push_back(min_shortest_from_pivot);    
+  } 
+
+  return border_distance_dh;
+}
+
 
 std::vector<std::vector<std::vector<int>>> select_pivots_avoid(int num_pivots, const std::vector<std::vector<bool>> map_obstacle){
   int rows = map_obstacle.size();
@@ -1617,6 +1677,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::vector<std::vector<int>>> border_distance_dh;
     Timer preprocess_4;
+    std::vector<Location> landmarks;
     if(heuris == 7){
       border_distance_dh.clear();
       int total_pivots = 5;
@@ -1716,11 +1777,11 @@ int main(int argc, char* argv[]) {
       //   goalY = goalYD; 
       //   next_index = goalX * state_p.board.cols + goalY;
       // } else 
-      // if(!(goalX == goalXD && goalY == goalYD)){
-      //   std::cout << "Goal, "<< goalX << ", " << goalY << ",GoalXY " << goalXD << ", " << goalYD<<"Test 222\n";
-      //   index_g++;
-      //   continue;
-      // }
+      if(!(goalX == goalXD && goalY == goalYD)){
+        std::cout << "Goal, "<< goalX << ", " << goalY << ",GoalXY " << goalXD << ", " << goalYD<<"Test 222\n";
+        index_g++;
+        continue;
+      }
       std::cout <<"Start and goal, " <<  startX << ", " << startY << ", " << goalX << ", " << goalY << " \n";
 
       std::vector<std::vector<int>> eHeuristicGoal(state_p.board.rows, std::vector<int>(state_p.board.cols + 1, -1));

@@ -69,14 +69,14 @@ class AStar {
   bool isXDP = false;
   bool ispwXDP = false;
   bool isRegu =  false;
-  bool isdebug = false;
-  double w = 8.0;
+  bool isdebug = true;
+  double w = 4.0;
   int bound  = 0.0;
 
   bool search(const State& startState,
               PlanResult<State, Action, Cost>& solution, int is_wei = 0, int wa_version = 0, int duration = 180, int weight = 20,  Cost initialCost = 0 ) { // wa_version = 1, xdp, wa_version = 2, pwxdp, wa_version = 3, regular, xup, wa_version = 4
     if(is_wei !=0 )is_weighted = true;
-    w = 8.0;
+    w = 4.0;
 
     duration = 180;
     solution.states.clear();
@@ -93,7 +93,8 @@ class AStar {
     std::unordered_set<State, StateHasher> closedSetEmpty;
     std::unordered_map<State, std::tuple<State, Action, Cost, Cost>, StateHasher> cameFrom;
 
-
+    
+    std::cout << m_env.admissibleHeuristic(startState) << "Test\n";
     auto handle = openSet.push(Node(std::make_shared<State>(startState),
                                     m_env.admissibleHeuristic(startState),
                                     initialCost,
@@ -101,7 +102,6 @@ class AStar {
     (*handle).handle = handle;
     stateToHeap.insert(std::make_pair<>(startState, handle));
     minimum_h_open = m_env.admissibleHeuristic(startState);
-
     std::vector<Neighbor<State, Action, Cost>> neighbors;
     neighbors.reserve(10);
     int max_size_open = 0;
@@ -121,7 +121,7 @@ class AStar {
         }        
         std::cout << "minimutest " << minimum_test << ", " << minimum_h_open << "\n";
         assert(minimum_test == minimum_h_open); */      
-      if(duration1 > 10){
+      if(duration1 > 60){
         int num_less_f = 0;
         int num_less_f_wait = 0;
         int num_h_less_g = 0;
@@ -227,7 +227,7 @@ class AStar {
     //       }
     //     }
     //   }
-
+      std::cout <<"Current state " <<  current.state->x << ", " << current.state->y  << ", gemx,y,  " << current.state->gem_x << ", " << current.state->gem_y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state->zorb_hash << ",--------------------"<< std::endl;
       openSet.pop();
       stateToHeap.erase(*current.state);
       current.state->f = current.fScore;
@@ -256,6 +256,8 @@ class AStar {
               else if(wa_version == 3) fScore = tentative_gScore + 1.0 * w * hScore;
               else if(wa_version == 4) fScore = (1.0/(2*w))*(tentative_gScore + hScore + std::sqrt((tentative_gScore + hScore)*(tentative_gScore + hScore) + 4*w*(w-1)*hScore*hScore));
             }
+
+            std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
 
             auto handle = openSet.push(Node(std::make_shared<State>(neighbor.state), fScore, tentative_gScore, hScore));
             (*handle).handle = handle;
@@ -293,6 +295,8 @@ class AStar {
               else if(wa_version == 4) (*handle).fScore = (1.0/(2*w))*(tentative_gScore + hScore + std::sqrt((tentative_gScore + hScore)*(tentative_gScore + hScore) + 4*w*(w-1)*hScore*hScore));
             }
 
+            std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< (*handle).fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash  << ",--------------------"<< std::endl;
+
             openSet.increase(handle);
 
             cameFrom.erase(neighbor.state);
@@ -317,6 +321,8 @@ class AStar {
               auto handle = openSet.push(Node(std::make_shared<State>(neighbor.state), fScore, tentative_gScore, hScore));
               
               (*handle).handle = handle;
+
+              std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
               
               stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
               m_env.onDiscover(neighbor.state, fScore, tentative_gScore);

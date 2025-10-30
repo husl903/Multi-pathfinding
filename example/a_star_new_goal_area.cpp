@@ -376,8 +376,8 @@ class Environment {
       int max_td_md = std::max((md + 1)/2, 0);
       if(m_eHeuristic_goalArea[s.x][s.y] != -1){ // max(TD(s,b),TDBD)
           // int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
-          // return max_td_md;
-          return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
+          return max_td_md;
+          // return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
         }else{      
         int closest_s_b = m_eHeuristic[s.x][s.y];
         int index = -1;
@@ -413,12 +413,13 @@ class Environment {
         else return std::max(max_td_md, closest_s_b + (closest_s_b_goal - closest_s_b + 1)/2);
 
       }
-    }else if(is_manhattan_distance == 5){ //max(TD(s,b), TD(s,g)/2)
+    }else if(is_manhattan_distance == 5){ //max(TD(s,b), TD(s,g)/2)->TD
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
       int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
       if(m_eHeuristic_goalArea[s.x][s.y] != -1){
           int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
-          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);        
+          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);    
+          return max_td_md;    
           return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
       }else{
         int closest_s_b = -1;
@@ -431,10 +432,10 @@ class Environment {
         //     }
         //   }
         // }
-        closest_s_b = m_eHeuristic[s.x][s.y];
+        // closest_s_b = m_eHeuristic[s.x][s.y];
         int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
         int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
-        return std::max((md + 1)/2 ,std::max(closest_s_b, (distance_goal_s + 1)/2));
+        return std::max((md + 1)/2 ,(distance_goal_s + 1)/2);
       }
     }else if(is_manhattan_distance == 6){ //TD-2*goal_dia
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
@@ -452,10 +453,36 @@ class Environment {
       int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
       int temp =(md + 1)/2;
       for(int i = 0; i < m_border_distance.size(); i++){
-        if(m_border_distance[i][s.gem_x][s.gem_y] != -1 && m_border_distance[i][s.x][s.y] != -1)
+        if(m_border_distance[i][s.gem_x][s.gem_y] != -1 && m_border_distance[i][s.x][s.y] != -1){
+
           temp = std::max(temp, (abs(m_border_distance[i][s.gem_x][s.gem_y] - m_border_distance[i][s.x][s.y]) + 1)/2);
+        }
       }
       return std::max(temp, (md + 1)/2);
+    }else if(is_manhattan_distance == 8){ //max(TD(s,b), TD(s,g)/2)
+      int md = (std::abs(s.x - s.gem_x) + std::abs(s.y - s.gem_y));
+      int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
+      if(m_eHeuristic_goalArea[s.x][s.y] != -1){
+          int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
+          int max_td_md = std::max((md + 1)/2, (distance_goal_s + 1)/2);    
+          return max_td_md;    
+          return std::max(max_td_md, (abs(m_eHeuristic_goalArea[s.gem_x][s.gem_y] - m_eHeuristic_goalArea[s.x][s.y]) + 1) / 2);
+      }else{
+        int closest_s_b = -1;
+        int index = -1;
+        // for(int i = 0; i < m_border_distance.size(); i++){
+        //   if(m_border_distance[i][s.x][s.y] != -1){
+        //     if(closest_s_b == -1) closest_s_b = m_border_distance[i][s.x][s.y];
+        //     else if(m_border_distance[i][s.x][s.y] < closest_s_b){
+        //       closest_s_b = m_border_distance[i][s.x][s.y];
+        //     }
+        //   }
+        // }
+        closest_s_b = m_eHeuristic[s.x][s.y];
+        int index_goal_curr = m_goal_index[s.gem_x][s.gem_y];
+        int distance_goal_s = m_goal_distance[index_goal_curr][s.x][s.y];
+        return std::max((md + 1)/2 ,std::max(closest_s_b, (distance_goal_s + 1)/2));
+      }
     }
     
 #endif    
@@ -1461,138 +1488,65 @@ std::vector<std::vector<std::vector<int>>> select_pivots_f(int num_pivots, const
   for(int iter = 0; iter < num_pivots; iter++){
     if(iter == 0){
       int random_x = -1, random_y = -1;
-      // while(1){
-      //   random_x = dist_x(rng);
-      //   random_y = dist_y(rng);
-      //   if(map_obstacle[pivot_x][pivot_y] == 0) break;
-      // }
+      while(1){
+        random_x = dist_x(rng);
+        random_y = dist_y(rng);
+        if(map_obstacle[random_x][random_y] == 0) break;
+      }
+      // landmark.push_back(Location(random_x, random_y));
+
       std::vector<std::vector<int>> min_shortest_from_pivot(rows, std::vector<int>(cols + 1, -1));
-      std::cout << "pivot_x, pivot,y " << random_x << ", pivot_y" << random_y << std::endl;
+      std::cout << "pivot_x, pivot,y " << random_x << ", pivot_y" << random_y << " rows, cols , " << rows << ", " <<cols <<  std::endl;
       getShortestPathHeuristic(dist_to_nearest_pivot, map_obstacle, random_x, random_y, rows, cols);
 
       getShortestPathHeuristic(min_shortest_from_pivot, map_obstacle, next_pivot_x, next_pivot_y, rows, cols);
       border_distance_dh.push_back(min_shortest_from_pivot);
       landmark.push_back(Location(next_pivot_x, next_pivot_y));
     }else{
-      
-      int R_r = -1, R_c = -1;
-      std::uniform_real_distribution<long double> U(0.0L, total);
-      long double x = U(rng);
-      long double run = 0.0L;
-      /*slecet the R node*/
-      for(int r = 0; r < rows; r++){
-        for(int c = 0; c < cols; c++){
-          int  d = dist_to_nearest_pivot[r][c];
-          if(d == -1) continue;
-          long double w = (long double)d * (long double)d;
-          run += w;
-          if(run >= x){
-            R_r = r;
-            R_c = c;
-            break;
-          }
-        }
-        if(R_r != -1 && R_c != -1) break;
-      }
-
-      /*build the BFS tree from R node*/
-      std::vector<int> parent(rows * cols, -1);
-      Location R_node(R_r, R_c);
-      std::vector<std::vector<int>> min_shortest_from_Rnode(rows, std::vector<int>(cols + 1, -1));
+      const int dx[4] = {1, -1, 0, 0};
+      const int dy[4] = {0, 0, 1, -1};
+      const int INF = 1e9;
+      std::vector<std::vector<int>> dist(rows, std::vector<int>(cols, INF));
       std::queue<Location> que;
-      que.push(R_node);
-      min_shortest_from_Rnode[R_r][R_c] = 0;
-      parent[R_r*cols + R_c] = -2;
+      for (auto& p : landmark) {
+        dist[p.x][p.y] = 0;
+        que.push(p);
+      }
       while(!que.empty()){
-        Location curr = que.front(); que.pop();
+        Location u = que.front(); que.pop();
         for(int dir = 0; dir < 4; dir++){
-          Location nei(curr.x + xx[dir], curr.y + yy[dir]);
-          if(nei.x < 0 || nei.y < 0 || nei.x >= rows || nei.y >= cols || map_obstacle[nei.x][nei.y]) continue;
-          if(min_shortest_from_Rnode[nei.x][nei.y] == -1){
-            min_shortest_from_Rnode[nei.x][nei.y] = min_shortest_from_Rnode[curr.x][curr.y] + 1;
-            que.push(nei);
-            if(parent[nei.x * cols + nei.y] == -1){
-              parent[nei.x * cols + nei.y] = curr.x * cols + curr.y;
-            }            
+          int nx = u.x + dx[dir], ny = u.y + dy[dir];
+          if(nx < 0 || ny < 0 || nx >= rows || ny >= cols || map_obstacle[nx][ny]) continue;
+          if(dist[nx][ny] > dist[u.x][u.y] + 1){
+            dist[nx][ny] = dist[u.x][u.y] + 1;
+            que.push(Location(nx, ny));
           }
         }
       }
-      std::vector<std::vector<long long>> w(rows, std::vector<long long>(cols, 0));
-      int sample = (rows * cols)/std::max(1, num_pivots);
-      for(int i = 0; i < sample; i++){
-        int rr = rng()%rows, cc = rng()%cols;
-        if(map_obstacle[rr][cc]) continue;
-        if(min_shortest_from_Rnode[rr][cc] == -1) continue;
-        int low_bound = 0;
-        for(int n_p = 0; n_p < border_distance_dh.size(); n_p++){
-          int dr = border_distance_dh[n_p][R_r][R_c];
-          int dv = border_distance_dh[n_p][rr][cc];
-          if(dr == -1 || dv == -1) continue;
-          low_bound = std::max(low_bound, std::abs(dr - dv));
-        }
-        int val = std::max(0, min_shortest_from_Rnode[rr][cc] - low_bound);
-        w[rr][cc] = val;
-      }
-      std::vector<int> order;
-      for(int cell_s = 0; cell_s < parent.size(); cell_s++){
-        if(parent[cell_s] != -1) order.push_back(cell_s);
-      }
-      reverse(order.begin(), order.end());
-      
-      std::vector<long long> sub(rows*cols, 0);
-      std::vector<char> hasL(rows*cols, 0);
-      for(auto L: landmark) hasL[L.x * cols + L.y] = 1;
-      long long bestVal = -1;
-      Location best_loc(-1, -1);
-      for(auto id:order){
-        int vr = id / cols;
-        int vc = id % cols;
-        if(hasL[id]) {sub[id] = 0; continue;}
-        long long sum = w[vr][vc];
-        for(int dir = 0; dir < 4; dir++){
-          int nr = vr + xx[dir], nc = vc + yy[dir];
-          if(nr < 0 || nc < 0 || nr >= rows || nc >= cols || map_obstacle[nr][nc]) continue;
-          if(parent[nr * cols + nc] == id) sum += sub[nr*cols + nc];
-        }
-        sub[id] = sum;
-        if(sum > bestVal){
-          bestVal = sum;
-          best_loc = Location(vr, vc);
-        }
-      }
-      Location p = best_loc;
-      while(true){
-        Location nxt(-1, -1); long long mx = 0;
-        int id_p = p.x * cols + p.y;
-        for(int dir = 0; dir < 4; dir++){
-          int nr = p.x + xx[dir];
-          int nc = p.y + yy[dir];
-          if(nr < 0 || nc < 0 || nr >= rows || nc >= cols || map_obstacle[nr][nc]) continue;
-          if(parent[nr * cols + nc] == id_p && sub[nr * cols + nc] > mx){
-            mx = sub[nr * cols + nc];
-            nxt.x = nr; nxt.y = nc;
+      int maxDist = -1;
+      Location farthest(-1, -1);
+      for (int i = 0; i < rows; i++) {
+          for (int j = 0; j < cols; j++) {
+              if (map_obstacle[i][j]) continue;
+              if (dist[i][j] != 1e9 && dist[i][j] > maxDist) {
+                  maxDist = dist[i][j];
+                  farthest.x = i;
+                  farthest.y = j;
+              }
           }
-        }
-        if(mx <= 0 || nxt.x == -1) break;
-        p = nxt;
       }
-      landmark.push_back(p);
-
+      landmark.push_back(farthest);
       std::vector<std::vector<int>> min_shortest_from_pivot(rows, std::vector<int>(cols + 1, -1));
-      getShortestPathHeuristic(min_shortest_from_pivot, map_obstacle, p.x, p.y, rows, cols);
-      border_distance_dh.push_back(min_shortest_from_pivot);
-      total = 0.0L;
-      for(int r = 0; r < rows; r++){
-        for(int c = 0; c < cols; c++){
-          if(dist_to_nearest_pivot[r][c] == -1 || (dist_to_nearest_pivot[r][c] > min_shortest_from_pivot[r][c] && min_shortest_from_pivot[r][c] != -1)){
-            dist_to_nearest_pivot[r][c] = min_shortest_from_pivot[r][c];
-          } 
-          if(dist_to_nearest_pivot[r][c] != -1){
-              long double w = (long double)dist_to_nearest_pivot[r][c] * (long double)dist_to_nearest_pivot[r][c];
-              total += w;
-          }
+      getShortestPathHeuristic(min_shortest_from_pivot, map_obstacle, farthest.x, farthest.y, rows, cols);
+      std::cout<<farthest.x << ", " << farthest.y << "-----------------------------------\n";
+      for(int i = 0; i < rows; i++){
+        for(int j = 0; j < cols; j++){
+          std::cout <<std::setw(2) <<  min_shortest_from_pivot[i][j] << ", ";
         }
-      }      
+        std::cout<<std::endl;
+      }
+      std::cout<<"-----------------------------------\n";
+      border_distance_dh.push_back(min_shortest_from_pivot);     
     }
   }
    for(auto L: landmark) std::cout << "landmark " << L.x << ", " << L.y << std::endl;
@@ -1958,8 +1912,8 @@ int main(int argc, char* argv[]) {
     std::vector<std::vector<std::vector<int>>> border_distance_dh;
     Timer preprocess_4;
     if(heuris == 7){
-      int total_pivots = 6;
-      border_distance_dh = select_pivots_avoid(total_pivots, map_obstacle);
+      int total_pivots = 15;
+      border_distance_dh = select_pivots_f(total_pivots, map_obstacle);
       // border_distance_dh.clear();
       // std::vector<Location> pivots;
       // int pivot_x = -1;
@@ -2436,9 +2390,10 @@ int main(int argc, char* argv[]) {
           else if(env_1.is_manhattan_distance == 2) std::cout  << ", " << env_1.is_manhattan_distance<< ",FullBNewHeuristic,," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 3) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB, MD2)," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 4) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB,BDTD/2)," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
-          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
+          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(temp, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
           else if(env_1.is_manhattan_distance == 6) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, TDSG-2Ddia)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 7) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, DH)"<< ",total preprocessTime," << preprocess_4.elapsedSeconds() << ",";
+          else if(env_1.is_manhattan_distance == 8) std::cout << ", " << env_1.is_manhattan_distance <<", Max(old TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
 
           if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds()<< ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() <<  ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size() << ",goalarea,"<<distance_goal_loc.size()<<std::endl;    
           else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds() << ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() << ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size()<< ",goalarea,"<<distance_goal_loc.size() <<std::endl;    
@@ -2447,9 +2402,11 @@ int main(int argc, char* argv[]) {
           else if(env_1.is_manhattan_distance == 2) std::cout  << ", " << env_1.is_manhattan_distance<< ",FullBNewHeuristic,";
           else if(env_1.is_manhattan_distance == 3) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB, MD2),";
           else if(env_1.is_manhattan_distance == 4) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB,BDTD/2),";
-          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(TDSB, TDSG/2)";          
+          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(temp, TDSG/2)";          
           else if(env_1.is_manhattan_distance == 6) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, TDSG-2Ddia)";
           else if(env_1.is_manhattan_distance == 7) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, DH)";         
+          else if(env_1.is_manhattan_distance == 8) std::cout << ", " << env_1.is_manhattan_distance <<", Max(old TDSB, TDSG/2)";          
+
           std::cout << filename <<  ", fail not success, ,"<< env.is_roll_fall << ", ,start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds()  << ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() << ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size() << ",goalarea,"<<distance_goal_loc.size()<<std::endl;           
           //std::cout<<filename << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << "Pathfinding not success\n";
         }/*else if(astar.is_goal_move){
