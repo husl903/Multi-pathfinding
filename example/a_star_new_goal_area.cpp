@@ -2156,7 +2156,7 @@ int main(int argc, char* argv[]) {
       preprocess_2.stop(); // the time to compute the border locations to all cells
 
       Timer preprocess_3;
-      if(heuris == 5 || heuris == 6){
+      if(heuris == 5 || heuris == 6 || heuris == 8){
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){//goal area
           bool is_border_flag = true;
           if(!((*it).x == 0 || (*it).x + 1 == state_p.board.rows || (*it).y == 0 || (*it).y + 1 ==  state_p.board.cols)){

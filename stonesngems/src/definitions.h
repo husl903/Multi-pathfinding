@@ -822,6 +822,11 @@ struct Board {
 
     int8_t &item(int index) {
         assert(index < rows * cols);
+// special cases
+        // int8_t temp_value = grid[index] - 1;
+        // if(grid[index] == 4 || grid[index] == 6 || grid[index] == 40 || grid[index] == 42) {
+        //     grid[index] = grid[index] - 1;
+        // }
         return grid[index];
     }
 

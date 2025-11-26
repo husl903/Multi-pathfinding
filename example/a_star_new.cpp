@@ -87,8 +87,8 @@ template <>
 struct hash<State> {
   size_t operator()(const State& s) const {
     size_t seed = 0;
-    boost::hash_combine(seed, s.x);
-    boost::hash_combine(seed, s.y);
+    // boost::hash_combine(seed, s.x);
+    // boost::hash_combine(seed, s.y);
     // seed^=rand_x[s.x];
     // seed^=rand_y[s.y];
     // boost::hash_combine(seed, s.time);
@@ -531,19 +531,29 @@ class Environment {
     std::cout << "Current state, "<< s.x <<", " << s.y  <<",time, " << s.time <<",h, " << hh_p << ", hash, " << s.zorb_hash << ", size, " << s.grid.size()  << "----------------------------------"<< std::endl;
     // << ", f, " << f_value << ", g , " << s.time << ", h , " << f_value - s.time <<
 #endif
-    // if( s.x == 3 && s.y == 25)
-    // {
-    //   // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
-    //   for (int h = 0; h < state_game.board.rows; ++h)
-    //   {
-    //     for (int w = 0; w < state_game.board.cols; ++w) 
-    //     {
-    //       std::cout << kCellTypeToElement[s.grid[h * state_game.board.cols + w] + 1].id;
-    //       // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
-    //     }
-    //     std::cout << std::endl;
-    //   }
-    // }
+    if( s.x == 10 && s.y == 27 )
+    {
+      // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", " << s.grid.size()  << "----------------------------------"<< std::endl;
+      for (int h = 0; h < state_game.board.rows; ++h)
+      {
+        for (int w = 0; w < state_game.board.cols; ++w) 
+        {
+          std::cout << kCellTypeToElement[s.grid[h * state_game.board.cols + w] + 1].id;
+          // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+        }
+        std::cout << std::endl;
+      }
+
+      // for (int h = 0; h < state_game.board.rows; ++h)
+      // {
+      //   for (int w = 0; w < state_game.board.cols; ++w) 
+      //   {
+      //     std::cout << std::setw(2) << static_cast<unsigned int>(s.grid[h * state_game.board.cols + w]);
+      //     // std::cout << kCellTypeToElement.at(state_game.board.grid[h * state_game.board.cols + w]).id;
+      //   }
+      //   std::cout << std::endl;
+      // }      
+    }
     // if(s.zorb_hash != zorb_hash_temp) std::cout << "ERROR \n";
     // std::cout << "Current state "<< s.x <<", " << s.y << ", time " << s.time << ", hash, " << s.zorb_hash  << ", new-hash " << zorb_hash_temp << ", size, " << s.grid.size()  << "----------------------------------"<< std::endl;
 
@@ -1738,11 +1748,11 @@ int main(int argc, char* argv[]) {
       state_game.board.grid.assign(grid.begin(), grid.end()); //the same initial map
       state_game.init_hash();
       state_game.num_apply_action = 0;
-      state_game.is_hash_dirt = false;
+      state_game.is_hash_dirt = true;
 
       State start(startX, startY, 0, state_game.board.zorb_hash);
       start.grid.assign(grid.begin(), grid.end());
-      start.localstate = localstate;
+      start.localstate = localstate; 
       start.need_update_index = start_temp.need_update_index;
 
       // if(index_g == 0){
@@ -1911,7 +1921,7 @@ int main(int argc, char* argv[]) {
       preprocess_2.stop();
 
       Timer preprocess_3;
-      if(heuris == 5 || heuris == 6){
+      if(heuris == 5 || heuris == 6 || heuris == 8){
         for(auto it = closedSet.begin(); it != closedSet.end(); it++){//goal area
           bool is_border_flag = true;
           if(!((*it).x == 0 || (*it).x + 1 == state_p.board.rows || (*it).y == 0 || (*it).y + 1 ==  state_p.board.cols)){
@@ -2096,9 +2106,11 @@ int main(int argc, char* argv[]) {
           else if(env_1.is_manhattan_distance == 2) std::cout  << ", " << env_1.is_manhattan_distance<< ",FullBNewHeuristic,," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 3) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB, MD2)," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 4) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB,BDTD/2)," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
-          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
+          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", new Max(MD,TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
           else if(env_1.is_manhattan_distance == 6) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, TDSG-2Ddia)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 7) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, DH)"<< ",total preprocessTime," << preprocess_4.elapsedSeconds() << ",";
+          else if(env_1.is_manhattan_distance == 8) std::cout << ", " << env_1.is_manhattan_distance <<", old Max(TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
+
 
           if(success) std::cout <<filename <<  ", success, cost, " << solution.cost <<"," << env.is_roll_fall << ",start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds()<< ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() <<  ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size() << ",goalarea,"<<distance_goal_loc.size()<<std::endl;    
           else std::cout << filename <<  ", not success, ,"<< env.is_roll_fall << ", ,start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss  << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds() << ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() << ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size()<< ",goalarea,"<<distance_goal_loc.size() <<std::endl;    
@@ -2108,9 +2120,11 @@ int main(int argc, char* argv[]) {
           else if(env_1.is_manhattan_distance == 2) std::cout  << ", " << env_1.is_manhattan_distance<< ",FullBNewHeuristic,," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 3) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB, MD2)," << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 4) std::cout << ", " << env_1.is_manhattan_distance << ",Max(TDSB,BDTD/2)," << ",total mpreprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() << ",";
-          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", Max(TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
+          else if(env_1.is_manhattan_distance == 5) std::cout << ", " << env_1.is_manhattan_distance <<", new Max(MD, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
           else if(env_1.is_manhattan_distance == 6) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, TDSG-2Ddia)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds() << ",";
           else if(env_1.is_manhattan_distance == 7) std::cout << ", " << env_1.is_manhattan_distance <<", Max(MD/2, DH)"<< ",total preprocessTime," << preprocess_4.elapsedSeconds() << ",";
+          else if(env_1.is_manhattan_distance == 8) std::cout << ", " << env_1.is_manhattan_distance <<", old Max(TDSB, TDSG/2)" << ",total preprocessTime," << preprocess_1.elapsedSeconds() + preprocess_2.elapsedSeconds() + preprocess_3.elapsedSeconds()<< ",";
+         
           std::cout << filename <<  ", fail not success, ,"<< env.is_roll_fall << ", ,start, " << startXD << ", " << startYD << ", goal, " << goalX <<", " << goalY << ", memory, " << r_usage.ru_maxrss << ",preprocesstime 1, "<< preprocess_1.elapsedSeconds() << ", preprocess2 border, " << preprocess_2.elapsedSeconds() << ",preprocess3 goalarea, " << preprocess_3.elapsedSeconds() << ",preprocess 4 pivots," <<preprocess_4.elapsedSeconds()  << ", solve time, " << timerSolve.elapsedSeconds() <<", total time, " <<  total_time.elapsedSeconds() << ", Expansion, " << env_1.num_expand << ", generation, " << env_1.num_generated << ",num_action," << state_game.num_apply_action << ", bordersize, " << border_loc.size() << ",goalarea,"<<distance_goal_loc.size()<<std::endl;           
 
           //std::cout<<filename << ",start, " << startX << ", " << startY << ", goal, " << goalX <<", " << goalY << "Pathfinding not success\n";

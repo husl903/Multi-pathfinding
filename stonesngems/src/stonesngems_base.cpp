@@ -48,7 +48,14 @@ void RNDGameState::reset() {
 //        std::cout << static_cast<int>(board.item(i))  << "," << static_cast<int>((board.item(i) * board.cols * board.rows) + i) << std::endl;    
 //        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
 #else
-        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+        int8_t item_ori1 = board.item(i);
+        int8_t item_ori = item_ori1;
+        if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+        // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+        // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+        // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + i);
+        // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
 #endif
     }
 
@@ -96,7 +103,16 @@ void RNDGameState::init_hash(){
             board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
         }
 #else        
-        board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
+
+        int8_t item_ori1 = board.item(i);
+        int8_t item_ori = item_ori1;
+        if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+        // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+        // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+        // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;
+
+        board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + i);
+        // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(i) * board.cols * board.rows) + i);
 #endif
     }
 }
@@ -107,10 +123,12 @@ void RNDGameState::apply_action(int action) {
     num_apply_action++;
     int old_index = board.agent_idx;
     // Handle agent first
+    uint64_t zorb_hash_temp = board.zorb_hash;
     UpdateAgent(board.agent_idx, static_cast<Directions>(action));
+    // if(zorb_hash_temp == 15854618949147724327) std::cout << board.zorb_hash  << ", action, " << action << "\n";
     if(action != 0 && old_index == board.agent_idx) return;
     // Handle all other items
-    if(!board.is_opt_queue_event){
+    if(!board.is_opt_queue_event){        
         for (int i = 0; i < board.rows * board.cols; ++i) {
             if (board.has_updated[i]) {    // Item already updated
                 continue;
@@ -168,6 +186,7 @@ void RNDGameState::apply_action(int action) {
         //  static std::vector<int> need_update_index_temp;
          for(int index_update = 0; index_update < board.need_update_index.size(); index_update++){
             int item_index = board.need_update_index[index_update];
+            int8_t te = board.item(item_index); 
             switch (board.item(item_index)) {
                 // Handle non-compound types
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStone):
@@ -175,30 +194,39 @@ void RNDGameState::apply_action(int action) {
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kStoneFalling):
                     UpdateStoneFalling(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kStoneFalling\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamond):
                     UpdateDiamond(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kDiamond\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kDiamondFalling):
                     UpdateDiamondFalling(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kDiamondFalling\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNut):
                     UpdateNut(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", "  << board.zorb_hash << " kNut\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kNutFalling):
                     UpdateNutFalling(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " <<board.zorb_hash << " kNutFalling\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBomb):
                     UpdateBomb(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kBomb\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBombFalling):
                     UpdateBombFalling(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kBombFalling\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kExitClosed):
                     UpdateExit(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327&& action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kExitClosed\n";
                     break;
                 case static_cast<std::underlying_type_t<HiddenCellType>>(HiddenCellType::kBlob):
                     UpdateBlob(item_index);
+                    // if(zorb_hash_temp == 15854618949147724327 && action == 0) std::cout << " i " << item_index  <<",old," <<static_cast<unsigned int>(te) << ",new," << static_cast<unsigned int>(board.item(item_index)) << ", " << board.zorb_hash << " kBlob\n";
                     break;
                 default:
                     // Handle compound types
@@ -367,7 +395,15 @@ void RNDGameState::MoveItem(int index, int action) {
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
     }
 #else    
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+
+    int8_t item_ori1 = board.item(new_index);
+    int8_t item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + new_index);
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
 #endif
 
     board.item(new_index) = board.item(index);
@@ -381,7 +417,15 @@ void RNDGameState::MoveItem(int index, int action) {
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
     }
 #else       
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+   
+    item_ori1 = board.item(new_index);
+    item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;    
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + new_index);
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
 #endif    
     // grid_.ids[new_index] = grid_.ids[index];
 #ifdef NoHashDirt
@@ -393,11 +437,28 @@ void RNDGameState::MoveItem(int index, int action) {
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
     }
 #else    
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
+
+    item_ori1 = board.item(index);
+    item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;       
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + index);
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(index) * board.cols * board.rows) + index);
 #endif    
 
     board.item(index) = ElementToItem(kElEmpty);
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(kElEmpty) * board.cols * board.rows) + index);
+
+    item_ori1 = ElementToItem(kElEmpty);
+    item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;   
+
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + index);
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(kElEmpty) * board.cols * board.rows) + index);
     board.has_updated[new_index] = true;
 
     // std::cout << board.zorb_hash <<" move Index " << index << ",new, " << new_index << "\n";
@@ -416,7 +477,17 @@ void RNDGameState::SetItem(int index, const Element &element, int id, int action
         board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
     }
 #else    
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
+   
+    int8_t item_ori1 = board.item(new_index);
+    int8_t item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;     
+    
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + new_index);
+
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((board.item(new_index) * board.cols * board.rows) + new_index);
 #endif
 
     board.item(new_index) = ElementToItem(element);
@@ -430,7 +501,16 @@ void RNDGameState::SetItem(int index, const Element &element, int id, int action
         board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
     }
 #else    
-    board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
+
+     item_ori1 = ElementToItem(element);
+     item_ori = item_ori1;
+    if(item_ori == 4 || item_ori == 6 || item_ori == 40 || item_ori == 42) {item_ori = item_ori1 - 1;}
+    // else if( item_ori == 11 || item_ori == 12 || item_ori == 13 ) item_ori = 10;
+    // else if(item_ori == 15 || item_ori == 16 || item_ori == 17) item_ori = 14;
+    // else if(item_ori == 44 || item_ori == 45 || item_ori == 46) item_ori = 43;    
+
+    board.zorb_hash ^= shared_state_ptr->zrbht.at((item_ori * board.cols * board.rows) + new_index);
+    // board.zorb_hash ^= shared_state_ptr->zrbht.at((ElementToItem(element) * board.cols * board.rows) + new_index);
 #endif    
     // grid_.ids[new_index] = id;
     board.has_updated[new_index] = true;
@@ -535,18 +615,31 @@ void RNDGameState::UpdateStone(int index) {
     }
     // std::cout << "stone " << index  << std::endl;
     // Boulder falls if empty below
+        int64_t temp_zor = board.zorb_hash;
     if (IsType(index, kElEmpty, Directions::kDown)) {
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " 111\n";
         SetItem(index, kElStoneFalling, -1);
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " 222\n";
+
         UpdateStoneFalling(index);
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " 333\n";
+
     } else if (CanRollLeft(index)) {    // Roll left/right if possible
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " Roolefg222\n";
+
         RollLeft(index, kElStoneFalling);
         // std::cout << "roll left " << index  << std::endl;
-        
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " Roolefg333\n";        
         if(board.is_opt_queue_event && index - 1 >= 0) board.need_update_index_temp.push_back(index - 1);
     } else if (CanRollRight(index)) {
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " RooRightg222\n";
+
         RollRight(index, kElStoneFalling);
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " Rooleft333\n";
+
         if(board.is_opt_queue_event && index + 1 < board.rows * board.cols) board.need_update_index_temp.push_back(index + 1);
     } else{
+        if(temp_zor == 15854618949147724327) std::cout << " test " << index << "," <<  board.zorb_hash << " Nothing\n";
         if(board.is_opt_queue_event) board.need_update_index_temp.push_back(index);
     }
     

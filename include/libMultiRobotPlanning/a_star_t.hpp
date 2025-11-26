@@ -69,7 +69,7 @@ class AStar {
   bool isXDP = false;
   bool ispwXDP = false;
   bool isRegu =  false;
-  bool isdebug = true;
+  bool isdebug = false;
   double w = 4.0;
   int bound  = 0.0;
 
@@ -121,7 +121,7 @@ class AStar {
         }        
         std::cout << "minimutest " << minimum_test << ", " << minimum_h_open << "\n";
         assert(minimum_test == minimum_h_open); */      
-      if(duration1 > 60){
+      if(duration1 > 180){
         int num_less_f = 0;
         int num_less_f_wait = 0;
         int num_h_less_g = 0;
@@ -142,6 +142,7 @@ class AStar {
         else if(wa_version == 2) std::cout << ",weightedpuXDP," << w << ",";
         else if(wa_version == 3) std::cout << ", weightedRegu," << w << ",";
         else if(wa_version == 4) std::cout << ", weightedXUP," << w << ",";
+        else if(wa_version == 5) std::cout << ", greedyBF," << w << ",";
 
         stateToHeap.swap(stateToHeapEmpty);
         closedSet.swap(closedSetEmpty);
@@ -184,7 +185,7 @@ class AStar {
         solution.cost = current.gScore;
         solution.fmin = current.fScore;
   
-        // std::cout <<"Final Current state " <<  current.state.x << ", " << current.state.y  << ", gemx,y,  " <<current.state.gem_x << ", " << current.state.gem_y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state. zorb_hash <<",minimum_h, " << minimum_h_open <<", " << minimum_test << ",minicount," << count_h[minimum_h_open] << ",--------------------"<< std::endl;
+        // if(isdebug) std::cout <<"Final Current state " <<  current.state.x << ", " << current.state.y  << ", gemx,y,  " <<current.state.gem_x << ", " << current.state.gem_y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state. zorb_hash <<",minimum_h, " << minimum_h_open <<", " << minimum_test << ",minicount," << count_h[minimum_h_open] << ",--------------------"<< std::endl;
 
 
 
@@ -210,6 +211,7 @@ class AStar {
         else if(wa_version == 2) std::cout << ",weightedpuXDP," << w << ",";
         else if(wa_version == 3) std::cout << ", weightedRegu," << w << ",";
         else if(wa_version == 4) std::cout << ", weightedXUP," << w << ",";
+        else if(wa_version == 5) std::cout << ", greedyBF," << w << ",";
 
         stateToHeap.swap(stateToHeapEmpty);
         closedSet.swap(closedSetEmpty);
@@ -227,7 +229,7 @@ class AStar {
     //       }
     //     }
     //   }
-      std::cout <<"Current state " <<  current.state->x << ", " << current.state->y  << ", gemx,y,  " << current.state->gem_x << ", " << current.state->gem_y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state->zorb_hash << ",--------------------"<< std::endl;
+      if(isdebug)  std::cout <<"Current state " <<  current.state->x << ", " << current.state->y  << ", gemx,y,  " << current.state->gem_x << ", " << current.state->gem_y << ",fsore, "<< current.fScore << ",gscore, " << current.gScore  << ",h, " << current.hScore <<  ",hash," << current.state->zorb_hash << ",--------------------"<< std::endl;
       openSet.pop();
       stateToHeap.erase(*current.state);
       current.state->f = current.fScore;
@@ -255,9 +257,10 @@ class AStar {
               else if(wa_version == 2) fScore = (hScore > tentative_gScore) ? tentative_gScore + hScore : (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
               else if(wa_version == 3) fScore = tentative_gScore + 1.0 * w * hScore;
               else if(wa_version == 4) fScore = (1.0/(2*w))*(tentative_gScore + hScore + std::sqrt((tentative_gScore + hScore)*(tentative_gScore + hScore) + 4*w*(w-1)*hScore*hScore));
+              else if(wa_version == 5) fScore = hScore;
             }
 
-            std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
+            if(isdebug)  std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
 
             auto handle = openSet.push(Node(std::make_shared<State>(neighbor.state), fScore, tentative_gScore, hScore));
             (*handle).handle = handle;
@@ -293,16 +296,17 @@ class AStar {
               else if(wa_version == 2) (*handle).fScore = (hScore > tentative_gScore) ? tentative_gScore + hScore : (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
               else if(wa_version == 3) (*handle).fScore = tentative_gScore + 1.0 * w * hScore;
               else if(wa_version == 4) (*handle).fScore = (1.0/(2*w))*(tentative_gScore + hScore + std::sqrt((tentative_gScore + hScore)*(tentative_gScore + hScore) + 4*w*(w-1)*hScore*hScore));
+              else if(wa_version == 5) (*handle).fScore = hScore;
             }
 
-            std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< (*handle).fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash  << ",--------------------"<< std::endl;
+            if(isdebug)  std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< (*handle).fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash  << ",--------------------"<< std::endl;
 
             openSet.increase(handle);
 
             cameFrom.erase(neighbor.state);
             cameFrom.insert(std::make_pair<>(neighbor.state, std::make_tuple<>(*current.state, neighbor.action, neighbor.cost, tentative_gScore)));
           }
-        }else{
+        }/*else{
         // restore reopen logic
           if ((*iterClosed).time > current.gScore + neighbor.cost) {
               reopen++;      // 统计 reopen 次数
@@ -316,13 +320,14 @@ class AStar {
                 else if(wa_version == 2) fScore = (hScore > tentative_gScore) ? tentative_gScore + hScore : (tentative_gScore + (2 * w -1) * hScore)/(w*1.0);
                 else if(wa_version == 3) fScore = tentative_gScore + 1.0 * w * hScore;
                 else if(wa_version == 4) fScore = (1.0/(2*w))*(tentative_gScore + hScore + std::sqrt((tentative_gScore + hScore)*(tentative_gScore + hScore) + 4*w*(w-1)*hScore*hScore));
-              }
+                else if(wa_version == 5) fScore = hScore;
+                }
 
               auto handle = openSet.push(Node(std::make_shared<State>(neighbor.state), fScore, tentative_gScore, hScore));
               
               (*handle).handle = handle;
 
-              std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
+              // std::cout <<"      Neighbor state " <<  neighbor.state.x << ", " << neighbor.state.y  << ", gemx,y,  " << neighbor.state.gem_x << ", " << neighbor.state.gem_y << ",fsore, "<< fScore << ",gscore, " << tentative_gScore  << ",h, " << hScore <<  ",hash," << neighbor.state.zorb_hash << ",--------------------"<< std::endl;
               
               stateToHeap.insert(std::make_pair<>(neighbor.state, handle));
               m_env.onDiscover(neighbor.state, fScore, tentative_gScore);
@@ -331,7 +336,7 @@ class AStar {
               cameFrom.insert(std::make_pair<>(neighbor.state, std::make_tuple<>(*current.state, neighbor.action, neighbor.cost, tentative_gScore)));          
               
           }
-        }
+        }*/
       }
     }
 
